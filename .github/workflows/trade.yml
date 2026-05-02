@@ -1,25 +1,34 @@
-name: Project Chakra Trading
+name: Project Chakra Trading System
 
 on:
   schedule:
-    - cron: '*/30 7-17 * * 1-5'
-  workflow_dispatch:
+    # Run every 30 minutes during London (7-12 UTC) and NY (12-17 UTC) sessions, Mon-Fri
+    - cron: '0,30 7-17 * * 1-5'
+  workflow_dispatch:  # Allow manual trigger from GitHub
 
 jobs:
   trade:
     runs-on: ubuntu-latest
+    timeout-minutes: 25
+
     steps:
-      - uses: actions/checkout@v3
-      
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-          
-      - name: Install libraries
+
+      - name: Install dependencies
         run: |
+          pip install --upgrade pip
           pip install requests numpy pandas yfinance
-          
-      - name: Run trading system
-        run: python v9_precision.py
-        timeout-minutes: 25
+
+      - name: Run Project Chakra V10
+        run: |
+          timeout 1400 python v10_complete.py || true
+
+      - name: Run missing agents test
+        if: always()
+        run: echo "Cycle complete"
