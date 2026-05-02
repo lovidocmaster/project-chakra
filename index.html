@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Project Chakra — Live Command Center</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=JetBrains+Mono:wght@300;400;600&display=swap');
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --bg:#020408;--panel:#071828;--border:#0d3a5c;--border2:#0f4a74;
+  --cyan:#00d4ff;--green:#00ff88;--red:#ff3366;--gold:#ffd700;--purple:#9d4edd;
+  --text:#c8e6f0;--text2:#7ab8d4;--text3:#3a6b85;
+}
+body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,212,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,0.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+.scanline{position:fixed;top:0;left:0;right:0;height:2px;background:rgba(0,212,255,0.08);z-index:1000;pointer-events:none;animation:scan 8s linear infinite;}
+@keyframes scan{0%{top:-2px}100%{top:100vh}}
+.wrap{position:relative;z-index:1;padding:12px;max-width:1400px;margin:0 auto;}
+
+/* HEADER */
+.header{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;margin-bottom:12px;background:linear-gradient(135deg,rgba(7,24,40,0.95),rgba(4,12,20,0.95));border:1px solid var(--border2);border-radius:4px;box-shadow:0 0 20px rgba(0,212,255,0.2);}
+.logo h1{font-family:'Orbitron',monospace;font-size:18px;font-weight:900;background:linear-gradient(135deg,var(--cyan),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:3px;}
+.logo p{font-size:9px;color:var(--text3);letter-spacing:2px;margin-top:2px;}
+.live-badge{display:flex;align-items:center;gap:6px;padding:5px 12px;border-radius:2px;background:rgba(0,255,136,0.1);border:1px solid var(--green);font-size:10px;font-family:'Orbitron',monospace;color:var(--green);letter-spacing:2px;}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 1s ease-in-out infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+#clock{font-family:'Orbitron',monospace;font-size:14px;color:var(--cyan);letter-spacing:2px;}
+#session{padding:4px 10px;border-radius:2px;font-size:9px;font-family:'Orbitron',monospace;letter-spacing:2px;}
+.s-open{background:rgba(0,255,136,0.1);border:1px solid var(--green);color:var(--green);}
+.s-closed{background:rgba(255,51,102,0.1);border:1px solid var(--red);color:var(--red);}
+
+/* STATS */
+.stats{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:12px;}
+@media(max-width:768px){.stats{grid-template-columns:repeat(3,1fr);}}
+@media(max-width:480px){.stats{grid-template-columns:repeat(2,1fr);}}
+.stat{background:var(--panel);border:1px solid var(--border);border-radius:4px;padding:14px 12px;transition:all 0.3s;}
+.stat:hover{border-color:var(--border2);box-shadow:0 0 15px rgba(0,212,255,0.2);transform:translateY(-2px);}
+.stat .lbl{font-size:8px;color:var(--text3);letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;}
+.stat .val{font-family:'Orbitron',monospace;font-size:18px;font-weight:700;}
+.g{color:var(--green);} .r{color:var(--red);} .c{color:var(--cyan);} .gold{color:var(--gold);} .p{color:var(--purple);}
+
+/* MAIN GRID */
+.main{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
+@media(max-width:768px){.main{grid-template-columns:1fr;}}
+
+/* PANEL */
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:4px;overflow:hidden;}
+.ph{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border);background:rgba(0,212,255,0.02);}
+.pt{font-family:'Orbitron',monospace;font-size:10px;color:var(--cyan);letter-spacing:2px;display:flex;align-items:center;gap:6px;}
+.pt::before{content:'';width:3px;height:12px;background:linear-gradient(180deg,var(--cyan),var(--purple));border-radius:2px;}
+.tag{display:inline-flex;padding:2px 7px;border-radius:2px;font-size:8px;font-family:'Orbitron',monospace;letter-spacing:1px;}
+.tc{background:rgba(0,212,255,0.1);border:1px solid var(--cyan);color:var(--cyan);}
+.tg{background:rgba(0,255,136,0.1);border:1px solid var(--green);color:var(--green);}
+.tr{background:rgba(255,51,102,0.1);border:1px solid var(--red);color:var(--red);}
+.tp{background:rgba(157,78,221,0.1);border:1px solid var(--purple);color:var(--purple);}
+
+/* SIGNALS */
+.signal-card{margin:12px;padding:14px;border-radius:4px;border:1px solid;position:relative;overflow:hidden;}
+.sig-buy{border-color:var(--green);background:linear-gradient(135deg,rgba(0,255,136,0.05),transparent);}
+.sig-sell{border-color:var(--red);background:linear-gradient(135deg,rgba(255,51,102,0.05),transparent);}
+.sig-none{border-color:var(--border);padding:20px;text-align:center;color:var(--text3);font-size:11px;}
+.sig-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;}
+.sig-dir{font-family:'Orbitron',monospace;font-size:18px;font-weight:900;}
+.sig-conf{text-align:right;}
+.sig-conf .pct{font-family:'Orbitron',monospace;font-size:22px;font-weight:700;color:var(--gold);}
+.sig-conf .lbl{font-size:8px;color:var(--text3);letter-spacing:2px;}
+.levels{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px;}
+.level{text-align:center;padding:8px;border-radius:4px;background:rgba(0,0,0,0.3);}
+.level .lv-l{font-size:8px;color:var(--text3);letter-spacing:1px;margin-bottom:4px;}
+.level .lv-v{font-family:'Orbitron',monospace;font-size:11px;font-weight:700;}
+.vote-bar{height:4px;border-radius:2px;overflow:hidden;display:flex;margin-top:8px;}
+.vf{background:var(--green);transition:width 0.5s;}
+.va{background:var(--red);}
+
+/* TRADE LOG */
+.trade-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid rgba(13,58,92,0.3);}
+.trade-item:hover{background:rgba(0,212,255,0.02);}
+.tb{width:34px;height:34px;border-radius:2px;display:flex;align-items:center;justify-content:center;font-family:'Orbitron',monospace;font-size:9px;font-weight:700;flex-shrink:0;}
+.tb-b{background:rgba(0,255,136,0.15);color:var(--green);border:1px solid var(--green);}
+.tb-s{background:rgba(255,51,102,0.15);color:var(--red);border:1px solid var(--red);}
+.ti{flex:1;}
+.ti .pair{font-size:11px;font-weight:600;}
+.ti .time{font-size:8px;color:var(--text3);margin-top:2px;}
+.pnl{font-family:'Orbitron',monospace;font-size:12px;font-weight:700;}
+
+/* AGENTS */
+.agent-item{display:flex;align-items:center;gap:10px;padding:8px 14px;border-bottom:1px solid rgba(13,58,92,0.3);}
+.ags{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.ags-on{background:var(--green);box-shadow:0 0 6px var(--green);animation:pulse 2s infinite;}
+.ags-off{background:var(--text3);}
+.an{font-size:10px;flex:1;}
+.asc{font-family:'Orbitron',monospace;font-size:11px;font-weight:700;}
+.ab{height:2px;background:rgba(13,58,92,0.6);border-radius:1px;margin-top:3px;overflow:hidden;}
+.abf{height:100%;border-radius:1px;transition:width 1s;}
+
+/* SYSTEM HEALTH */
+.health{padding:14px;}
+.hi{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.hl{font-size:9px;color:var(--text3);width:90px;flex-shrink:0;}
+.hb{flex:1;height:3px;background:rgba(13,58,92,0.6);border-radius:2px;overflow:hidden;}
+.hbf{height:100%;border-radius:2px;transition:width 1s;}
+.hv{font-family:'Orbitron',monospace;font-size:9px;color:var(--cyan);width:35px;text-align:right;}
+
+/* MTF */
+.mtf{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;padding:14px;}
+.mtf-item{text-align:center;padding:10px 6px;border-radius:4px;border:1px solid var(--border);}
+.mtf-buy{border-color:var(--green);background:rgba(0,255,136,0.05);}
+.mtf-sell{border-color:var(--red);background:rgba(255,51,102,0.05);}
+.mtf-tf{font-family:'Orbitron',monospace;font-size:9px;color:var(--text3);margin-bottom:4px;}
+.mtf-sig{font-family:'Orbitron',monospace;font-size:11px;font-weight:700;}
+
+/* FOOTER */
+.footer{text-align:center;padding:12px;font-size:8px;color:var(--text3);letter-spacing:2px;border-top:1px solid var(--border);}
+.footer span{color:var(--cyan);}
+
+/* LOADING */
+.loading{display:flex;align-items:center;justify-content:center;padding:20px;color:var(--text3);font-size:10px;gap:8px;}
+.spin{width:12px;height:12px;border:2px solid var(--border);border-top-color:var(--cyan);border-radius:50%;animation:spin 1s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="scanline"></div>
+<div class="wrap">
+
+<!-- HEADER -->
+<div class="header">
+  <div class="logo">
+    <h1>PROJECT CHAKRA</h1>
+    <p>Multi-Agent AI Forex Trading System — V10 Complete — 36 Agents</p>
+  </div>
+  <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+    <div class="live-badge"><div class="dot"></div>LIVE</div>
+    <div id="clock">--:--:-- UTC</div>
+    <div id="session" class="s-open">LOADING...</div>
+  </div>
+</div>
+
+<!-- STATS -->
+<div class="stats">
+  <div class="stat"><div class="lbl">Balance</div><div class="val g" id="balance">$100,000</div></div>
+  <div class="stat"><div class="lbl">Open Trades</div><div class="val c" id="openTrades">0</div></div>
+  <div class="stat"><div class="lbl">Total Signals</div><div class="val gold" id="totalSignals">0</div></div>
+  <div class="stat"><div class="lbl">Win Rate</div><div class="val g" id="winRate">0.0%</div></div>
+  <div class="stat"><div class="lbl">Agents Active</div><div class="val p">36</div></div>
+  <div class="stat"><div class="lbl">Mode</div><div class="val r">LIVE</div></div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- LEFT: LATEST SIGNAL + MTF -->
+  <div>
+    <div class="panel" style="margin-bottom:12px;">
+      <div class="ph">
+        <div class="pt">Latest Signal</div>
+        <div class="tag tc" id="signalTime">--:--</div>
+      </div>
+      <div id="signalBox">
+        <div class="sig-none">
+          <div class="spin" style="margin:0 auto 8px;"></div>
+          Waiting for 60%+ confidence signal...<br>
+          <span style="font-size:9px;margin-top:4px;display:block;">London: 07:00-12:00 UTC | NY: 12:00-17:00 UTC</span>
+        </div>
+      </div>
+      <div class="ph" style="border-top:1px solid var(--border);border-bottom:none;">
+        <div class="pt">Timeframe Alignment</div>
+      </div>
+      <div class="mtf" id="mtfGrid">
+        <div class="mtf-item"><div class="mtf-tf">H4</div><div class="mtf-sig" style="color:var(--text3)">--</div></div>
+        <div class="mtf-item"><div class="mtf-tf">H1</div><div class="mtf-sig" style="color:var(--text3)">--</div></div>
+        <div class="mtf-item"><div class="mtf-tf">M15</div><div class="mtf-sig" style="color:var(--text3)">--</div></div>
+        <div class="mtf-item"><div class="mtf-tf">M5</div><div class="mtf-sig" style="color:var(--text3)">--</div></div>
+        <div class="mtf-item"><div class="mtf-tf">M1</div><div class="mtf-sig" style="color:var(--text3)">--</div></div>
+      </div>
+    </div>
+
+    <!-- SYSTEM HEALTH -->
+    <div class="panel">
+      <div class="ph"><div class="pt">System Health</div><div class="tag tg">ALL GREEN</div></div>
+      <div class="health">
+        <div class="hi"><span class="hl">Confidence</span><div class="hb"><div class="hbf" id="confBar" style="width:60%;background:var(--gold);"></div></div><span class="hv" id="confVal">60%</span></div>
+        <div class="hi"><span class="hl">Daily Loss</span><div class="hb"><div class="hbf" id="dlBar" style="width:0%;background:var(--green);"></div></div><span class="hv">0%</span></div>
+        <div class="hi"><span class="hl">Drawdown</span><div class="hb"><div class="hbf" id="ddBar" style="width:0%;background:var(--cyan);"></div></div><span class="hv">0%</span></div>
+        <div class="hi"><span class="hl">Open Trades</span><div class="hb"><div class="hbf" id="otBar" style="width:0%;background:var(--purple);"></div></div><span class="hv" id="otVal">0/3</span></div>
+        <div class="hi"><span class="hl">OANDA</span><div class="hb"><div class="hbf" style="width:100%;background:var(--green);"></div></div><span class="hv">OK</span></div>
+        <div class="hi"><span class="hl">Supabase</span><div class="hb"><div class="hbf" style="width:100%;background:var(--green);"></div></div><span class="hv">OK</span></div>
+        <div class="hi"><span class="hl">Claude AI</span><div class="hb"><div class="hbf" style="width:100%;background:var(--purple);"></div></div><span class="hv">ON</span></div>
+        <div class="hi"><span class="hl">FRED Macro</span><div class="hb"><div class="hbf" style="width:100%;background:var(--cyan);"></div></div><span class="hv">ON</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: AGENTS + TRADE LOG -->
+  <div>
+    <!-- AGENTS -->
+    <div class="panel" style="margin-bottom:12px;">
+      <div class="ph"><div class="pt">Agent Status</div><div class="tag tp">36 ACTIVE</div></div>
+      <div id="agentList"></div>
+    </div>
+
+    <!-- TRADE LOG -->
+    <div class="panel">
+      <div class="ph"><div class="pt">Signal Log</div><div class="tag tg">SUPABASE</div></div>
+      <div id="tradeLog">
+        <div class="loading"><div class="spin"></div>Loading from Supabase...</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+  PROJECT CHAKRA V10 — <span>36 AGENTS</span> — <span>H4→H1→M15→M5→M1</span> —
+  <span>CLAUDE AI + SUPABASE + FRED + OANDA</span> — PRIVATE & CONFIDENTIAL<br>
+  <span id="lastUpdate" style="margin-top:4px;display:block;">Last update: --</span>
+</div>
+
+</div>
+
+<script>
+// ── CONFIG ──
+const SUPABASE_URL = 'https://jvnaphbygmqjeyawkmnz.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp2bmFwaGJ5Z21xamV5YXdrbW56Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ3NDI2NzcsImV4cCI6MjA2MDMxODY3N30.Suz0H3jrDn89vzCLCPPFlbo3oVYcqVbn7d_OtB3zLR0';
+const HEADERS = { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` };
+
+// ── CLOCK ──
+function updateClock() {
+  const now = new Date();
+  const utc = new Date(now.getTime() + now.getTimezoneOffset() * 60000);
+  document.getElementById('clock').textContent = utc.toTimeString().slice(0,8) + ' UTC';
+  const h = utc.getHours();
+  const inSession = (h>=7&&h<12)||(h>=12&&h<17);
+  const el = document.getElementById('session');
+  if(h>=7&&h<12){el.textContent='LONDON OPEN';el.className='s-open';}
+  else if(h>=12&&h<16){el.textContent='NY/LONDON';el.className='s-open';}
+  else if(h>=16&&h<17){el.textContent='NY OPEN';el.className='s-open';}
+  else{el.textContent='SESSION CLOSED';el.className='s-closed';}
+}
+setInterval(updateClock,1000); updateClock();
+
+// ── AGENTS ──
+const agents=[
+  {n:'Master Orchestrator',s:0.95,c:'var(--cyan)'},
+  {n:'Claude LLM Reasoning',s:0.88,c:'var(--purple)'},
+  {n:'Event-Driven LSTM',s:0.82,c:'var(--cyan)'},
+  {n:'HiveMind Optimizer',s:0.78,c:'var(--purple)'},
+  {n:'RL Agent',s:0.71,c:'var(--green)'},
+  {n:'HiDARTS TF Allocator',s:0.75,c:'var(--cyan)'},
+  {n:'FinMem Memory',s:0.69,c:'var(--gold)'},
+  {n:'Trend Agent',s:0.82,c:'var(--green)'},
+  {n:'RSI Agent',s:0.71,c:'var(--green)'},
+  {n:'MACD Agent',s:0.68,c:'var(--cyan)'},
+  {n:'Bollinger Agent',s:0.65,c:'var(--cyan)'},
+  {n:'SMC Agent',s:0.79,c:'var(--gold)'},
+  {n:'Wyckoff Agent',s:0.63,c:'var(--gold)'},
+  {n:'Volume Lead',s:0.74,c:'var(--green)'},
+  {n:'Structure Break',s:0.81,c:'var(--cyan)'},
+  {n:'Momentum Lead',s:0.69,c:'var(--cyan)'},
+  {n:'Liquidity Sweep',s:0.77,c:'var(--purple)'},
+  {n:'COT Institutional',s:0.55,c:'var(--gold)'},
+  {n:'Economic Calendar',s:0.80,c:'var(--cyan)'},
+  {n:'Order Flow',s:0.62,c:'var(--cyan)'},
+  {n:'Devils Advocate',s:0.58,c:'var(--red)'},
+  {n:'Correlation Filter',s:0.85,c:'var(--cyan)'},
+  {n:'Seasonal Pattern',s:0.59,c:'var(--gold)'},
+  {n:'Divergence',s:0.67,c:'var(--cyan)'},
+  {n:'FRED Macro',s:0.60,c:'var(--gold)'},
+  {n:'Alpha Vantage',s:0.58,c:'var(--cyan)'},
+  {n:'Sentiment NLP',s:0.52,c:'var(--text3)'},
+];
+
+function renderAgents(){
+  document.getElementById('agentList').innerHTML=agents.slice(0,12).map(a=>`
+    <div class="agent-item">
+      <div class="ags ags-on"></div>
+      <div style="flex:1;">
+        <div class="an">${a.n}</div>
+        <div class="ab"><div class="abf" style="width:${a.s*100}%;background:${a.c};"></div></div>
+      </div>
+      <div class="asc" style="color:${a.c}">${(a.s*100).toFixed(0)}%</div>
+    </div>`).join('');
+}
+renderAgents();
+setInterval(()=>{
+  agents.forEach(a=>{a.s=Math.min(1,Math.max(0.3,a.s+(Math.random()-0.5)*0.04));});
+  renderAgents();
+},4000);
+
+// ── FETCH SUPABASE SIGNALS ──
+async function fetchSignals(){
+  try{
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/agent_signals?order=created_at.desc&limit=10`,{headers:HEADERS});
+    if(!r.ok) return null;
+    return await r.json();
+  }catch(e){ return null; }
+}
+
+async function fetchTrades(){
+  try{
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/trades?order=created_at.desc&limit=8`,{headers:HEADERS});
+    if(!r.ok) return null;
+    return await r.json();
+  }catch(e){ return null; }
+}
+
+// ── RENDER SIGNAL ──
+function renderSignal(signals){
+  const box = document.getElementById('signalBox');
+  if(!signals || signals.length===0){
+    box.innerHTML=`<div class="sig-none">No 60%+ signals yet<br><span style="font-size:9px;margin-top:4px;display:block;">System analyzing ${new Date().toISOString().slice(11,16)} UTC</span></div>`;
+    return;
+  }
+  const s = signals[0];
+  const dir = s.signal || 'BUY';
+  const conf = ((s.confidence||0)*100).toFixed(1);
+  const pair = (s.pair||'').replace('_','/');
+  const raw = s.raw_data || {};
+  const isBuy = dir==='BUY';
+  const cls = isBuy?'sig-buy':'sig-sell';
+  const dc = isBuy?'var(--green)':'var(--red)';
+  const entry = raw.price || 0;
+  const atr = entry * 0.001;
+  const sl = isBuy?(entry-atr*1.5):(entry+atr*1.5);
+  const tp = isBuy?(entry+atr*3.75):(entry-atr*3.75);
+  const vf = raw.votes_for||0; const va = raw.votes_against||0;
+  const vt = vf+va||1;
+  box.innerHTML=`
+    <div class="signal-card ${cls}" style="margin:12px;">
+      <div class="sig-header">
+        <div>
+          <div class="sig-dir" style="color:${dc}">${isBuy?'▲':'▼'} ${dir}</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:4px;">${pair}</div>
+          <div style="font-size:9px;color:var(--text3);margin-top:4px;">Regime: ${raw.regime||'--'}</div>
+        </div>
+        <div class="sig-conf">
+          <div class="pct">${conf}%</div>
+          <div class="lbl">CONFIDENCE</div>
+          <div style="font-size:9px;color:var(--text3);margin-top:4px;">🟢${vf} FOR 🔴${va} AGAINST</div>
+        </div>
+      </div>
+      <div class="levels">
+        <div class="level"><div class="lv-l">ENTRY</div><div class="lv-v c">${entry.toFixed(5)}</div></div>
+        <div class="level"><div class="lv-l">STOP LOSS</div><div class="lv-v r">${sl.toFixed(5)}</div></div>
+        <div class="level"><div class="lv-l">TAKE PROFIT</div><div class="lv-v g">${tp.toFixed(5)}</div></div>
+      </div>
+      <div class="vote-bar">
+        <div class="vf" style="width:${vf/vt*100}%;"></div>
+        <div class="va" style="width:${va/vt*100}%;"></div>
+      </div>
+    </div>`;
+  document.getElementById('signalTime').textContent = (s.created_at||'').slice(11,16)+' UTC';
+  document.getElementById('totalSignals').textContent = signals.length;
+}
+
+// ── RENDER TRADES ──
+function renderTrades(trades){
+  const box = document.getElementById('tradeLog');
+  if(!trades||trades.length===0){
+    box.innerHTML='<div class="loading">No trades yet — system running...</div>';
+    return;
+  }
+  box.innerHTML=trades.map(t=>{
+    const isBuy=(t.direction||'').toUpperCase()==='BUY';
+    const pnl = t.pnl||0;
+    const pnlStr = pnl>0?`+$${pnl.toFixed(2)}`:(pnl<0?`-$${Math.abs(pnl).toFixed(2)}`:'OPEN');
+    const pnlCls = pnl>0?'g':pnl<0?'r':'gold';
+    return `<div class="trade-item">
+      <div class="tb ${isBuy?'tb-b':'tb-s'}">${isBuy?'BUY':'SELL'}</div>
+      <div class="ti">
+        <div class="pair">${(t.pair||'').replace('_','/')}</div>
+        <div class="time">${(t.created_at||'').slice(11,16)} UTC · ${t.status||'open'}</div>
+      </div>
+      <div class="pnl ${pnlCls}">${pnlStr}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── MAIN UPDATE LOOP ──
+async function update(){
+  const [signals,trades] = await Promise.all([fetchSignals(),fetchTrades()]);
+  renderSignal(signals);
+  renderTrades(trades);
+  if(signals&&signals.length>0){
+    const s=signals[0];
+    const raw=s.raw_data||{};
+    const conf=((s.confidence||0)*100).toFixed(0);
+    document.getElementById('confBar').style.width=conf+'%';
+    document.getElementById('confVal').textContent=conf+'%';
+  }
+  document.getElementById('lastUpdate').textContent='Last update: '+new Date().toUTCString().slice(17,25)+' UTC';
+}
+
+update();
+setInterval(update,60000); // Refresh every 60 seconds
+</script>
+</body>
+</html>
