@@ -1,0 +1,119 @@
+{
+  "ts": "2026-05-02T03:13:58.171510",
+  "ret": -9.558355847930924,
+  "final": 9044.164415206908,
+  "markets": 10,
+  "agents": 50,
+  "results": {
+    "USDJPY": {
+      "init": 1400.0000000000002,
+      "final": 1485.3125106811517,
+      "ret": 6.093750762939391,
+      "trades": 205.0,
+      "wins": 105.0,
+      "losses": 100.0,
+      "wr": 51.21951219512195,
+      "type": "forex"
+    },
+    "GBPUSD": {
+      "init": 1200.0,
+      "final": 1033.2647313616692,
+      "ret": -13.8946057198609,
+      "trades": 2.0,
+      "wins": 0.0,
+      "losses": 2.0,
+      "wr": 0.0,
+      "type": "forex"
+    },
+    "EURUSD": {
+      "init": 1200.0,
+      "final": 487.61482758620684,
+      "ret": -59.36543103448276,
+      "trades": 1.0,
+      "wins": 0.0,
+      "losses": 1.0,
+      "wr": 0.0,
+      "type": "forex"
+    },
+    "AUDUSD": {
+      "init": 800.0,
+      "final": 3158.251892948631,
+      "ret": 294.78148661857887,
+      "trades": 40.0,
+      "wins": 20.0,
+      "losses": 20.0,
+      "wr": 50.0,
+      "type": "forex"
+    },
+    "XAUUSD": {
+      "init": 800.0,
+      "final": 992.9821698178799,
+      "ret": 24.122771227234992,
+      "trades": 5.0,
+      "wins": 4.0,
+      "losses": 1.0,
+      "wr": 80.0,
+      "type": "metal"
+    },
+    "EURJPY": {
+      "init": 400.0,
+      "final": 498.4262431335449,
+      "ret": 24.60656078338623,
+      "trades": 0.0,
+      "wins": 0.0,
+      "losses": 0.0,
+      "wr": 0.0,
+      "type": "forex"
+    },
+    "EURGBP": {
+      "init": 300.0,
+      "final": 258.55377466694114,
+      "ret": -13.815408444352952,
+      "trades": 1.0,
+      "wins": 0.0,
+      "losses": 1.0,
+      "wr": 0.0,
+      "type": "forex"
+    },
+    "USDCAD": {
+      "init": 600.0,
+      "final": 522.3538306603032,
+      "ret": -12.941028223282805,
+      "trades": 2.0,
+      "wins": 0.0,
+      "losses": 2.0,
+      "wr": 0.0,
+      "type": "forex"
+    },
+    "US500": {
+      "init": 500.0,
+      "final": 433.1103515625,
+      "ret": -13.3779296875,
+      "trades": 2.0,
+      "wins": 0.0,
+      "losses": 2.0,
+      "wr": 0.0,
+      "type": "index"
+    },
+    "BTCUSD": {
+      "init": 200.0,
+      "final": 174.29408278807898,
+      "ret": -12.85295860596051,
+      "trades": 101.0,
+      "wins": 29.0,
+      "losses": 72.0,
+      "wr": 28.71287128712871,
+      "type": "crypto"
+    }
+  },
+  "evolution": {
+    "agent": "LLM_Evolver"
+  },
+  "memory": [],
+  "status": {
+    "llm": true,
+    "oanda": false,
+    "news": false,
+    "telegram": false
+  }
+}

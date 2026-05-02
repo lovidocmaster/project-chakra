@@ -1,0 +1,51 @@
+{
+  "total_return": 14.629827595129155,
+  "final_capital": 11462.982759512915,
+  "results": {
+    "USDJPY": {
+      "initial": 3500.0,
+      "final": 3920.926071493746,
+      "return": 12.026459185535597,
+      "trades": 131,
+      "win_rate": 41.221374045801525,
+      "rank": 1,
+      "news_view": "LLM unavailable - placeholder mode"
+    },
+    "GBPUSD": {
+      "initial": 3000.0,
+      "final": 3000.0,
+      "return": 0.0,
+      "trades": 0,
+      "win_rate": 0.0,
+      "rank": 2,
+      "news_view": "LLM unavailable - placeholder mode"
+    },
+    "AUDUSD": {
+      "initial": 2000.0,
+      "final": 2855.0547547520614,
+      "return": 42.75273773760307,
+      "trades": 139,
+      "win_rate": 38.84892086330935,
+      "rank": 3,
+      "news_view": "LLM unavailable - placeholder mode"
+    },
+    "EURUSD": {
+      "initial": 1500.0,
+      "final": 1687.001933267108,
+      "return": 12.466795551140528,
+      "trades": 73,
+      "win_rate": 38.35616438356164,
+      "rank": 4,
+      "news_view": "LLM unavailable - placeholder mode"
+    }
+  },
+  "timestamp": "2026-05-01 03:15:50.868358",
+  "integrations": {
+    "claude_llm": false,
+    "oanda": false,
+    "real_data": true,
+    "newsapi": false,
+    "supabase": false,
+    "telegram": false
+  }
+}

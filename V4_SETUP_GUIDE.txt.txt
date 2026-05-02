@@ -1,0 +1,77 @@
+# V4 ULTIMATE SYSTEM - SETUP GUIDE
+# ====================================
+# 50 Agents | 19 Global Markets | Self-Evolving
+# Run this BEFORE v4_final.py
+
+# STEP 1: Install required libraries (run these in terminal one by one)
+# Open terminal and paste each line, press Enter after each
+
+py -3.11 -m pip install yfinance
+py -3.11 -m pip install requests
+py -3.11 -m pip install pandas
+py -3.11 -m pip install numpy
+
+# STEP 2: Run the system
+py -3.11 v4_final.py
+
+# STEP 3: When you get API keys, open v4_final.py in VS Code
+# Find the CONFIG section at top and replace PLACEHOLDER values:
+
+# Claude API key  → console.anthropic.com
+# OANDA key       → oanda.com (free demo)
+# Telegram token  → @BotFather on Telegram
+# News API key    → newsapi.org (free)
+
+# STEP 4: Run again - more features activate automatically
+
+# ====================================
+# WHAT EACH API KEY DOES:
+# ====================================
+# yfinance (free, no key):
+#   Real USDJPY/GBPUSD/EURUSD price data
+#   Without it: uses synthetic data (less accurate)
+
+# OANDA (free demo account):
+#   Places real paper trades on real markets
+#   Without it: backtest only, no live trading
+
+# Telegram (free):
+#   Phone alert for every trade
+#   "BUY USDJPY at 150.25 - 82% confidence"
+#   Without it: no phone alerts
+
+# NewsAPI (free 100/day):
+#   Real news headlines analyzed by agents
+#   Without it: placeholder news
+
+# Claude API (~$20-50/month):
+#   Activates 8 LLM agents:
+#   - News Analyst reads real headlines
+#   - Macro Researcher tracks Fed/ECB events
+#   - Trade Reasoner explains every trade
+#   - Strategy Evolver improves system weekly
+#   - Pair Analyst specializes per currency
+#   - Regime Detector identifies market phase
+#   - Risk Reviewer vetoes dangerous trades
+#   - Portfolio Advisor optimizes allocation
+#   Without it: 42 math agents still trade
+
+# ====================================
+# PENDING TASKS TRACKER:
+# ====================================
+# [ ] Install yfinance (FREE - do today)
+# [ ] Install requests (FREE - do today)
+# [ ] OANDA demo account (FREE - 5 min)
+# [ ] Telegram bot token (FREE - 5 min)
+# [ ] Supabase key (FREE - already have account)
+# [ ] NewsAPI key (FREE - 100/day)
+# [ ] Claude API key (PAID ~$20-50/month)
+
+# ====================================
+# GLOBAL MARKETS TRADING (19 total):
+# ====================================
+# FOREX MAJORS:  USDJPY GBPUSD EURUSD AUDUSD USDCAD NZDUSD USDCHF
+# FOREX MINORS:  EURJPY GBPJPY EURGBP AUDJPY
+# METALS:        XAUUSD (Gold) XAGUSD (Silver)
+# INDICES:       US500 US30 USTEC
+# CRYPTO:        BTCUSD ETHUSD

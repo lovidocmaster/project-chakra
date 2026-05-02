@@ -24,6 +24,9 @@
 """
 
 import os, json, time, warnings, requests, threading, traceback
+from missing_agents import get_all_missing_agents
+from advanced_agents import get_advanced_agents
+from advanced_ai import get_advanced_ai_agents, get_hivemind
 from datetime import datetime, timedelta
 from collections import defaultdict, deque
 import numpy as np
@@ -37,7 +40,7 @@ warnings.filterwarnings('ignore')
 # ─────────────────────────────────────────────────────────────────────
 CONFIG = {
     # API KEYS
-    "ANTHROPIC_KEY":    "sk-ant-api03-UQXXaqxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxZkHLfgAA",
+    "ANTHROPIC_KEY":    "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",
     "OANDA_TOKEN":      "500c5382d32fcc8a3a58b0ea0507c083-64e0d997e301a20caa3270a846d33402",
     "OANDA_ACCOUNT":    "101-001-39217670-001",
     "OANDA_URL":        "https://api-fxpractice.oanda.com",
@@ -47,7 +50,7 @@ CONFIG = {
     "TELEGRAM_TOKEN":   "8635098808:AAEc1mNqNE9pRqsYU0-W4uu7R0KIjEQFbhk",
     "TELEGRAM_CHAT":    "757855988",
     "SUPABASE_URL":     "https://jvnaphbygmqjeyawkmnz.supabase.co",
-    "SUPABASE_KEY":     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp2bmFwaGJ5Z21xamV5YXdrbW56Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ3NDI2NzcsImV4cCI6MjA2MDMxODY3N30.Suz0H3jrDn89vzCLCPPFlbo3oVYcqVbn7d_OtB3zLR0",
+    "SUPABASE_KEY":     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp2bmFwaGJ5Z21xamV5YXdrbW56Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1NDU0NDksImV4cCI6MjA5MzEyMTQ0OX0.Suz0H3jrDn89vzCLCPPFIbo3oVYcqVbn7d_OtB3zLR0",
 
     # TRADING CONTROLS
     "MIN_CONFIDENCE":       0.60,
@@ -1242,6 +1245,10 @@ class V10Orchestrator:
             self.fred,   # FRED macro
             self.av,     # Alpha Vantage
         ]
+        self.agents += get_all_missing_agents()
+        self.agents += get_advanced_agents()
+        self.agents += get_advanced_ai_agents()
+        self.hivemind = get_hivemind()
 
         self.instruments = (CONFIG["PRIMARY_PAIRS"] +
                            CONFIG["SECONDARY_PAIRS"] +
