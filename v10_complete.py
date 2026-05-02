@@ -33,6 +33,7 @@ from collections import defaultdict, deque
 import numpy as np
 import pandas as pd
 import yfinance as yf
+from ict_smc_agent import ICTSMCAgent
 
 warnings.filterwarnings('ignore')
 
@@ -1250,6 +1251,8 @@ class V10Orchestrator:
         self.agents += get_advanced_agents()
         self.agents += get_advanced_ai_agents()
         self.hivemind = get_hivemind()
+        self.ict_smc_agent = ICTSMCAgent()
+        print("✅ ICT/SMC Agent (37th) initialized")
     self.hivemind.learning_enabled = True
     self.hivemind.weekend_mode = True
     print("✅ HiveMind Weekend Learning ENABLED"),self.agents.append(TradingViewAgent())
