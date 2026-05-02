@@ -27,6 +27,7 @@ import os, json, time, warnings, requests, threading, traceback
 from missing_agents import get_all_missing_agents
 from advanced_agents import get_advanced_agents
 from advanced_ai import get_advanced_ai_agents, get_hivemind
+from tradingview_agent import TradingViewAgent
 from datetime import datetime, timedelta
 from collections import defaultdict, deque
 import numpy as np
@@ -1249,6 +1250,9 @@ class V10Orchestrator:
         self.agents += get_advanced_agents()
         self.agents += get_advanced_ai_agents()
         self.hivemind = get_hivemind()
+    self.hivemind.learning_enabled = True
+    self.hivemind.weekend_mode = True
+    print("✅ HiveMind Weekend Learning ENABLED"),self.agents.append(TradingViewAgent())
 
         self.instruments = (CONFIG["PRIMARY_PAIRS"] +
                            CONFIG["SECONDARY_PAIRS"] +
