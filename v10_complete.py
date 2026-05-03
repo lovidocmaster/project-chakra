@@ -28,6 +28,13 @@ from missing_agents import get_all_missing_agents
 from advanced_agents import get_advanced_agents
 from advanced_ai import get_advanced_ai_agents, get_hivemind
 from tradingview_agent import TradingViewAgent
+
+# ADVANCED FEATURES (NEW)
+from advanced_risk_manager import AdvancedRiskManager
+from macro_calendar_agent import MacroCalendarAgent
+from enhanced_sentiment_agent import EnhancedSentimentAgent
+from options_agent import OptionsAgent
+
 from datetime import datetime, timedelta
 from collections import defaultdict, deque
 import numpy as np
@@ -40,6 +47,33 @@ warnings.filterwarnings('ignore')
 # ─────────────────────────────────────────────────────────────────────
 # CONFIG — ALL KEYS
 # ─────────────────────────────────────────────────────────────────────
+
+# MULTI-BROKER REDUNDANCY CONFIGURATION
+MULTI_BROKER_CONFIG = {
+    "primary_broker": "OANDA",
+    "backup_broker": "IC_MARKETS",
+    "load_balancing": True,
+    "load_balance_ratio": 0.5,  # 50% to each broker
+    "auto_failover": True,
+    "failover_delay": 30,  # seconds
+    "health_check_interval": 60,  # seconds
+    "switch_on_error": True,
+    "rebalance_on_connection_restore": True,
+}
+
+BROKER_TOKENS = {
+    "OANDA": {
+        "token": os.getenv("OANDA_TOKEN"),
+        "account": os.getenv("OANDA_ACCOUNT"),
+        "url": os.getenv("OANDA_URL"),
+    },
+    "IC_MARKETS": {
+        "token": os.getenv("IC_MARKETS_TOKEN"),
+        "account": os.getenv("IC_MARKETS_ACCOUNT"),
+        "url": "https://api.icmarkets.com",
+    }
+}
+
 CONFIG = {
     # API KEYS
     "ANTHROPIC_KEY":    "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",
@@ -1252,6 +1286,22 @@ class V10Orchestrator:
         self.agents += get_advanced_ai_agents()
         self.hivemind = get_hivemind()
         self.ict_smc_agent = ICTSMCAgent()
+        # Advanced Risk Management
+        self.advanced_risk = AdvancedRiskManager()
+        print("✅ Advanced Risk Manager initialized")
+        
+        # Macro Calendar
+        self.macro_calendar = MacroCalendarAgent()
+        print("✅ Macro Calendar Agent initialized")
+        
+        # Enhanced Sentiment
+        self.enhanced_sentiment = EnhancedSentimentAgent()
+        print("✅ Enhanced Sentiment Agent initialized")
+        
+        # Options Intelligence
+        self.options_agent = OptionsAgent()
+        print("✅ Options Market Agent initialized")
+
         print("✅ ICT/SMC Agent (37th) initialized")
     self.hivemind.learning_enabled = True
     self.hivemind.weekend_mode = True
