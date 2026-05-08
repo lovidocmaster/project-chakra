@@ -4,11 +4,11 @@
 ╔══════════════════════════════════════════════════════════════════════════════╗
 ║          FOREX TRADING SYSTEM V14 — ARMY OF AGENTS                          ║
 ║                                                                              ║
-║  35 specialized AI agents running SIMULTANEOUSLY via ThreadPoolExecutor     ║
+║  36 specialized AI agents running SIMULTANEOUSLY via ThreadPoolExecutor     ║
 ║  Decisions in ~200ms vs V13's 15-minute sequential cycle                    ║
 ║                                                                              ║
 ║  WHAT'S NEW vs V13:                                                          ║
-║  ✅ 35 agents (was 17) — all run in parallel                                 ║
+║  ✅ 36 agents (was 17) — all run in parallel                                 ║
 ║  ✅ ~200ms decision time (was 15 min)                                        ║
 ║  ✅ Event-driven architecture — reacts to market moves instantly             ║
 ║  ✅ 18 brand-new agents: Fibonacci, VWAP, Ichimoku, Divergence, etc.        ║
@@ -97,9 +97,12 @@ if not V13_OK:
     RISK_PCT = 0.005
     MAX_DD   = 0.02
 
+# Extend with commodities and crypto
+PAIRS = list(PAIRS) + ["BTC_USD", "XAU_USD"]
+
 CYCLE_SECONDS = 60       # run every 60 seconds (was 900 in v13)
 MIN_CONF      = 0.60     # minimum confidence to trade
-MIN_AGENTS    = 12       # need at least 12/35 agents agreeing
+MIN_AGENTS    = 12       # need at least 12/36 agents agreeing
 AUTO_EXECUTE  = True
 MEM_FILE  = "v14_memory.json"
 WTS_FILE  = "v14_weights.json"
@@ -118,7 +121,7 @@ log = logging.getLogger("V14")
 app = Flask(__name__)
 
 # ══════════════════════════════════════════════════════════════════════════════
-# 18 NEW AGENTS (V14-exclusive)
+# 19 NEW AGENTS (V14-exclusive)
 # ══════════════════════════════════════════════════════════════════════════════
 
 class MomentumAgent:
@@ -355,6 +358,8 @@ class DXYAgent:
 
     def analyze(self, bars: List) -> Optional[Signal]:
         pair = getattr(self, "_pair", "EUR_USD")
+        if pair in ("XAU_USD", "BTC_USD"):
+            return None
         dxy_change = self._get_dxy()
         usd_base   = pair.startswith("USD_")
         if abs(dxy_change) < 0.1: return None
@@ -424,10 +429,11 @@ class VIXAgent:
     def analyze(self, bars: List) -> Optional[Signal]:
         pair = getattr(self, "_pair", "EUR_USD")
         vix  = self._get_vix()
-        if vix > 30:   # high fear → JPY/USD safe haven
+        if vix > 30:   # high fear → safe havens
             if pair == "USD_JPY": return Signal("SELL", 0.72, f"VIX={vix:.0f} fear mode", self.name)
+            if pair == "XAU_USD": return Signal("BUY",  0.74, f"VIX={vix:.0f} gold safe haven", self.name)
         elif vix < 15: # low fear → risk-on
-            risk_on = ["AUD_USD", "GBP_USD"]
+            risk_on = ["AUD_USD", "GBP_USD", "BTC_USD"]
             if pair in risk_on: return Signal("BUY", 0.68, f"VIX={vix:.0f} calm market", self.name)
         return None
 
@@ -523,7 +529,8 @@ class NewsFlowAgent:
             return NewsFlowAgent._cache[pair]
         if not NEWS_KEY: return 0.0
         try:
-            currencies = pair.replace("_", " ").lower()
+            _terms = {"BTC_USD": "bitcoin cryptocurrency", "XAU_USD": "gold XAU precious metals"}
+            currencies = _terms.get(pair, pair.replace("_", " ").lower())
             r = requests.get(
                 f"https://newsapi.org/v2/everything",
                 params={"q": currencies, "language": "en",
@@ -585,6 +592,42 @@ class MultiTimeframeConfluenceAgent:
         return None
 
 
+class DXYInverseCorrelAgent:
+    """DXY inverse correlation — EUR/USD and GBP/USD move opposite to DXY (knowledge layer)"""
+    name = "DXYInverse"
+    _dxy_value: float = 0.0
+    _dxy_change: float = 0.0
+    _cache_time = datetime.utcnow() - timedelta(hours=2)
+
+    def _fetch_dxy(self):
+        now = datetime.utcnow()
+        if (now - DXYInverseCorrelAgent._cache_time).seconds < 1800:
+            return
+        try:
+            if YF_OK:
+                dxy = yf.Ticker("DX-Y.NYB").history(period="5d")["Close"]
+                if len(dxy) >= 2:
+                    DXYInverseCorrelAgent._dxy_value  = float(dxy.iloc[-1])
+                    DXYInverseCorrelAgent._dxy_change  = float(dxy.iloc[-1] - dxy.iloc[-2])
+                    DXYInverseCorrelAgent._cache_time  = now
+        except Exception:
+            pass
+
+    def analyze(self, bars: List) -> Optional[Signal]:
+        pair = getattr(self, "_pair", "EUR_USD")
+        # EUR/USD and GBP/USD are the most inversely correlated with DXY
+        if pair not in ("EUR_USD", "GBP_USD"):
+            return None
+        self._fetch_dxy()
+        change = DXYInverseCorrelAgent._dxy_change
+        if abs(change) < 0.15:
+            return None
+        conf = min(0.82, 0.62 + abs(change) * 0.02)
+        if change > 0.15:   # DXY rising → EUR/USD and GBP/USD fall
+            return Signal("SELL", conf, f"DXY +{change:.2f} inverse → SELL {pair}", self.name)
+        return Signal("BUY", conf, f"DXY {change:.2f} inverse → BUY {pair}", self.name)
+
+
 class ConsensusMetaAgent:
     """Meta-agent — final filter that checks quality of consensus"""
     name = "MetaConsensus"
@@ -610,10 +653,10 @@ class ConsensusMetaAgent:
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# ARMY BUILDER — all 35 agents
+# ARMY BUILDER — all 36 agents
 # ══════════════════════════════════════════════════════════════════════════════
 def _build_army(pair: str) -> List:
-    """Returns all 35 agents, each with the current pair set"""
+    """Returns all 36 agents, each with the current pair set"""
     v13_agents = []
     if V13_OK:
         try:
@@ -634,7 +677,8 @@ def _build_army(pair: str) -> List:
         PivotPointAgent(), MarketStructureAgent(), HeikinAshiAgent(),
         IchimokuAgent(), SupertrendAgent(), DXYAgent(), GoldCorrelAgent(),
         VIXAgent(), PriceActionAgent(), AdaptiveEMAAgent(), SessionVolumeAgent(),
-        NewsFlowAgent(), MultiTimeframeConfluenceAgent(), ConsensusMetaAgent(),
+        NewsFlowAgent(), MultiTimeframeConfluenceAgent(), DXYInverseCorrelAgent(),
+        ConsensusMetaAgent(),
     ]
     # Inject pair into agents that use external data
     for ag in v14_agents:
@@ -656,7 +700,7 @@ def _run_agent_safe(agent, bars: List) -> Optional[Signal]:
 
 def parallel_analyze(pair: str, bars: List, weights) -> Dict:
     """
-    Runs all 35 agents simultaneously via ThreadPoolExecutor.
+    Runs all 36 agents simultaneously via ThreadPoolExecutor.
     Returns consensus in ~200ms.
     """
     army = _build_army(pair)
@@ -664,7 +708,7 @@ def parallel_analyze(pair: str, bars: List, weights) -> Dict:
     buy_agents: List[str] = []
     sell_agents: List[str] = []
 
-    with ThreadPoolExecutor(max_workers=35) as pool:
+    with ThreadPoolExecutor(max_workers=36) as pool:
         futures = {pool.submit(_run_agent_safe, ag, bars): ag for ag in army}
         for fut in as_completed(futures, timeout=5.0):
             ag = futures[fut]
@@ -737,11 +781,13 @@ def execute_trade(pair: str, direction: str, bars: List,
 
     atrs     = [b.high - b.low for b in bars[-14:]]
     atr      = np.mean(atrs) if atrs else 0.0010
-    pip_size = 0.01 if "JPY" in pair else 0.0001
+    # (pip_size, min_units, max_units) per instrument
+    _inst = {"XAU_USD": (0.01, 1, 50), "BTC_USD": (1.0, 1, 3)}
+    pip_size, min_u, max_u = _inst.get(pair, (0.01 if "JPY" in pair else 0.0001, 1000, 50000))
     sl_pips  = max(15, int(atr / pip_size * 1.5))
     risk_usd = capital * RISK_PCT
     units    = int(risk_usd / (sl_pips * pip_size))
-    units    = max(1000, min(50000, units))
+    units    = max(min_u, min(max_u, units))
     if direction == "SELL":
         units = -units
 
@@ -843,7 +889,7 @@ class ArmyOrchestrator:
                     f"Pair: {pair}\n"
                     f"Direction: {sig['direction']}\n"
                     f"Confidence: {sig['confidence']:.1%}\n"
-                    f"Agents agreed: {sig['agent_count']}/35\n"
+                    f"Agents agreed: {sig['agent_count']}/36\n"
                     f"Decision time: {sig['ms']:.0f}ms\n"
                     f"Trade: {msg}\n"
                     f"Top agents: {', '.join(sig.get('buy_agents' if sig['direction']=='BUY' else 'sell_agents', [])[:5])}"
@@ -939,7 +985,7 @@ DASHBOARD_HTML = """
 {% endfor %}
 </table>
 </div>
-<p style="color:#555; font-size:11px">Auto-refresh 15s | V14 Army of Agents | 35 parallel agents</p>
+<p style="color:#555; font-size:11px">Auto-refresh 15s | V14 Army of Agents | 36 parallel agents</p>
 </body></html>
 """
 

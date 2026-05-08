@@ -2930,3 +2930,904 @@
 2026-05-08 00:59:51,452 [INFO] Learned: EUR_USD WIN | WR: 87.3% | RL: 402
 2026-05-08 00:59:59,742 [INFO] Learned: USD_JPY WIN | WR: 87.3% | RL: 403
 2026-05-08 01:00:09,334 [INFO] Learned: USD_CAD WIN | WR: 87.4% | RL: 404
+2026-05-08 01:14:11,167 [INFO] setting up API-client for environment practice
+2026-05-08 01:14:11,185 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/EUR_USD/candles
+2026-05-08 01:14:13,962 [INFO] News: 20 articles fetched
+2026-05-08 01:14:16,843 [INFO] Correlations: ['DXY', 'GOLD', 'OIL', 'SP500', 'VIX'] loaded
+2026-05-08 01:14:16,843 [INFO] EUR_USD: 64.9% below 65.0% threshold. Skip.
+2026-05-08 01:14:18,856 [INFO] setting up API-client for environment practice
+2026-05-08 01:14:18,856 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/GBP_USD/candles
+2026-05-08 01:14:20,470 [INFO] GBP_USD: 56.7% below 65.0% threshold. Skip.
+2026-05-08 01:14:22,472 [INFO] setting up API-client for environment practice
+2026-05-08 01:14:22,472 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_JPY/candles
+2026-05-08 01:14:25,010 [INFO] SIGNAL: USD_JPY BUY 97.3% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 01:14:27,033 [INFO] setting up API-client for environment practice
+2026-05-08 01:14:27,035 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/AUD_USD/candles
+2026-05-08 01:14:28,042 [INFO] AUD_USD: 51.6% below 65.0% threshold. Skip.
+2026-05-08 01:14:30,043 [INFO] setting up API-client for environment practice
+2026-05-08 01:14:30,045 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_CAD/candles
+2026-05-08 01:14:33,447 [INFO] SIGNAL: USD_CAD BUY 91.1% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 01:14:35,453 [INFO] Cycle #121 done. Trades in memory: 404 | WR: 87.4% | RL episodes: 404
+2026-05-08 01:15:25,154 [INFO] Learned: USD_JPY WIN | WR: 87.4% | RL: 405
+2026-05-08 01:15:33,752 [INFO] Learned: USD_CAD WIN | WR: 87.4% | RL: 406
+2026-05-08 01:29:35,412 [INFO] setting up API-client for environment practice
+2026-05-08 01:29:35,412 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/EUR_USD/candles
+2026-05-08 01:29:37,018 [INFO] EUR_USD: 63.3% below 65.0% threshold. Skip.
+2026-05-08 01:29:39,019 [INFO] setting up API-client for environment practice
+2026-05-08 01:29:39,019 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/GBP_USD/candles
+2026-05-08 01:29:40,642 [INFO] GBP_USD: 63.3% below 65.0% threshold. Skip.
+2026-05-08 01:29:42,656 [INFO] setting up API-client for environment practice
+2026-05-08 01:29:42,657 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_JPY/candles
+2026-05-08 01:29:44,948 [INFO] SIGNAL: USD_JPY BUY 94.0% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 01:29:46,962 [INFO] setting up API-client for environment practice
+2026-05-08 01:29:46,962 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/AUD_USD/candles
+2026-05-08 01:29:48,489 [INFO] AUD_USD: 59.8% below 65.0% threshold. Skip.
+2026-05-08 01:29:50,495 [INFO] setting up API-client for environment practice
+2026-05-08 01:29:50,495 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_CAD/candles
+2026-05-08 01:29:53,822 [INFO] SIGNAL: USD_CAD BUY 87.7% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 01:29:55,871 [INFO] Cycle #122 done. Trades in memory: 406 | WR: 87.4% | RL episodes: 406
+2026-05-08 01:30:45,270 [INFO] Learned: USD_JPY WIN | WR: 87.5% | RL: 407
+2026-05-08 01:30:54,095 [INFO] Learned: USD_CAD WIN | WR: 87.5% | RL: 408
+2026-05-08 01:44:55,841 [INFO] setting up API-client for environment practice
+2026-05-08 01:44:55,845 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/EUR_USD/candles
+2026-05-08 01:44:57,887 [INFO] ForexFactory: 115 events loaded
+2026-05-08 01:44:59,199 [INFO] News: 19 articles fetched
+2026-05-08 01:45:02,379 [INFO] Correlations: ['DXY', 'GOLD', 'OIL', 'SP500', 'VIX'] loaded
+2026-05-08 01:45:02,380 [INFO] EUR_USD: 56.7% below 65.0% threshold. Skip.
+2026-05-08 01:45:04,381 [INFO] setting up API-client for environment practice
+2026-05-08 01:45:04,381 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/GBP_USD/candles
+2026-05-08 01:45:05,375 [INFO] GBP_USD: 56.7% below 65.0% threshold. Skip.
+2026-05-08 01:45:07,375 [INFO] setting up API-client for environment practice
+2026-05-08 01:45:07,376 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_JPY/candles
+2026-05-08 01:45:08,340 [INFO] USD_JPY: 58.7% below 65.0% threshold. Skip.
+2026-05-08 01:45:10,341 [INFO] setting up API-client for environment practice
+2026-05-08 01:45:10,341 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/AUD_USD/candles
+2026-05-08 01:45:12,606 [INFO] SIGNAL: AUD_USD SELL 85.0% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 01:45:14,608 [INFO] setting up API-client for environment practice
+2026-05-08 01:45:14,608 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_CAD/candles
+2026-05-08 01:45:16,573 [INFO] SIGNAL: USD_CAD BUY 96.7% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 01:45:18,574 [INFO] Cycle #123 done. Trades in memory: 408 | WR: 87.5% | RL episodes: 408
+2026-05-08 01:46:12,841 [INFO] Learned: AUD_USD WIN | WR: 87.5% | RL: 409
+2026-05-08 01:46:16,727 [INFO] Learned: USD_CAD WIN | WR: 87.6% | RL: 410
+2026-05-08 02:00:18,553 [INFO] setting up API-client for environment practice
+2026-05-08 02:00:18,561 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/EUR_USD/candles
+2026-05-08 02:00:20,627 [INFO] EUR_USD: 56.7% below 65.0% threshold. Skip.
+2026-05-08 02:00:22,628 [INFO] setting up API-client for environment practice
+2026-05-08 02:00:22,628 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/GBP_USD/candles
+2026-05-08 02:00:24,372 [INFO] GBP_USD: 51.6% below 65.0% threshold. Skip.
+2026-05-08 02:00:26,375 [INFO] setting up API-client for environment practice
+2026-05-08 02:00:26,375 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_JPY/candles
+2026-05-08 02:00:27,990 [INFO] USD_JPY: 58.7% below 65.0% threshold. Skip.
+2026-05-08 02:00:30,000 [INFO] setting up API-client for environment practice
+2026-05-08 02:00:30,000 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/AUD_USD/candles
+2026-05-08 02:00:33,739 [INFO] SIGNAL: AUD_USD SELL 81.3% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 02:00:35,744 [INFO] setting up API-client for environment practice
+2026-05-08 02:00:35,744 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_CAD/candles
+2026-05-08 02:00:39,245 [INFO] SIGNAL: USD_CAD BUY 96.7% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 02:00:41,251 [INFO] Cycle #124 done. Trades in memory: 410 | WR: 87.6% | RL episodes: 410
+2026-05-08 02:01:34,051 [INFO] Learned: AUD_USD WIN | WR: 87.6% | RL: 411
+2026-05-08 02:01:39,606 [INFO] Learned: USD_CAD WIN | WR: 87.6% | RL: 412
+2026-05-08 02:15:41,233 [INFO] setting up API-client for environment practice
+2026-05-08 02:15:41,237 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/EUR_USD/candles
+2026-05-08 02:15:45,045 [INFO] News: 19 articles fetched
+2026-05-08 02:15:48,044 [INFO] Correlations: ['DXY', 'GOLD', 'OIL', 'SP500', 'VIX'] loaded
+2026-05-08 02:15:48,044 [INFO] EUR_USD: 63.7% below 65.0% threshold. Skip.
+2026-05-08 02:15:50,057 [INFO] setting up API-client for environment practice
+2026-05-08 02:15:50,057 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/GBP_USD/candles
+2026-05-08 02:15:52,763 [INFO] GBP_USD: 63.7% below 65.0% threshold. Skip.
+2026-05-08 02:15:54,793 [INFO] setting up API-client for environment practice
+2026-05-08 02:15:54,793 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_JPY/candles
+2026-05-08 02:15:58,585 [INFO] SIGNAL: USD_JPY BUY 94.4% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 02:16:00,592 [INFO] setting up API-client for environment practice
+2026-05-08 02:16:00,592 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/AUD_USD/candles
+2026-05-08 02:16:04,473 [INFO] SIGNAL: AUD_USD SELL 100.5% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 02:16:06,478 [INFO] setting up API-client for environment practice
+2026-05-08 02:16:06,478 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_CAD/candles
+2026-05-08 02:16:12,295 [INFO] SIGNAL: USD_CAD BUY 107.4% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 02:16:14,298 [INFO] Cycle #125 done. Trades in memory: 412 | WR: 87.6% | RL episodes: 412
+2026-05-08 02:16:58,766 [INFO] Learned: USD_JPY WIN | WR: 87.7% | RL: 413
+2026-05-08 02:17:04,681 [INFO] Learned: AUD_USD WIN | WR: 87.7% | RL: 414
+2026-05-08 02:17:12,485 [INFO] Learned: USD_CAD WIN | WR: 87.7% | RL: 415
+2026-05-08 02:31:14,286 [INFO] setting up API-client for environment practice
+2026-05-08 02:31:14,288 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/EUR_USD/candles
+2026-05-08 02:31:15,487 [INFO] EUR_USD: 64.4% below 65.0% threshold. Skip.
+2026-05-08 02:31:17,495 [INFO] setting up API-client for environment practice
+2026-05-08 02:31:17,495 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/GBP_USD/candles
+2026-05-08 02:31:18,634 [INFO] GBP_USD: 64.4% below 65.0% threshold. Skip.
+2026-05-08 02:31:20,642 [INFO] setting up API-client for environment practice
+2026-05-08 02:31:20,643 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_JPY/candles
+2026-05-08 02:31:23,265 [INFO] SIGNAL: USD_JPY BUY 95.1% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 02:31:25,280 [INFO] setting up API-client for environment practice
+2026-05-08 02:31:25,280 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/AUD_USD/candles
+2026-05-08 02:31:27,572 [INFO] SIGNAL: AUD_USD SELL 100.9% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 02:31:29,587 [INFO] setting up API-client for environment practice
+2026-05-08 02:31:29,587 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_CAD/candles
+2026-05-08 02:31:31,691 [INFO] SIGNAL: USD_CAD BUY 107.6% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 02:31:33,706 [INFO] Cycle #126 done. Trades in memory: 415 | WR: 87.7% | RL episodes: 415
+2026-05-08 02:32:23,492 [INFO] Learned: USD_JPY WIN | WR: 87.7% | RL: 416
+2026-05-08 02:32:27,710 [INFO] Learned: AUD_USD WIN | WR: 87.8% | RL: 417
+2026-05-08 02:32:31,953 [INFO] Learned: USD_CAD WIN | WR: 87.8% | RL: 418
+2026-05-08 02:46:33,697 [INFO] setting up API-client for environment practice
+2026-05-08 02:46:33,699 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/EUR_USD/candles
+2026-05-08 02:46:36,106 [INFO] ForexFactory: 115 events loaded
+2026-05-08 02:46:37,504 [INFO] News: 19 articles fetched
+2026-05-08 02:46:38,573 [INFO] Correlations: ['DXY', 'GOLD', 'OIL', 'SP500', 'VIX'] loaded
+2026-05-08 02:46:38,573 [INFO] EUR_USD: 60.8% below 65.0% threshold. Skip.
+2026-05-08 02:46:40,587 [INFO] setting up API-client for environment practice
+2026-05-08 02:46:40,587 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/GBP_USD/candles
+2026-05-08 02:46:43,193 [INFO] SIGNAL: GBP_USD SELL 84.4% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 02:46:45,200 [INFO] setting up API-client for environment practice
+2026-05-08 02:46:45,200 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_JPY/candles
+2026-05-08 02:46:46,969 [INFO] SIGNAL: USD_JPY BUY 107.4% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 02:46:48,974 [INFO] setting up API-client for environment practice
+2026-05-08 02:46:48,974 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/AUD_USD/candles
+2026-05-08 02:46:51,338 [INFO] SIGNAL: AUD_USD SELL 97.0% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 02:46:53,342 [INFO] setting up API-client for environment practice
+2026-05-08 02:46:53,342 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_CAD/candles
+2026-05-08 02:46:55,096 [INFO] SIGNAL: USD_CAD BUY 79.0% | News: BEARISH | COT: NEUTRAL | Regime: RANGING
+2026-05-08 02:46:57,102 [INFO] Cycle #127 done. Trades in memory: 418 | WR: 87.8% | RL episodes: 418
+2026-05-08 02:47:43,517 [INFO] Learned: GBP_USD WIN | WR: 87.8% | RL: 419
+2026-05-08 02:47:47,066 [INFO] Learned: USD_JPY WIN | WR: 87.9% | RL: 420
+2026-05-08 02:47:51,538 [INFO] Learned: AUD_USD WIN | WR: 87.9% | RL: 421
+2026-05-08 02:47:55,169 [INFO] Learned: USD_CAD WIN | WR: 87.9% | RL: 422
+2026-05-08 03:01:57,095 [INFO] setting up API-client for environment practice
+2026-05-08 03:01:57,095 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/EUR_USD/candles
+2026-05-08 03:01:58,013 [INFO] EUR_USD: 60.8% below 65.0% threshold. Skip.
+2026-05-08 03:02:00,016 [INFO] setting up API-client for environment practice
+2026-05-08 03:02:00,016 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/GBP_USD/candles
+2026-05-08 03:02:02,279 [INFO] SIGNAL: GBP_USD SELL 84.4% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 03:02:04,296 [INFO] setting up API-client for environment practice
+2026-05-08 03:02:04,296 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_JPY/candles
+2026-05-08 03:02:06,644 [INFO] SIGNAL: USD_JPY BUY 107.4% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 03:02:08,648 [INFO] setting up API-client for environment practice
+2026-05-08 03:02:08,648 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/AUD_USD/candles
+2026-05-08 03:02:10,691 [INFO] SIGNAL: AUD_USD SELL 86.2% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 03:02:12,696 [INFO] setting up API-client for environment practice
+2026-05-08 03:02:12,696 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_CAD/candles
+2026-05-08 03:02:14,868 [INFO] SIGNAL: USD_CAD BUY 80.7% | News: BEARISH | COT: NEUTRAL | Regime: RANGING
+2026-05-08 03:02:16,871 [INFO] Cycle #128 done. Trades in memory: 422 | WR: 87.9% | RL episodes: 422
+2026-05-08 03:03:02,520 [INFO] Learned: GBP_USD WIN | WR: 87.9% | RL: 423
+2026-05-08 03:03:06,797 [INFO] Learned: USD_JPY WIN | WR: 88.0% | RL: 424
+2026-05-08 03:03:10,934 [INFO] Learned: AUD_USD WIN | WR: 88.0% | RL: 425
+2026-05-08 03:03:15,106 [INFO] Learned: USD_CAD WIN | WR: 88.0% | RL: 426
+2026-05-08 03:17:16,866 [INFO] setting up API-client for environment practice
+2026-05-08 03:17:16,866 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/EUR_USD/candles
+2026-05-08 03:17:18,939 [INFO] News: 20 articles fetched
+2026-05-08 03:17:19,062 [ERROR] Pair EUR_USD error: can only concatenate str (not "NoneType") to str
+2026-05-08 03:17:19,062 [INFO] setting up API-client for environment practice
+2026-05-08 03:17:19,063 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/GBP_USD/candles
+2026-05-08 03:17:20,073 [ERROR] Pair GBP_USD error: can only concatenate str (not "NoneType") to str
+2026-05-08 03:17:20,073 [INFO] setting up API-client for environment practice
+2026-05-08 03:17:20,073 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_JPY/candles
+2026-05-08 03:17:21,057 [ERROR] Pair USD_JPY error: can only concatenate str (not "NoneType") to str
+2026-05-08 03:17:21,058 [INFO] setting up API-client for environment practice
+2026-05-08 03:17:21,059 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/AUD_USD/candles
+2026-05-08 03:17:22,159 [ERROR] Pair AUD_USD error: can only concatenate str (not "NoneType") to str
+2026-05-08 03:17:22,161 [INFO] setting up API-client for environment practice
+2026-05-08 03:17:22,162 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_CAD/candles
+2026-05-08 03:17:23,311 [ERROR] Pair USD_CAD error: can only concatenate str (not "NoneType") to str
+2026-05-08 03:17:23,311 [INFO] Cycle #129 done. Trades in memory: 426 | WR: 88.0% | RL episodes: 426
+2026-05-08 03:32:23,321 [INFO] setting up API-client for environment practice
+2026-05-08 03:32:23,321 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/EUR_USD/candles
+2026-05-08 03:32:24,206 [ERROR] Pair EUR_USD error: can only concatenate str (not "NoneType") to str
+2026-05-08 03:32:24,206 [INFO] setting up API-client for environment practice
+2026-05-08 03:32:24,206 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/GBP_USD/candles
+2026-05-08 03:32:25,112 [ERROR] Pair GBP_USD error: can only concatenate str (not "NoneType") to str
+2026-05-08 03:32:25,112 [INFO] setting up API-client for environment practice
+2026-05-08 03:32:25,112 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_JPY/candles
+2026-05-08 03:32:26,236 [ERROR] Pair USD_JPY error: can only concatenate str (not "NoneType") to str
+2026-05-08 03:32:26,236 [INFO] setting up API-client for environment practice
+2026-05-08 03:32:26,236 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/AUD_USD/candles
+2026-05-08 03:32:27,045 [ERROR] Pair AUD_USD error: can only concatenate str (not "NoneType") to str
+2026-05-08 03:32:27,045 [INFO] setting up API-client for environment practice
+2026-05-08 03:32:27,045 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_CAD/candles
+2026-05-08 03:32:27,988 [ERROR] Pair USD_CAD error: can only concatenate str (not "NoneType") to str
+2026-05-08 03:32:27,988 [INFO] Cycle #130 done. Trades in memory: 426 | WR: 88.0% | RL episodes: 426
+2026-05-08 03:47:28,001 [INFO] setting up API-client for environment practice
+2026-05-08 03:47:28,001 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/EUR_USD/candles
+2026-05-08 03:47:30,389 [INFO] ForexFactory: 115 events loaded
+2026-05-08 03:47:31,774 [INFO] News: 20 articles fetched
+2026-05-08 03:47:33,005 [INFO] Correlations: ['DXY', 'GOLD', 'OIL', 'SP500', 'VIX'] loaded
+2026-05-08 03:47:34,381 [INFO] SIGNAL: EUR_USD SELL 84.4% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 03:47:36,394 [INFO] setting up API-client for environment practice
+2026-05-08 03:47:36,394 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/GBP_USD/candles
+2026-05-08 03:47:39,504 [INFO] SIGNAL: GBP_USD SELL 73.7% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 03:47:41,520 [INFO] setting up API-client for environment practice
+2026-05-08 03:47:41,520 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_JPY/candles
+2026-05-08 03:47:43,795 [INFO] SIGNAL: USD_JPY BUY 94.2% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 03:47:45,800 [INFO] setting up API-client for environment practice
+2026-05-08 03:47:45,800 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/AUD_USD/candles
+2026-05-08 03:47:47,791 [INFO] SIGNAL: AUD_USD SELL 94.2% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 03:47:49,793 [INFO] setting up API-client for environment practice
+2026-05-08 03:47:49,793 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_CAD/candles
+2026-05-08 03:47:51,811 [INFO] SIGNAL: USD_CAD BUY 100.9% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 03:47:53,815 [INFO] Cycle #131 done. Trades in memory: 426 | WR: 88.0% | RL episodes: 426
+2026-05-08 03:48:34,596 [INFO] Learned: EUR_USD LOSS | WR: 87.8% | RL: 427
+2026-05-08 03:48:39,640 [INFO] Learned: GBP_USD LOSS | WR: 87.6% | RL: 428
+2026-05-08 03:48:43,938 [INFO] Learned: USD_JPY WIN | WR: 87.6% | RL: 429
+2026-05-08 03:48:47,880 [INFO] Learned: AUD_USD WIN | WR: 87.7% | RL: 430
+2026-05-08 03:48:51,961 [INFO] Learned: USD_CAD WIN | WR: 87.7% | RL: 431
+2026-05-08 04:02:53,815 [INFO] setting up API-client for environment practice
+2026-05-08 04:02:53,817 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/EUR_USD/candles
+2026-05-08 04:02:55,867 [INFO] SIGNAL: EUR_USD SELL 84.4% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 04:02:57,869 [INFO] setting up API-client for environment practice
+2026-05-08 04:02:57,869 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/GBP_USD/candles
+2026-05-08 04:03:00,780 [INFO] SIGNAL: GBP_USD SELL 73.7% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 04:03:02,783 [INFO] setting up API-client for environment practice
+2026-05-08 04:03:02,783 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_JPY/candles
+2026-05-08 04:03:04,740 [INFO] SIGNAL: USD_JPY BUY 94.2% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 04:03:06,748 [INFO] setting up API-client for environment practice
+2026-05-08 04:03:06,748 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/AUD_USD/candles
+2026-05-08 04:03:08,834 [INFO] SIGNAL: AUD_USD SELL 94.2% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 04:03:10,838 [INFO] setting up API-client for environment practice
+2026-05-08 04:03:10,838 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_CAD/candles
+2026-05-08 04:03:12,955 [INFO] SIGNAL: USD_CAD BUY 109.1% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 04:03:14,959 [INFO] Cycle #132 done. Trades in memory: 431 | WR: 87.7% | RL episodes: 431
+2026-05-08 04:03:56,095 [INFO] Learned: EUR_USD WIN | WR: 87.7% | RL: 432
+2026-05-08 04:04:00,904 [INFO] Learned: GBP_USD WIN | WR: 87.8% | RL: 433
+2026-05-08 04:04:04,802 [INFO] Learned: USD_JPY WIN | WR: 87.8% | RL: 434
+2026-05-08 04:04:08,936 [INFO] Learned: AUD_USD WIN | WR: 87.8% | RL: 435
+2026-05-08 04:04:13,228 [INFO] Learned: USD_CAD WIN | WR: 87.8% | RL: 436
+2026-05-08 04:18:14,958 [INFO] setting up API-client for environment practice
+2026-05-08 04:18:14,958 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/EUR_USD/candles
+2026-05-08 04:18:17,177 [INFO] News: 20 articles fetched
+2026-05-08 04:18:17,998 [INFO] Correlations: ['DXY', 'GOLD', 'OIL', 'SP500', 'VIX'] loaded
+2026-05-08 04:18:19,208 [INFO] SIGNAL: EUR_USD SELL 84.4% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 04:18:21,211 [INFO] setting up API-client for environment practice
+2026-05-08 04:18:21,211 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/GBP_USD/candles
+2026-05-08 04:18:23,383 [INFO] SIGNAL: GBP_USD SELL 73.7% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 04:18:25,395 [INFO] setting up API-client for environment practice
+2026-05-08 04:18:25,395 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_JPY/candles
+2026-05-08 04:18:27,278 [INFO] SIGNAL: USD_JPY BUY 94.2% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 04:18:29,281 [INFO] setting up API-client for environment practice
+2026-05-08 04:18:29,281 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/AUD_USD/candles
+2026-05-08 04:18:31,259 [INFO] SIGNAL: AUD_USD SELL 94.2% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 04:18:33,262 [INFO] setting up API-client for environment practice
+2026-05-08 04:18:33,262 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_CAD/candles
+2026-05-08 04:18:36,445 [INFO] SIGNAL: USD_CAD BUY 100.9% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 04:18:38,459 [INFO] Cycle #133 done. Trades in memory: 436 | WR: 87.8% | RL episodes: 436
+2026-05-08 04:19:19,327 [INFO] Learned: EUR_USD WIN | WR: 87.9% | RL: 437
+2026-05-08 04:19:23,641 [INFO] Learned: GBP_USD WIN | WR: 87.9% | RL: 438
+2026-05-08 04:19:27,516 [INFO] Learned: USD_JPY WIN | WR: 87.9% | RL: 439
+2026-05-08 04:19:31,537 [INFO] Learned: AUD_USD WIN | WR: 88.0% | RL: 440
+2026-05-08 04:19:36,629 [INFO] Learned: USD_CAD WIN | WR: 88.0% | RL: 441
+2026-05-08 04:33:38,459 [INFO] setting up API-client for environment practice
+2026-05-08 04:33:38,459 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/EUR_USD/candles
+2026-05-08 04:33:40,623 [INFO] SIGNAL: EUR_USD SELL 84.0% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 04:33:42,627 [INFO] setting up API-client for environment practice
+2026-05-08 04:33:42,627 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/GBP_USD/candles
+2026-05-08 04:33:44,913 [INFO] SIGNAL: GBP_USD SELL 84.0% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 04:33:46,915 [INFO] setting up API-client for environment practice
+2026-05-08 04:33:46,916 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_JPY/candles
+2026-05-08 04:33:49,143 [INFO] SIGNAL: USD_JPY BUY 107.4% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 04:33:51,146 [INFO] setting up API-client for environment practice
+2026-05-08 04:33:51,148 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/AUD_USD/candles
+2026-05-08 04:33:53,229 [INFO] SIGNAL: AUD_USD SELL 107.4% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 04:33:55,232 [INFO] setting up API-client for environment practice
+2026-05-08 04:33:55,232 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_CAD/candles
+2026-05-08 04:33:57,453 [INFO] SIGNAL: USD_CAD BUY 109.1% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 04:33:59,460 [INFO] Cycle #134 done. Trades in memory: 441 | WR: 88.0% | RL episodes: 441
+2026-05-08 04:34:40,760 [INFO] Learned: EUR_USD WIN | WR: 88.0% | RL: 442
+2026-05-08 04:34:45,105 [INFO] Learned: GBP_USD WIN | WR: 88.0% | RL: 443
+2026-05-08 04:34:49,370 [INFO] Learned: USD_JPY WIN | WR: 88.1% | RL: 444
+2026-05-08 04:34:53,455 [INFO] Learned: AUD_USD WIN | WR: 88.1% | RL: 445
+2026-05-08 04:34:57,630 [INFO] Learned: USD_CAD WIN | WR: 88.1% | RL: 446
+2026-05-08 04:48:59,461 [INFO] setting up API-client for environment practice
+2026-05-08 04:48:59,461 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/EUR_USD/candles
+2026-05-08 04:49:01,060 [INFO] ForexFactory: 115 events loaded
+2026-05-08 04:49:02,082 [INFO] News: 19 articles fetched
+2026-05-08 04:49:02,899 [INFO] Correlations: ['DXY', 'GOLD', 'OIL', 'SP500', 'VIX'] loaded
+2026-05-08 04:49:03,928 [INFO] SIGNAL: EUR_USD SELL 84.0% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 04:49:05,938 [INFO] setting up API-client for environment practice
+2026-05-08 04:49:05,938 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/GBP_USD/candles
+2026-05-08 04:49:07,648 [INFO] SIGNAL: GBP_USD SELL 84.0% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 04:49:09,650 [INFO] setting up API-client for environment practice
+2026-05-08 04:49:09,650 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_JPY/candles
+2026-05-08 04:49:11,578 [INFO] SIGNAL: USD_JPY BUY 107.4% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 04:49:13,580 [INFO] setting up API-client for environment practice
+2026-05-08 04:49:13,580 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/AUD_USD/candles
+2026-05-08 04:49:15,528 [INFO] SIGNAL: AUD_USD SELL 107.4% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 04:49:17,531 [INFO] setting up API-client for environment practice
+2026-05-08 04:49:17,531 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_CAD/candles
+2026-05-08 04:49:19,806 [INFO] SIGNAL: USD_CAD BUY 109.1% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 04:49:21,814 [INFO] Cycle #135 done. Trades in memory: 446 | WR: 88.1% | RL episodes: 446
+2026-05-08 04:50:04,135 [INFO] Learned: EUR_USD LOSS | WR: 87.9% | RL: 447
+2026-05-08 04:50:07,883 [INFO] Learned: GBP_USD WIN | WR: 87.9% | RL: 448
+2026-05-08 04:50:11,738 [INFO] Learned: USD_JPY WIN | WR: 88.0% | RL: 449
+2026-05-08 04:50:15,685 [INFO] Learned: AUD_USD WIN | WR: 88.0% | RL: 450
+2026-05-08 04:50:19,882 [INFO] Learned: USD_CAD WIN | WR: 88.0% | RL: 451
+2026-05-08 08:04:47,239 [INFO] setting up API-client for environment practice
+2026-05-08 08:04:47,454 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/EUR_USD/candles
+2026-05-08 08:04:50,057 [INFO] ForexFactory: 115 events loaded
+2026-05-08 08:04:51,364 [INFO] News: 20 articles fetched
+2026-05-08 08:04:52,901 [INFO] Correlations: ['DXY', 'GOLD', 'OIL', 'SP500', 'VIX'] loaded
+2026-05-08 08:04:53,841 [INFO] SIGNAL: EUR_USD SELL 80.8% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 08:04:55,847 [INFO] setting up API-client for environment practice
+2026-05-08 08:04:55,847 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/GBP_USD/candles
+2026-05-08 08:04:58,191 [INFO] SIGNAL: GBP_USD SELL 83.7% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 08:05:00,195 [INFO] setting up API-client for environment practice
+2026-05-08 08:05:00,195 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_JPY/candles
+2026-05-08 08:05:02,463 [INFO] SIGNAL: USD_JPY BUY 83.7% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 08:05:04,471 [INFO] setting up API-client for environment practice
+2026-05-08 08:05:04,471 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/AUD_USD/candles
+2026-05-08 08:05:07,275 [INFO] SIGNAL: AUD_USD SELL 79.1% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 08:05:09,284 [INFO] setting up API-client for environment practice
+2026-05-08 08:05:09,284 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_CAD/candles
+2026-05-08 08:05:12,759 [INFO] SIGNAL: USD_CAD BUY 90.0% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 08:05:14,760 [INFO] Cycle #136 done. Trades in memory: 451 | WR: 88.0% | RL episodes: 451
+2026-05-08 08:05:54,047 [INFO] Learned: EUR_USD WIN | WR: 88.1% | RL: 452
+2026-05-08 08:05:58,417 [INFO] Learned: GBP_USD WIN | WR: 88.1% | RL: 453
+2026-05-08 08:06:02,556 [INFO] Learned: USD_JPY WIN | WR: 88.1% | RL: 454
+2026-05-08 08:06:07,358 [INFO] Learned: AUD_USD WIN | WR: 88.1% | RL: 455
+2026-05-08 08:06:12,865 [INFO] Learned: USD_CAD WIN | WR: 88.2% | RL: 456
+2026-05-08 08:20:14,770 [INFO] setting up API-client for environment practice
+2026-05-08 08:20:14,819 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/EUR_USD/candles
+2026-05-08 08:20:17,401 [INFO] SIGNAL: EUR_USD SELL 80.8% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 08:20:19,403 [INFO] setting up API-client for environment practice
+2026-05-08 08:20:19,403 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/GBP_USD/candles
+2026-05-08 08:20:21,368 [INFO] SIGNAL: GBP_USD SELL 83.7% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 08:20:23,370 [INFO] setting up API-client for environment practice
+2026-05-08 08:20:23,370 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_JPY/candles
+2026-05-08 08:20:25,421 [INFO] SIGNAL: USD_JPY BUY 83.7% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 08:20:27,422 [INFO] setting up API-client for environment practice
+2026-05-08 08:20:27,422 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/AUD_USD/candles
+2026-05-08 08:20:29,441 [INFO] SIGNAL: AUD_USD SELL 83.7% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 08:20:31,442 [INFO] setting up API-client for environment practice
+2026-05-08 08:20:31,442 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_CAD/candles
+2026-05-08 08:20:33,084 [INFO] SIGNAL: USD_CAD BUY 90.0% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 08:20:35,117 [INFO] Cycle #137 done. Trades in memory: 456 | WR: 88.2% | RL episodes: 456
+2026-05-08 08:21:17,601 [INFO] Learned: EUR_USD WIN | WR: 88.2% | RL: 457
+2026-05-08 08:21:21,452 [INFO] Learned: GBP_USD WIN | WR: 88.2% | RL: 458
+2026-05-08 08:21:25,627 [INFO] Learned: USD_JPY WIN | WR: 88.2% | RL: 459
+2026-05-08 08:21:29,612 [INFO] Learned: AUD_USD WIN | WR: 88.3% | RL: 460
+2026-05-08 08:21:33,210 [INFO] Learned: USD_CAD WIN | WR: 88.3% | RL: 461
+2026-05-08 08:35:35,117 [INFO] setting up API-client for environment practice
+2026-05-08 08:35:35,119 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/EUR_USD/candles
+2026-05-08 08:35:36,871 [INFO] News: 20 articles fetched
+2026-05-08 08:35:38,374 [INFO] Correlations: ['DXY', 'GOLD', 'OIL', 'SP500', 'VIX'] loaded
+2026-05-08 08:35:39,489 [INFO] SIGNAL: EUR_USD SELL 83.7% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 08:35:41,492 [INFO] setting up API-client for environment practice
+2026-05-08 08:35:41,492 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/GBP_USD/candles
+2026-05-08 08:35:43,257 [INFO] SIGNAL: GBP_USD SELL 83.7% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 08:35:45,258 [INFO] setting up API-client for environment practice
+2026-05-08 08:35:45,259 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_JPY/candles
+2026-05-08 08:35:48,908 [INFO] SIGNAL: USD_JPY BUY 83.7% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 08:35:50,910 [INFO] setting up API-client for environment practice
+2026-05-08 08:35:50,910 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/AUD_USD/candles
+2026-05-08 08:35:52,727 [INFO] SIGNAL: AUD_USD SELL 83.7% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 08:35:54,729 [INFO] setting up API-client for environment practice
+2026-05-08 08:35:54,729 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_CAD/candles
+2026-05-08 08:35:56,534 [INFO] SIGNAL: USD_CAD BUY 90.0% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 08:35:58,535 [INFO] Cycle #138 done. Trades in memory: 461 | WR: 88.3% | RL episodes: 461
+2026-05-08 08:36:39,650 [INFO] Learned: EUR_USD WIN | WR: 88.3% | RL: 462
+2026-05-08 08:36:43,342 [INFO] Learned: GBP_USD WIN | WR: 88.3% | RL: 463
+2026-05-08 08:36:49,035 [INFO] Learned: USD_JPY WIN | WR: 88.4% | RL: 464
+2026-05-08 08:36:52,918 [INFO] Learned: AUD_USD WIN | WR: 88.4% | RL: 465
+2026-05-08 08:36:56,687 [INFO] Learned: USD_CAD WIN | WR: 88.4% | RL: 466
+2026-05-08 08:50:58,539 [INFO] setting up API-client for environment practice
+2026-05-08 08:50:58,548 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/EUR_USD/candles
+2026-05-08 08:51:00,401 [INFO] SIGNAL: EUR_USD SELL 79.1% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 08:51:02,402 [INFO] setting up API-client for environment practice
+2026-05-08 08:51:02,402 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/GBP_USD/candles
+2026-05-08 08:51:04,185 [INFO] SIGNAL: GBP_USD SELL 83.7% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 08:51:06,187 [INFO] setting up API-client for environment practice
+2026-05-08 08:51:06,187 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_JPY/candles
+2026-05-08 08:51:08,075 [INFO] SIGNAL: USD_JPY BUY 83.7% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 08:51:10,077 [INFO] setting up API-client for environment practice
+2026-05-08 08:51:10,077 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/AUD_USD/candles
+2026-05-08 08:51:12,161 [INFO] SIGNAL: AUD_USD SELL 83.7% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 08:51:14,162 [INFO] setting up API-client for environment practice
+2026-05-08 08:51:14,162 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_CAD/candles
+2026-05-08 08:51:15,988 [INFO] SIGNAL: USD_CAD BUY 115.0% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 08:51:17,990 [INFO] Cycle #139 done. Trades in memory: 466 | WR: 88.4% | RL episodes: 466
+2026-05-08 08:52:00,485 [INFO] Learned: EUR_USD WIN | WR: 88.4% | RL: 467
+2026-05-08 08:52:04,258 [INFO] Learned: GBP_USD WIN | WR: 88.5% | RL: 468
+2026-05-08 08:52:08,166 [INFO] Learned: USD_JPY LOSS | WR: 88.3% | RL: 469
+2026-05-08 08:52:12,366 [INFO] Learned: AUD_USD WIN | WR: 88.3% | RL: 470
+2026-05-08 08:52:16,102 [INFO] Learned: USD_CAD WIN | WR: 88.3% | RL: 471
+2026-05-08 09:06:18,112 [INFO] setting up API-client for environment practice
+2026-05-08 09:06:18,125 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/EUR_USD/candles
+2026-05-08 09:06:20,015 [INFO] ForexFactory: 115 events loaded
+2026-05-08 09:06:20,943 [INFO] News: 20 articles fetched
+2026-05-08 09:06:23,178 [INFO] Correlations: ['DXY', 'GOLD', 'OIL', 'SP500', 'VIX'] loaded
+2026-05-08 09:06:24,092 [INFO] SIGNAL: EUR_USD SELL 83.7% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 09:06:26,094 [INFO] setting up API-client for environment practice
+2026-05-08 09:06:26,113 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/GBP_USD/candles
+2026-05-08 09:06:28,282 [INFO] SIGNAL: GBP_USD SELL 83.7% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 09:06:30,283 [INFO] setting up API-client for environment practice
+2026-05-08 09:06:30,283 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_JPY/candles
+2026-05-08 09:06:32,316 [INFO] SIGNAL: USD_JPY BUY 90.0% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 09:06:34,319 [INFO] setting up API-client for environment practice
+2026-05-08 09:06:34,321 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/AUD_USD/candles
+2026-05-08 09:06:36,514 [INFO] SIGNAL: AUD_USD SELL 90.0% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 09:06:38,517 [INFO] setting up API-client for environment practice
+2026-05-08 09:06:38,518 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_CAD/candles
+2026-05-08 09:06:40,549 [INFO] SIGNAL: USD_CAD BUY 115.0% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 09:06:42,553 [INFO] Cycle #140 done. Trades in memory: 471 | WR: 88.3% | RL episodes: 471
+2026-05-08 09:07:24,270 [INFO] Learned: EUR_USD WIN | WR: 88.3% | RL: 472
+2026-05-08 09:07:28,464 [INFO] Learned: GBP_USD WIN | WR: 88.4% | RL: 473
+2026-05-08 09:07:32,530 [INFO] Learned: USD_JPY WIN | WR: 88.4% | RL: 474
+2026-05-08 09:07:36,680 [INFO] Learned: AUD_USD WIN | WR: 88.4% | RL: 475
+2026-05-08 09:07:40,716 [INFO] Learned: USD_CAD WIN | WR: 88.4% | RL: 476
+2026-05-08 09:21:42,750 [INFO] setting up API-client for environment practice
+2026-05-08 09:21:42,750 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/EUR_USD/candles
+2026-05-08 09:21:44,662 [INFO] SIGNAL: EUR_USD SELL 83.7% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 09:21:46,663 [INFO] setting up API-client for environment practice
+2026-05-08 09:21:46,663 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/GBP_USD/candles
+2026-05-08 09:21:48,529 [INFO] SIGNAL: GBP_USD SELL 83.7% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 09:21:50,530 [INFO] setting up API-client for environment practice
+2026-05-08 09:21:50,530 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_JPY/candles
+2026-05-08 09:21:52,490 [INFO] SIGNAL: USD_JPY BUY 90.0% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 09:21:54,491 [INFO] setting up API-client for environment practice
+2026-05-08 09:21:54,491 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/AUD_USD/candles
+2026-05-08 09:21:56,586 [INFO] SIGNAL: AUD_USD SELL 85.4% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 09:21:58,588 [INFO] setting up API-client for environment practice
+2026-05-08 09:21:58,588 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_CAD/candles
+2026-05-08 09:22:00,508 [INFO] SIGNAL: USD_CAD BUY 115.0% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 09:22:02,511 [INFO] Cycle #141 done. Trades in memory: 476 | WR: 88.4% | RL episodes: 476
+2026-05-08 09:22:44,822 [INFO] Learned: EUR_USD WIN | WR: 88.5% | RL: 477
+2026-05-08 09:22:48,811 [INFO] Learned: GBP_USD WIN | WR: 88.5% | RL: 478
+2026-05-08 09:22:52,675 [INFO] Learned: USD_JPY WIN | WR: 88.5% | RL: 479
+2026-05-08 09:22:56,746 [INFO] Learned: AUD_USD WIN | WR: 88.5% | RL: 480
+2026-05-08 09:23:00,616 [INFO] Learned: USD_CAD WIN | WR: 88.6% | RL: 481
+2026-05-08 09:37:02,660 [INFO] setting up API-client for environment practice
+2026-05-08 09:37:02,663 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/EUR_USD/candles
+2026-05-08 09:37:04,466 [INFO] News: 20 articles fetched
+2026-05-08 09:37:05,971 [INFO] Correlations: ['DXY', 'GOLD', 'OIL', 'SP500', 'VIX'] loaded
+2026-05-08 09:37:07,165 [INFO] SIGNAL: EUR_USD SELL 83.7% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 09:37:09,168 [INFO] setting up API-client for environment practice
+2026-05-08 09:37:09,169 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/GBP_USD/candles
+2026-05-08 09:37:11,087 [INFO] SIGNAL: GBP_USD SELL 83.7% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 09:37:13,090 [INFO] setting up API-client for environment practice
+2026-05-08 09:37:13,090 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_JPY/candles
+2026-05-08 09:37:13,862 [INFO] USD_JPY: 51.9% below 65.0% threshold. Skip.
+2026-05-08 09:37:15,864 [INFO] setting up API-client for environment practice
+2026-05-08 09:37:15,865 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/AUD_USD/candles
+2026-05-08 09:37:16,732 [INFO] AUD_USD: 62.1% below 65.0% threshold. Skip.
+2026-05-08 09:37:18,733 [INFO] setting up API-client for environment practice
+2026-05-08 09:37:18,735 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_CAD/candles
+2026-05-08 09:37:20,601 [INFO] SIGNAL: USD_CAD BUY 107.0% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 09:37:22,603 [INFO] Cycle #142 done. Trades in memory: 481 | WR: 88.6% | RL episodes: 481
+2026-05-08 09:38:07,265 [INFO] Learned: EUR_USD WIN | WR: 88.6% | RL: 482
+2026-05-08 09:38:11,175 [INFO] Learned: GBP_USD WIN | WR: 88.6% | RL: 483
+2026-05-08 09:38:20,692 [INFO] Learned: USD_CAD WIN | WR: 88.6% | RL: 484
+2026-05-08 09:52:22,811 [INFO] setting up API-client for environment practice
+2026-05-08 09:52:22,814 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/EUR_USD/candles
+2026-05-08 09:52:24,558 [INFO] SIGNAL: EUR_USD SELL 107.0% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 09:52:26,562 [INFO] setting up API-client for environment practice
+2026-05-08 09:52:26,563 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/GBP_USD/candles
+2026-05-08 09:52:28,666 [INFO] SIGNAL: GBP_USD SELL 83.7% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 09:52:30,669 [INFO] setting up API-client for environment practice
+2026-05-08 09:52:30,671 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_JPY/candles
+2026-05-08 09:52:32,600 [INFO] SIGNAL: USD_JPY BUY 83.7% | News: BEARISH | COT: NEUTRAL | Regime: RANGING
+2026-05-08 09:52:34,602 [INFO] setting up API-client for environment practice
+2026-05-08 09:52:34,602 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/AUD_USD/candles
+2026-05-08 09:52:35,695 [INFO] AUD_USD: 62.1% below 65.0% threshold. Skip.
+2026-05-08 09:52:37,697 [INFO] setting up API-client for environment practice
+2026-05-08 09:52:37,697 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_CAD/candles
+2026-05-08 09:52:39,774 [INFO] SIGNAL: USD_CAD BUY 115.0% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 09:52:41,874 [INFO] Cycle #143 done. Trades in memory: 484 | WR: 88.6% | RL episodes: 484
+2026-05-08 09:53:24,745 [INFO] Learned: EUR_USD WIN | WR: 88.7% | RL: 485
+2026-05-08 09:53:28,775 [INFO] Learned: GBP_USD WIN | WR: 88.7% | RL: 486
+2026-05-08 09:53:32,810 [INFO] Learned: USD_JPY WIN | WR: 88.7% | RL: 487
+2026-05-08 09:53:39,948 [INFO] Learned: USD_CAD WIN | WR: 88.7% | RL: 488
+2026-05-08 10:07:41,955 [INFO] setting up API-client for environment practice
+2026-05-08 10:07:41,958 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/EUR_USD/candles
+2026-05-08 10:07:43,406 [INFO] ForexFactory: 115 events loaded
+2026-05-08 10:07:44,261 [INFO] News: 20 articles fetched
+2026-05-08 10:07:45,391 [INFO] Correlations: ['DXY', 'GOLD', 'OIL', 'SP500', 'VIX'] loaded
+2026-05-08 10:07:46,347 [INFO] SIGNAL: EUR_USD SELL 107.0% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 10:07:48,349 [INFO] setting up API-client for environment practice
+2026-05-08 10:07:48,349 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/GBP_USD/candles
+2026-05-08 10:07:50,085 [INFO] SIGNAL: GBP_USD SELL 83.7% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 10:07:52,087 [INFO] setting up API-client for environment practice
+2026-05-08 10:07:52,089 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_JPY/candles
+2026-05-08 10:07:53,772 [INFO] SIGNAL: USD_JPY BUY 107.0% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 10:07:55,775 [INFO] setting up API-client for environment practice
+2026-05-08 10:07:55,775 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/AUD_USD/candles
+2026-05-08 10:07:56,860 [INFO] AUD_USD: 62.1% below 65.0% threshold. Skip.
+2026-05-08 10:07:58,863 [INFO] setting up API-client for environment practice
+2026-05-08 10:07:58,864 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_CAD/candles
+2026-05-08 10:08:00,710 [INFO] SIGNAL: USD_CAD BUY 107.0% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 10:08:02,713 [INFO] Cycle #144 done. Trades in memory: 488 | WR: 88.7% | RL episodes: 488
+2026-05-08 10:08:46,445 [INFO] Learned: EUR_USD WIN | WR: 88.8% | RL: 489
+2026-05-08 10:08:50,207 [INFO] Learned: GBP_USD WIN | WR: 88.8% | RL: 490
+2026-05-08 10:08:54,014 [INFO] Learned: USD_JPY WIN | WR: 88.8% | RL: 491
+2026-05-08 10:09:00,963 [INFO] Learned: USD_CAD WIN | WR: 88.8% | RL: 492
+2026-05-08 10:23:02,773 [INFO] setting up API-client for environment practice
+2026-05-08 10:23:02,775 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/EUR_USD/candles
+2026-05-08 10:23:03,735 [INFO] EUR_USD: 49.0% below 65.0% threshold. Skip.
+2026-05-08 10:23:05,736 [INFO] setting up API-client for environment practice
+2026-05-08 10:23:05,737 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/GBP_USD/candles
+2026-05-08 10:23:06,461 [INFO] GBP_USD: 62.1% below 65.0% threshold. Skip.
+2026-05-08 10:23:08,463 [INFO] setting up API-client for environment practice
+2026-05-08 10:23:08,464 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_JPY/candles
+2026-05-08 10:23:10,175 [INFO] SIGNAL: USD_JPY BUY 107.0% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 10:23:12,178 [INFO] setting up API-client for environment practice
+2026-05-08 10:23:12,180 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/AUD_USD/candles
+2026-05-08 10:23:13,133 [INFO] AUD_USD: 62.1% below 65.0% threshold. Skip.
+2026-05-08 10:23:15,135 [INFO] setting up API-client for environment practice
+2026-05-08 10:23:15,137 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_CAD/candles
+2026-05-08 10:23:16,906 [INFO] SIGNAL: USD_CAD BUY 115.0% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 10:23:18,908 [INFO] Cycle #145 done. Trades in memory: 492 | WR: 88.8% | RL episodes: 492
+2026-05-08 10:24:10,315 [INFO] Learned: USD_JPY WIN | WR: 88.8% | RL: 493
+2026-05-08 10:24:16,996 [INFO] Learned: USD_CAD WIN | WR: 88.9% | RL: 494
+2026-05-08 10:38:18,951 [INFO] setting up API-client for environment practice
+2026-05-08 10:38:18,951 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/EUR_USD/candles
+2026-05-08 10:38:20,887 [INFO] News: 18 articles fetched
+2026-05-08 10:38:22,267 [INFO] Correlations: ['DXY', 'GOLD', 'OIL', 'SP500', 'VIX'] loaded
+2026-05-08 10:38:23,402 [INFO] SIGNAL: EUR_USD SELL 83.5% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 10:38:25,404 [INFO] setting up API-client for environment practice
+2026-05-08 10:38:25,405 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/GBP_USD/candles
+2026-05-08 10:38:27,971 [INFO] SIGNAL: GBP_USD SELL 65.3% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 10:38:29,973 [INFO] setting up API-client for environment practice
+2026-05-08 10:38:29,973 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_JPY/candles
+2026-05-08 10:38:32,106 [INFO] SIGNAL: USD_JPY BUY 66.3% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 10:38:34,109 [INFO] setting up API-client for environment practice
+2026-05-08 10:38:34,109 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/AUD_USD/candles
+2026-05-08 10:38:35,965 [INFO] SIGNAL: AUD_USD SELL 65.3% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 10:38:37,969 [INFO] setting up API-client for environment practice
+2026-05-08 10:38:37,970 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_CAD/candles
+2026-05-08 10:38:38,756 [INFO] USD_CAD: 55.7% below 65.0% threshold. Skip.
+2026-05-08 10:38:40,757 [INFO] Cycle #146 done. Trades in memory: 494 | WR: 88.9% | RL episodes: 494
+2026-05-08 10:39:23,558 [INFO] Learned: EUR_USD WIN | WR: 88.9% | RL: 495
+2026-05-08 10:39:28,093 [INFO] Learned: GBP_USD LOSS | WR: 88.7% | RL: 496
+2026-05-08 10:39:32,243 [INFO] Learned: USD_JPY WIN | WR: 88.7% | RL: 497
+2026-05-08 10:39:36,045 [INFO] Learned: AUD_USD LOSS | WR: 88.6% | RL: 498
+2026-05-08 10:53:40,790 [INFO] setting up API-client for environment practice
+2026-05-08 10:53:40,790 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/EUR_USD/candles
+2026-05-08 10:53:42,558 [INFO] SIGNAL: EUR_USD SELL 81.8% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 10:53:44,559 [INFO] setting up API-client for environment practice
+2026-05-08 10:53:44,560 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/GBP_USD/candles
+2026-05-08 10:53:45,522 [INFO] GBP_USD: 64.0% below 65.0% threshold. Skip.
+2026-05-08 10:53:47,525 [INFO] setting up API-client for environment practice
+2026-05-08 10:53:47,525 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_JPY/candles
+2026-05-08 10:53:48,366 [INFO] USD_JPY: 64.8% below 65.0% threshold. Skip.
+2026-05-08 10:53:50,368 [INFO] setting up API-client for environment practice
+2026-05-08 10:53:50,370 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/AUD_USD/candles
+2026-05-08 10:53:51,163 [INFO] AUD_USD: 64.0% below 65.0% threshold. Skip.
+2026-05-08 10:53:53,164 [INFO] setting up API-client for environment practice
+2026-05-08 10:53:53,167 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_CAD/candles
+2026-05-08 10:53:53,949 [INFO] USD_CAD: 54.5% below 65.0% threshold. Skip.
+2026-05-08 10:53:55,951 [INFO] Cycle #147 done. Trades in memory: 498 | WR: 88.6% | RL episodes: 498
+2026-05-08 10:54:42,637 [INFO] Learned: EUR_USD WIN | WR: 88.6% | RL: 499
+2026-05-08 11:08:55,976 [INFO] setting up API-client for environment practice
+2026-05-08 11:08:55,979 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/EUR_USD/candles
+2026-05-08 11:08:57,827 [INFO] ForexFactory: 115 events loaded
+2026-05-08 11:08:58,941 [INFO] News: 19 articles fetched
+2026-05-08 11:09:00,338 [INFO] Correlations: ['DXY', 'GOLD', 'OIL', 'SP500', 'VIX'] loaded
+2026-05-08 11:09:01,433 [INFO] SIGNAL: EUR_USD SELL 82.9% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 11:09:03,436 [INFO] setting up API-client for environment practice
+2026-05-08 11:09:03,438 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/GBP_USD/candles
+2026-05-08 11:09:05,309 [INFO] SIGNAL: GBP_USD SELL 67.4% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 11:09:07,312 [INFO] setting up API-client for environment practice
+2026-05-08 11:09:07,312 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_JPY/candles
+2026-05-08 11:09:09,158 [INFO] SIGNAL: USD_JPY BUY 66.1% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 11:09:11,161 [INFO] setting up API-client for environment practice
+2026-05-08 11:09:11,162 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/AUD_USD/candles
+2026-05-08 11:09:12,014 [INFO] AUD_USD: 64.9% below 65.0% threshold. Skip.
+2026-05-08 11:09:14,015 [INFO] setting up API-client for environment practice
+2026-05-08 11:09:14,016 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_CAD/candles
+2026-05-08 11:09:14,820 [INFO] USD_CAD: 55.6% below 65.0% threshold. Skip.
+2026-05-08 11:09:16,822 [INFO] Cycle #148 done. Trades in memory: 499 | WR: 88.6% | RL episodes: 499
+2026-05-08 11:10:01,536 [INFO] Learned: EUR_USD WIN | WR: 88.6% | RL: 500
+2026-05-08 11:10:05,537 [INFO] Learned: GBP_USD WIN | WR: 88.6% | RL: 501
+2026-05-08 11:10:09,218 [INFO] Learned: USD_JPY WIN | WR: 88.6% | RL: 502
+2026-05-08 15:35:46,406 [INFO] setting up API-client for environment practice
+2026-05-08 15:35:51,037 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/EUR_USD/candles
+2026-05-08 15:36:00,383 [INFO] ForexFactory: 115 events loaded
+2026-05-08 15:36:02,391 [INFO] News: 20 articles fetched
+2026-05-08 15:36:21,116 [INFO] Correlations: ['DXY', 'GOLD', 'OIL', 'SP500', 'VIX'] loaded
+2026-05-08 15:36:22,875 [INFO] SIGNAL: EUR_USD BUY 71.5% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 15:36:25,041 [INFO] setting up API-client for environment practice
+2026-05-08 15:36:25,041 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/GBP_USD/candles
+2026-05-08 15:36:27,088 [INFO] SIGNAL: GBP_USD BUY 67.5% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 15:36:29,089 [INFO] setting up API-client for environment practice
+2026-05-08 15:36:29,105 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_JPY/candles
+2026-05-08 15:36:30,076 [INFO] USD_JPY: 58.1% below 65.0% threshold. Skip.
+2026-05-08 15:36:32,077 [INFO] setting up API-client for environment practice
+2026-05-08 15:36:32,077 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/AUD_USD/candles
+2026-05-08 15:36:34,356 [INFO] SIGNAL: AUD_USD BUY 91.4% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 15:36:36,357 [INFO] setting up API-client for environment practice
+2026-05-08 15:36:36,357 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_CAD/candles
+2026-05-08 15:36:38,509 [INFO] SIGNAL: USD_CAD SELL 74.3% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 15:36:40,510 [INFO] Cycle #149 done. Trades in memory: 502 | WR: 88.6% | RL episodes: 502
+2026-05-08 15:37:24,390 [INFO] Learned: EUR_USD LOSS | WR: 88.5% | RL: 503
+2026-05-08 15:37:27,218 [INFO] Learned: GBP_USD LOSS | WR: 88.3% | RL: 504
+2026-05-08 15:37:34,489 [INFO] Learned: AUD_USD WIN | WR: 88.3% | RL: 505
+2026-05-08 15:37:38,637 [INFO] Learned: USD_CAD WIN | WR: 88.3% | RL: 506
+2026-05-08 15:51:40,511 [INFO] setting up API-client for environment practice
+2026-05-08 15:51:40,513 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/EUR_USD/candles
+2026-05-08 15:51:42,475 [INFO] SIGNAL: EUR_USD BUY 71.4% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 15:51:44,478 [INFO] setting up API-client for environment practice
+2026-05-08 15:51:44,478 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/GBP_USD/candles
+2026-05-08 15:51:46,474 [INFO] SIGNAL: GBP_USD BUY 68.9% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 15:51:48,476 [INFO] setting up API-client for environment practice
+2026-05-08 15:51:48,478 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_JPY/candles
+2026-05-08 15:51:49,471 [INFO] USD_JPY: 47.0% below 65.0% threshold. Skip.
+2026-05-08 15:51:51,473 [INFO] setting up API-client for environment practice
+2026-05-08 15:51:51,474 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/AUD_USD/candles
+2026-05-08 15:51:53,422 [INFO] SIGNAL: AUD_USD BUY 91.3% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 15:51:55,424 [INFO] setting up API-client for environment practice
+2026-05-08 15:51:55,425 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_CAD/candles
+2026-05-08 15:51:56,358 [INFO] USD_CAD: 50.2% below 65.0% threshold. Skip.
+2026-05-08 15:51:58,359 [INFO] Cycle #150 done. Trades in memory: 506 | WR: 88.3% | RL episodes: 506
+2026-05-08 15:52:42,567 [INFO] Learned: EUR_USD LOSS | WR: 88.2% | RL: 507
+2026-05-08 15:52:46,598 [INFO] Learned: GBP_USD WIN | WR: 88.2% | RL: 508
+2026-05-08 15:52:53,502 [INFO] Learned: AUD_USD WIN | WR: 88.2% | RL: 509
+2026-05-08 16:06:58,361 [INFO] setting up API-client for environment practice
+2026-05-08 16:06:58,361 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/EUR_USD/candles
+2026-05-08 16:07:00,176 [INFO] News: 20 articles fetched
+2026-05-08 16:07:01,749 [INFO] Correlations: ['DXY', 'GOLD', 'OIL', 'SP500', 'VIX'] loaded
+2026-05-08 16:07:02,749 [INFO] SIGNAL: EUR_USD BUY 71.5% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 16:07:04,752 [INFO] setting up API-client for environment practice
+2026-05-08 16:07:04,753 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/GBP_USD/candles
+2026-05-08 16:07:06,637 [INFO] SIGNAL: GBP_USD BUY 69.1% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 16:07:08,640 [INFO] setting up API-client for environment practice
+2026-05-08 16:07:08,641 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_JPY/candles
+2026-05-08 16:07:09,749 [INFO] USD_JPY: 52.3% below 65.0% threshold. Skip.
+2026-05-08 16:07:11,751 [INFO] setting up API-client for environment practice
+2026-05-08 16:07:11,753 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/AUD_USD/candles
+2026-05-08 16:07:13,890 [INFO] SIGNAL: AUD_USD BUY 83.6% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 16:07:15,894 [INFO] setting up API-client for environment practice
+2026-05-08 16:07:15,896 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_CAD/candles
+2026-05-08 16:07:17,055 [INFO] USD_CAD: 50.1% below 65.0% threshold. Skip.
+2026-05-08 16:07:19,056 [INFO] Cycle #151 done. Trades in memory: 509 | WR: 88.2% | RL episodes: 509
+2026-05-08 16:08:02,893 [INFO] Learned: EUR_USD LOSS | WR: 88.0% | RL: 510
+2026-05-08 16:08:06,712 [INFO] Learned: GBP_USD WIN | WR: 88.1% | RL: 511
+2026-05-08 16:08:13,978 [INFO] Learned: AUD_USD WIN | WR: 88.1% | RL: 512
+2026-05-08 16:22:19,056 [INFO] setting up API-client for environment practice
+2026-05-08 16:22:19,057 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/EUR_USD/candles
+2026-05-08 16:22:21,750 [INFO] SIGNAL: EUR_USD BUY 69.1% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 16:22:23,752 [INFO] setting up API-client for environment practice
+2026-05-08 16:22:23,753 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/GBP_USD/candles
+2026-05-08 16:22:26,026 [INFO] SIGNAL: GBP_USD BUY 73.4% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 16:22:28,030 [INFO] setting up API-client for environment practice
+2026-05-08 16:22:28,031 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_JPY/candles
+2026-05-08 16:22:28,912 [INFO] USD_JPY: 47.2% below 65.0% threshold. Skip.
+2026-05-08 16:22:30,913 [INFO] setting up API-client for environment practice
+2026-05-08 16:22:30,914 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/AUD_USD/candles
+2026-05-08 16:22:32,864 [INFO] SIGNAL: AUD_USD BUY 83.6% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 16:22:34,866 [INFO] setting up API-client for environment practice
+2026-05-08 16:22:34,866 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_CAD/candles
+2026-05-08 16:22:35,789 [INFO] USD_CAD: 48.0% below 65.0% threshold. Skip.
+2026-05-08 16:22:37,790 [INFO] Cycle #152 done. Trades in memory: 512 | WR: 88.1% | RL episodes: 512
+2026-05-08 16:23:21,889 [INFO] Learned: EUR_USD LOSS | WR: 87.9% | RL: 513
+2026-05-08 16:23:26,208 [INFO] Learned: GBP_USD LOSS | WR: 87.7% | RL: 514
+2026-05-08 16:23:33,068 [INFO] Learned: AUD_USD WIN | WR: 87.8% | RL: 515
+2026-05-08 16:37:45,806 [INFO] setting up API-client for environment practice
+2026-05-08 16:37:52,372 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/EUR_USD/candles
+2026-05-08 16:38:09,704 [INFO] ForexFactory: 116 events loaded
+2026-05-08 16:38:11,483 [INFO] News: 20 articles fetched
+2026-05-08 16:38:17,383 [INFO] Correlations: ['DXY', 'GOLD', 'OIL', 'SP500', 'VIX'] loaded
+2026-05-08 16:38:18,886 [INFO] SIGNAL: EUR_USD BUY 66.1% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 16:38:21,007 [INFO] setting up API-client for environment practice
+2026-05-08 16:38:21,007 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/GBP_USD/candles
+2026-05-08 16:38:23,116 [INFO] SIGNAL: GBP_USD BUY 87.9% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 16:38:25,118 [INFO] setting up API-client for environment practice
+2026-05-08 16:38:25,118 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_JPY/candles
+2026-05-08 16:38:25,904 [INFO] USD_JPY: 59.0% below 65.0% threshold. Skip.
+2026-05-08 16:38:27,905 [INFO] setting up API-client for environment practice
+2026-05-08 16:38:27,906 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/AUD_USD/candles
+2026-05-08 16:38:29,845 [INFO] SIGNAL: AUD_USD BUY 84.5% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 16:38:31,847 [INFO] setting up API-client for environment practice
+2026-05-08 16:38:31,848 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_CAD/candles
+2026-05-08 16:38:32,773 [INFO] USD_CAD: 62.5% below 65.0% threshold. Skip.
+2026-05-08 16:38:34,775 [INFO] Cycle #153 done. Trades in memory: 515 | WR: 87.8% | RL episodes: 515
+2026-05-08 16:39:19,579 [INFO] Learned: EUR_USD WIN | WR: 87.8% | RL: 516
+2026-05-08 16:39:23,224 [INFO] Learned: GBP_USD WIN | WR: 87.8% | RL: 517
+2026-05-08 16:39:30,088 [INFO] Learned: AUD_USD WIN | WR: 87.8% | RL: 518
+2026-05-08 16:53:34,780 [INFO] setting up API-client for environment practice
+2026-05-08 16:53:34,898 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/EUR_USD/candles
+2026-05-08 16:53:37,841 [INFO] SIGNAL: EUR_USD BUY 67.0% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 16:53:39,845 [INFO] setting up API-client for environment practice
+2026-05-08 16:53:39,845 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/GBP_USD/candles
+2026-05-08 16:53:41,795 [INFO] SIGNAL: GBP_USD BUY 65.7% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 16:53:43,797 [INFO] setting up API-client for environment practice
+2026-05-08 16:53:43,797 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_JPY/candles
+2026-05-08 16:53:44,834 [INFO] USD_JPY: 63.5% below 65.0% threshold. Skip.
+2026-05-08 16:53:46,835 [INFO] setting up API-client for environment practice
+2026-05-08 16:53:46,837 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/AUD_USD/candles
+2026-05-08 16:53:49,159 [INFO] SIGNAL: AUD_USD BUY 85.7% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 16:53:51,160 [INFO] setting up API-client for environment practice
+2026-05-08 16:53:51,160 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_CAD/candles
+2026-05-08 16:53:52,133 [INFO] USD_CAD: 63.5% below 65.0% threshold. Skip.
+2026-05-08 16:53:54,135 [INFO] Cycle #154 done. Trades in memory: 518 | WR: 87.8% | RL episodes: 518
+2026-05-08 16:54:37,951 [INFO] Learned: EUR_USD WIN | WR: 87.9% | RL: 519
+2026-05-08 16:54:41,891 [INFO] Learned: GBP_USD WIN | WR: 87.9% | RL: 520
+2026-05-08 16:54:49,489 [INFO] Learned: AUD_USD LOSS | WR: 87.7% | RL: 521
+2026-05-08 17:08:54,435 [INFO] setting up API-client for environment practice
+2026-05-08 17:08:54,820 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/EUR_USD/candles
+2026-05-08 17:08:59,176 [INFO] News: 20 articles fetched
+2026-05-08 17:09:43,933 [INFO] Correlations: ['DXY', 'GOLD', 'OIL', 'SP500', 'VIX'] loaded
+2026-05-08 17:09:45,072 [INFO] SIGNAL: EUR_USD BUY 93.0% | News: BULLISH | COT: NEUTRAL | Regime: RANGING
+2026-05-08 17:09:47,076 [INFO] setting up API-client for environment practice
+2026-05-08 17:09:47,076 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/GBP_USD/candles
+2026-05-08 17:09:48,945 [INFO] SIGNAL: GBP_USD BUY 88.2% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 17:09:50,947 [INFO] setting up API-client for environment practice
+2026-05-08 17:09:50,947 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_JPY/candles
+2026-05-08 17:09:51,631 [INFO] USD_JPY: 62.6% below 65.0% threshold. Skip.
+2026-05-08 17:09:53,632 [INFO] setting up API-client for environment practice
+2026-05-08 17:09:53,632 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/AUD_USD/candles
+2026-05-08 17:09:55,255 [INFO] SIGNAL: AUD_USD BUY 84.5% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 17:09:57,259 [INFO] setting up API-client for environment practice
+2026-05-08 17:09:57,259 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_CAD/candles
+2026-05-08 17:09:58,888 [INFO] SIGNAL: USD_CAD SELL 70.0% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 17:10:00,890 [INFO] Cycle #155 done. Trades in memory: 521 | WR: 87.7% | RL episodes: 521
+2026-05-08 17:10:45,319 [INFO] Learned: EUR_USD LOSS | WR: 87.5% | RL: 522
+2026-05-08 17:10:49,032 [INFO] Learned: GBP_USD WIN | WR: 87.6% | RL: 523
+2026-05-08 17:10:55,332 [INFO] Learned: AUD_USD WIN | WR: 87.6% | RL: 524
+2026-05-08 17:10:58,967 [INFO] Learned: USD_CAD WIN | WR: 87.6% | RL: 525
+2026-05-08 17:25:01,154 [INFO] setting up API-client for environment practice
+2026-05-08 17:25:01,915 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/EUR_USD/candles
+2026-05-08 17:25:04,911 [INFO] SIGNAL: EUR_USD BUY 94.2% | News: BULLISH | COT: NEUTRAL | Regime: RANGING
+2026-05-08 17:25:06,916 [INFO] setting up API-client for environment practice
+2026-05-08 17:25:06,916 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/GBP_USD/candles
+2026-05-08 17:25:08,682 [INFO] SIGNAL: GBP_USD BUY 89.2% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 17:25:10,686 [INFO] setting up API-client for environment practice
+2026-05-08 17:25:10,686 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_JPY/candles
+2026-05-08 17:25:11,509 [INFO] USD_JPY: 63.5% below 65.0% threshold. Skip.
+2026-05-08 17:25:13,511 [INFO] setting up API-client for environment practice
+2026-05-08 17:25:13,511 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/AUD_USD/candles
+2026-05-08 17:25:15,380 [INFO] SIGNAL: AUD_USD BUY 85.7% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 17:25:17,384 [INFO] setting up API-client for environment practice
+2026-05-08 17:25:17,384 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_CAD/candles
+2026-05-08 17:25:18,230 [INFO] USD_CAD: 59.6% below 65.0% threshold. Skip.
+2026-05-08 17:25:20,255 [INFO] Cycle #156 done. Trades in memory: 525 | WR: 87.6% | RL episodes: 525
+2026-05-08 17:26:06,587 [INFO] Learned: EUR_USD WIN | WR: 87.6% | RL: 526
+2026-05-08 17:26:08,866 [INFO] Learned: GBP_USD WIN | WR: 87.7% | RL: 527
+2026-05-08 17:26:15,547 [INFO] Learned: AUD_USD WIN | WR: 87.7% | RL: 528
+2026-05-08 17:40:20,256 [INFO] setting up API-client for environment practice
+2026-05-08 17:40:20,257 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/EUR_USD/candles
+2026-05-08 17:40:21,606 [INFO] ForexFactory: 118 events loaded
+2026-05-08 17:40:22,540 [INFO] News: 20 articles fetched
+2026-05-08 17:40:29,745 [INFO] Correlations: ['DXY', 'GOLD', 'OIL', 'SP500', 'VIX'] loaded
+2026-05-08 17:40:30,759 [INFO] SIGNAL: EUR_USD BUY 67.9% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 17:40:32,761 [INFO] setting up API-client for environment practice
+2026-05-08 17:40:32,761 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/GBP_USD/candles
+2026-05-08 17:40:34,469 [INFO] SIGNAL: GBP_USD BUY 89.4% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 17:40:36,471 [INFO] setting up API-client for environment practice
+2026-05-08 17:40:36,471 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_JPY/candles
+2026-05-08 17:40:37,319 [INFO] USD_JPY: 51.4% below 65.0% threshold. Skip.
+2026-05-08 17:40:39,320 [INFO] setting up API-client for environment practice
+2026-05-08 17:40:39,320 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/AUD_USD/candles
+2026-05-08 17:40:39,953 [INFO] AUD_USD: 61.1% below 65.0% threshold. Skip.
+2026-05-08 17:40:41,958 [INFO] setting up API-client for environment practice
+2026-05-08 17:40:41,958 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_CAD/candles
+2026-05-08 17:40:43,559 [INFO] SIGNAL: USD_CAD BUY 81.2% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 17:40:45,563 [INFO] Cycle #157 done. Trades in memory: 528 | WR: 87.7% | RL episodes: 528
+2026-05-08 17:41:30,825 [INFO] Learned: EUR_USD WIN | WR: 87.7% | RL: 529
+2026-05-08 17:41:34,537 [INFO] Learned: GBP_USD WIN | WR: 87.7% | RL: 530
+2026-05-08 17:41:43,651 [INFO] Learned: USD_CAD WIN | WR: 87.8% | RL: 531
+2026-05-08 17:55:45,564 [INFO] setting up API-client for environment practice
+2026-05-08 17:55:45,564 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/EUR_USD/candles
+2026-05-08 17:55:51,761 [INFO] SIGNAL: EUR_USD BUY 85.7% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 17:55:53,769 [INFO] setting up API-client for environment practice
+2026-05-08 17:55:53,769 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/GBP_USD/candles
+2026-05-08 17:56:02,663 [INFO] SIGNAL: GBP_USD BUY 89.7% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 17:56:04,665 [INFO] setting up API-client for environment practice
+2026-05-08 17:56:04,665 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_JPY/candles
+2026-05-08 17:56:07,562 [INFO] SIGNAL: USD_JPY BUY 82.6% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 17:56:09,577 [INFO] setting up API-client for environment practice
+2026-05-08 17:56:09,577 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/AUD_USD/candles
+2026-05-08 17:56:11,685 [INFO] SIGNAL: AUD_USD BUY 85.7% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 17:56:13,697 [INFO] setting up API-client for environment practice
+2026-05-08 17:56:13,697 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_CAD/candles
+2026-05-08 17:56:15,510 [INFO] SIGNAL: USD_CAD BUY 72.3% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 17:56:17,516 [INFO] Cycle #158 done. Trades in memory: 531 | WR: 87.8% | RL episodes: 531
+2026-05-08 17:56:51,860 [INFO] Learned: EUR_USD WIN | WR: 87.8% | RL: 532
+2026-05-08 17:57:02,833 [INFO] Learned: GBP_USD WIN | WR: 87.8% | RL: 533
+2026-05-08 17:57:07,718 [INFO] Learned: USD_JPY WIN | WR: 87.8% | RL: 534
+2026-05-08 17:57:11,883 [INFO] Learned: AUD_USD WIN | WR: 87.9% | RL: 535
+2026-05-08 17:57:15,744 [INFO] Learned: USD_CAD LOSS | WR: 87.7% | RL: 536
+2026-05-08 18:11:17,518 [INFO] setting up API-client for environment practice
+2026-05-08 18:11:17,524 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/EUR_USD/candles
+2026-05-08 18:11:22,416 [INFO] News: 20 articles fetched
+2026-05-08 18:11:36,290 [INFO] Correlations: ['DXY', 'GOLD', 'OIL', 'SP500', 'VIX'] loaded
+2026-05-08 18:11:38,979 [INFO] SIGNAL: EUR_USD BUY 103.3% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 18:11:40,983 [INFO] setting up API-client for environment practice
+2026-05-08 18:11:40,983 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/GBP_USD/candles
+2026-05-08 18:11:45,969 [INFO] SIGNAL: GBP_USD BUY 98.1% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 18:11:47,971 [INFO] setting up API-client for environment practice
+2026-05-08 18:11:47,971 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_JPY/candles
+2026-05-08 18:11:49,676 [INFO] SIGNAL: USD_JPY SELL 69.9% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 18:11:51,679 [INFO] setting up API-client for environment practice
+2026-05-08 18:11:51,679 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/AUD_USD/candles
+2026-05-08 18:11:53,362 [INFO] SIGNAL: AUD_USD BUY 91.7% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 18:11:55,372 [INFO] setting up API-client for environment practice
+2026-05-08 18:11:55,372 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_CAD/candles
+2026-05-08 18:11:57,165 [INFO] SIGNAL: USD_CAD BUY 83.7% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 18:11:59,168 [INFO] Cycle #159 done. Trades in memory: 536 | WR: 87.7% | RL episodes: 536
+2026-05-08 18:12:39,258 [INFO] Learned: EUR_USD WIN | WR: 87.7% | RL: 537
+2026-05-08 18:12:46,072 [INFO] Learned: GBP_USD WIN | WR: 87.7% | RL: 538
+2026-05-08 18:12:49,822 [INFO] Learned: USD_JPY WIN | WR: 87.8% | RL: 539
+2026-05-08 18:12:53,492 [INFO] Learned: AUD_USD WIN | WR: 87.8% | RL: 540
+2026-05-08 18:12:57,264 [INFO] Learned: USD_CAD WIN | WR: 87.8% | RL: 541
+2026-05-08 18:26:59,169 [INFO] setting up API-client for environment practice
+2026-05-08 18:26:59,174 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/EUR_USD/candles
+2026-05-08 18:27:01,671 [INFO] SIGNAL: EUR_USD BUY 103.8% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 18:27:03,672 [INFO] setting up API-client for environment practice
+2026-05-08 18:27:03,672 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/GBP_USD/candles
+2026-05-08 18:27:05,568 [INFO] SIGNAL: GBP_USD BUY 98.5% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 18:27:07,569 [INFO] setting up API-client for environment practice
+2026-05-08 18:27:07,569 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_JPY/candles
+2026-05-08 18:27:09,966 [INFO] SIGNAL: USD_JPY SELL 67.4% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 18:27:11,968 [INFO] setting up API-client for environment practice
+2026-05-08 18:27:11,968 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/AUD_USD/candles
+2026-05-08 18:27:13,779 [INFO] SIGNAL: AUD_USD BUY 91.8% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 18:27:15,781 [INFO] setting up API-client for environment practice
+2026-05-08 18:27:15,781 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_CAD/candles
+2026-05-08 18:27:17,926 [INFO] SIGNAL: USD_CAD BUY 107.4% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 18:27:19,930 [INFO] Cycle #160 done. Trades in memory: 541 | WR: 87.8% | RL episodes: 541
+2026-05-08 18:28:01,770 [INFO] Learned: EUR_USD WIN | WR: 87.8% | RL: 542
+2026-05-08 18:28:05,925 [INFO] Learned: GBP_USD WIN | WR: 87.8% | RL: 543
+2026-05-08 18:28:10,137 [INFO] Learned: USD_JPY WIN | WR: 87.9% | RL: 544
+2026-05-08 18:28:13,966 [INFO] Learned: AUD_USD WIN | WR: 87.9% | RL: 545
+2026-05-08 18:28:18,117 [INFO] Learned: USD_CAD WIN | WR: 87.9% | RL: 546
+2026-05-08 18:42:19,931 [INFO] setting up API-client for environment practice
+2026-05-08 18:42:19,931 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/EUR_USD/candles
+2026-05-08 18:42:22,063 [INFO] ForexFactory: 118 events loaded
+2026-05-08 18:42:23,044 [INFO] News: 19 articles fetched
+2026-05-08 18:42:25,339 [INFO] Correlations: ['DXY', 'GOLD', 'OIL', 'SP500', 'VIX'] loaded
+2026-05-08 18:42:26,523 [INFO] SIGNAL: EUR_USD BUY 66.7% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 18:42:28,525 [INFO] setting up API-client for environment practice
+2026-05-08 18:42:28,525 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/GBP_USD/candles
+2026-05-08 18:42:30,409 [INFO] SIGNAL: GBP_USD BUY 66.7% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 18:42:32,411 [INFO] setting up API-client for environment practice
+2026-05-08 18:42:32,411 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_JPY/candles
+2026-05-08 18:42:33,159 [INFO] USD_JPY: 49.7% below 65.0% threshold. Skip.
+2026-05-08 18:42:35,160 [INFO] setting up API-client for environment practice
+2026-05-08 18:42:35,160 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/AUD_USD/candles
+2026-05-08 18:42:35,871 [INFO] AUD_USD: 45.3% below 65.0% threshold. Skip.
+2026-05-08 18:42:37,872 [INFO] setting up API-client for environment practice
+2026-05-08 18:42:37,872 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_CAD/candles
+2026-05-08 18:42:39,751 [INFO] SIGNAL: USD_CAD BUY 77.7% | News: NEUTRAL | COT: NEUTRAL | Regime: TRENDING
+2026-05-08 18:42:41,752 [INFO] Cycle #161 done. Trades in memory: 546 | WR: 87.9% | RL episodes: 546
+2026-05-08 18:43:26,645 [INFO] Learned: EUR_USD WIN | WR: 87.9% | RL: 547
+2026-05-08 18:43:30,512 [INFO] Learned: GBP_USD WIN | WR: 88.0% | RL: 548
+2026-05-08 18:43:39,881 [INFO] Learned: USD_CAD WIN | WR: 88.0% | RL: 549
+2026-05-08 18:57:41,753 [INFO] setting up API-client for environment practice
+2026-05-08 18:57:41,753 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/EUR_USD/candles
+2026-05-08 18:57:43,826 [INFO] SIGNAL: EUR_USD BUY 110.2% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 18:57:45,827 [INFO] setting up API-client for environment practice
+2026-05-08 18:57:45,827 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/GBP_USD/candles
+2026-05-08 18:57:47,699 [INFO] SIGNAL: GBP_USD BUY 110.2% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 18:57:49,701 [INFO] setting up API-client for environment practice
+2026-05-08 18:57:49,702 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_JPY/candles
+2026-05-08 18:57:51,875 [INFO] SIGNAL: USD_JPY SELL 67.4% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 18:57:53,876 [INFO] setting up API-client for environment practice
+2026-05-08 18:57:53,876 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/AUD_USD/candles
+2026-05-08 18:57:55,897 [INFO] SIGNAL: AUD_USD BUY 110.4% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 18:57:57,905 [INFO] setting up API-client for environment practice
+2026-05-08 18:57:57,905 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_CAD/candles
+2026-05-08 18:57:59,688 [INFO] SIGNAL: USD_CAD BUY 105.1% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 18:58:01,690 [INFO] Cycle #162 done. Trades in memory: 549 | WR: 88.0% | RL episodes: 549
+2026-05-08 18:58:44,056 [INFO] Learned: EUR_USD WIN | WR: 88.0% | RL: 550
+2026-05-08 18:58:47,850 [INFO] Learned: GBP_USD WIN | WR: 88.0% | RL: 551
+2026-05-08 18:58:52,027 [INFO] Learned: USD_JPY WIN | WR: 88.0% | RL: 552
+2026-05-08 18:58:55,994 [INFO] Learned: AUD_USD WIN | WR: 88.1% | RL: 553
+2026-05-08 18:58:59,822 [INFO] Learned: USD_CAD WIN | WR: 88.1% | RL: 554
+2026-05-08 19:13:01,691 [INFO] setting up API-client for environment practice
+2026-05-08 19:13:01,692 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/EUR_USD/candles
+2026-05-08 19:13:05,433 [INFO] News: 20 articles fetched
+2026-05-08 19:13:06,871 [INFO] Correlations: ['DXY', 'GOLD', 'OIL', 'SP500', 'VIX'] loaded
+2026-05-08 19:13:08,991 [INFO] SIGNAL: EUR_USD BUY 105.3% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 19:13:11,094 [INFO] setting up API-client for environment practice
+2026-05-08 19:13:11,094 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/GBP_USD/candles
+2026-05-08 19:13:14,597 [INFO] SIGNAL: GBP_USD BUY 101.1% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 19:13:16,600 [INFO] setting up API-client for environment practice
+2026-05-08 19:13:16,602 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_JPY/candles
+2026-05-08 19:13:19,409 [INFO] SIGNAL: USD_JPY SELL 71.1% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 19:13:21,412 [INFO] setting up API-client for environment practice
+2026-05-08 19:13:21,412 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/AUD_USD/candles
+2026-05-08 19:13:23,910 [INFO] SIGNAL: AUD_USD BUY 110.4% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 19:13:25,912 [INFO] setting up API-client for environment practice
+2026-05-08 19:13:25,912 [INFO] performing request https://api-fxpractice.oanda.com/v3/instruments/USD_CAD/candles
+2026-05-08 19:13:29,031 [INFO] SIGNAL: USD_CAD BUY 108.7% | News: NEUTRAL | COT: NEUTRAL | Regime: RANGING
+2026-05-08 19:13:31,034 [INFO] Cycle #163 done. Trades in memory: 554 | WR: 88.1% | RL episodes: 554
+2026-05-08 19:13:57,094 [INFO] System stopped
+2026-05-08 19:14:09,243 [INFO] Learned: EUR_USD WIN | WR: 88.1% | RL: 555
+2026-05-08 19:14:14,813 [INFO] Learned: GBP_USD WIN | WR: 88.1% | RL: 556
+2026-05-08 19:14:19,731 [INFO] Learned: USD_JPY WIN | WR: 88.2% | RL: 557
+2026-05-08 19:14:24,251 [INFO] Learned: AUD_USD WIN | WR: 88.2% | RL: 558
+2026-05-08 19:14:29,270 [INFO] Learned: USD_CAD WIN | WR: 88.2% | RL: 559
