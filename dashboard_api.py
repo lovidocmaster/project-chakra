@@ -272,13 +272,6 @@ def dashboard_summary():
             }
         })
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-@app.route('/health', methods=['GET'])
-def health():
-    return jsonify({'status': 'ok', 'timestamp': datetime.utcnow().isoformat()})
-
-if __name__ == '__main__':
-    print("🚀 Dashboard API Starting on http://localhost:5000")
+        return jsonify({'success': False, 'error':diralhost:5000")
     print("📊 Open dashboard at http://localhost:3000")
     app.run(debug=False, host='0.0.0.0', port=5000)

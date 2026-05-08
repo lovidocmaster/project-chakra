@@ -1,0 +1,292 @@
+{
+  "q": {
+    "EUR_USD_RANGING_HI_BAD_AS_NEU_N": {
+      "BUY": 0.446306404540138,
+      "SELL": 0.0,
+      "HOLD": 0.0
+    },
+    "GBP_USD_RANGING_HI_BAD_AS_NEU_N": {
+      "BUY": 0.20385723353824048,
+      "SELL": 0.0,
+      "HOLD": 0.0
+    },
+    "USD_JPY_RANGING_HI_BAD_AS_NEU_N": {
+      "BUY": 0.4048770455609554,
+      "SELL": 0.0,
+      "HOLD": 0.0
+    },
+    "AUD_USD_RANGING_HI_BAD_AS_NEU_N": {
+      "BUY": 0.2973866959465945,
+      "SELL": 0.0,
+      "HOLD": 0.0
+    },
+    "USD_CAD_RANGING_HI_BAD_AS_NEU_N": {
+      "BUY": 0.20080139279691506,
+      "SELL": 0.0,
+      "HOLD": 0.0
+    },
+    "EUR_USD_RANGING_HI_GOOD_AS_NEU_N": {
+      "BUY": 4.0710467353537005,
+      "SELL": 1.7363186549135619,
+      "HOLD": 0.0
+    },
+    "USD_JPY_RANGING_HI_GOOD_AS_NEU_N": {
+      "BUY": 7.904329383606331,
+      "SELL": 2.4396451024515944,
+      "HOLD": 0.0
+    },
+    "USD_CAD_RANGING_HI_GOOD_AS_NEU_N": {
+      "BUY": 12.496045014535344,
+      "SELL": 1.0945786377035016,
+      "HOLD": 0.0
+    },
+    "USD_JPY_RANGING_HI_OK_AS_NEU_N": {
+      "BUY": 0.27788255435914183,
+      "SELL": 0.0,
+      "HOLD": 0.0
+    },
+    "AUD_USD_RANGING_HI_OK_AS_NEU_N": {
+      "BUY": 0.3727753128885387,
+      "SELL": 0.0,
+      "HOLD": 0.0
+    },
+    "AUD_USD_RANGING_HI_GOOD_AS_NEU_N": {
+      "BUY": 4.375502962647733,
+      "SELL": 6.443967952830703,
+      "HOLD": 0.0
+    },
+    "USD_JPY_RANGING_MED_GOOD_AS_BEA_N": {
+      "BUY": 0.26951404831096276,
+      "SELL": 0.0,
+      "HOLD": 0.0
+    },
+    "USD_CAD_RANGING_HI_GOOD_AS_BEA_N": {
+      "BUY": 0.7463993464585544,
+      "SELL": 0.1708568997209764,
+      "HOLD": 0.0
+    },
+    "GBP_USD_RANGING_HI_GOOD_AS_NEU_N": {
+      "BUY": 3.3126586563288885,
+      "SELL": 2.971642532342295,
+      "HOLD": 0.0
+    },
+    "EUR_USD_RANGING_HI_GOOD_AS_BEA_N": {
+      "BUY": 0.08087321656379862,
+      "SELL": 0.0,
+      "HOLD": 0.0
+    },
+    "USD_CAD_RANGING_MED_GOOD_AS_NEU_N": {
+      "BUY": 0.6731531962531236,
+      "SELL": -0.18983761146048514,
+      "HOLD": 0.0
+    },
+    "GBP_USD_RANGING_MED_GOOD_AS_NEU_N": {
+      "BUY": 0.8444889746955981,
+      "SELL": 0.538071696672144,
+      "HOLD": 0.0
+    },
+    "AUD_USD_TRENDING_HI_GOOD_AS_NEU_N": {
+      "BUY": -0.20444195024850337,
+      "SELL": 0.0,
+      "HOLD": 0.0
+    },
+    "GBP_USD_RANGING_MED_GOOD_LON_BEA_N": {
+      "BUY": -0.1685417326932852,
+      "SELL": 0.0,
+      "HOLD": 0.0
+    },
+    "USD_JPY_RANGING_MED_GOOD_LON_BUL_N": {
+      "BUY": 0.16837144855816985,
+      "SELL": -0.25492794325532114,
+      "HOLD": 0.0
+    },
+    "AUD_USD_TRENDING_HI_GOOD_LON_BEA_N": {
+      "BUY": 0.377183387338033,
+      "SELL": 0.0,
+      "HOLD": 0.0
+    },
+    "USD_CAD_RANGING_HI_GOOD_LON_BUL_N": {
+      "BUY": 0.5627023564066641,
+      "SELL": 0.301470204540206,
+      "HOLD": 0.0
+    },
+    "EUR_USD_RANGING_MED_GOOD_LON_BEA_N": {
+      "BUY": 0.3468620130894763,
+      "SELL": 0.0,
+      "HOLD": 0.0
+    },
+    "GBP_USD_RANGING_HI_GOOD_LON_BEA_N": {
+      "BUY": 0.3478854430217275,
+      "SELL": 0.0,
+      "HOLD": 0.0
+    },
+    "EUR_USD_RANGING_HI_GOOD_LON_NEU_N": {
+      "BUY": 4.954242887386308,
+      "SELL": 2.518424744261063,
+      "HOLD": 0.0
+    },
+    "GBP_USD_RANGING_HI_GOOD_LON_NEU_N": {
+      "BUY": 6.935373001350864,
+      "SELL": 1.1553109348206516,
+      "HOLD": 0.0
+    },
+    "USD_JPY_RANGING_MED_GOOD_LON_NEU_N": {
+      "BUY": 0.18005165262011233,
+      "SELL": 0.0,
+      "HOLD": 0.0
+    },
+    "AUD_USD_TRENDING_HI_GOOD_LON_NEU_N": {
+      "BUY": 3.809771170047693,
+      "SELL": 0.0,
+      "HOLD": 0.0
+    },
+    "USD_CAD_RANGING_HI_GOOD_LON_NEU_N": {
+      "BUY": 4.750310763876201,
+      "SELL": 5.378685406363168,
+      "HOLD": 0.0
+    },
+    "USD_JPY_RANGING_HI_GOOD_LON_NEU_N": {
+      "BUY": 3.1238654421495875,
+      "SELL": 4.243759380132261,
+      "HOLD": 0.0
+    },
+    "EUR_USD_RANGING_MED_GOOD_LON_NEU_N": {
+      "BUY": 0.40383367469920856,
+      "SELL": 0.12695000748023252,
+      "HOLD": 0.0
+    },
+    "AUD_USD_RANGING_HI_GOOD_LON_NEU_N": {
+      "BUY": 4.760802429571196,
+      "SELL": 0.8260430398284393,
+      "HOLD": 0.0
+    },
+    "GBP_USD_RANGING_MED_GOOD_LON_NEU_N": {
+      "BUY": 0.6200983505087133,
+      "SELL": 0.0,
+      "HOLD": 0.0
+    },
+    "USD_JPY_VOLATILE_HI_GOOD_LON_NEU_N": {
+      "BUY": 0.0,
+      "SELL": 1.3717185733450015,
+      "HOLD": 0.0
+    },
+    "EUR_USD_TRENDING_HI_GOOD_LON_NEU_N": {
+      "BUY": 0.7185582272377131,
+      "SELL": 0.0,
+      "HOLD": 0.0
+    },
+    "EUR_USD_RANGING_MED_GOOD_NY_NEU_N": {
+      "BUY": 0.8861370363233152,
+      "SELL": 0.0,
+      "HOLD": 0.0
+    },
+    "AUD_USD_RANGING_MED_GOOD_NY_BEA_N": {
+      "BUY": 0.0,
+      "SELL": 0.4713922611705393,
+      "HOLD": 0.0
+    },
+    "USD_CAD_RANGING_MED_GOOD_NY_NEU_N": {
+      "BUY": 1.081475388788903,
+      "SELL": 0.0,
+      "HOLD": 0.0
+    },
+    "USD_CAD_RANGING_HI_GOOD_NY_NEU_N": {
+      "BUY": 0.03884330960009752,
+      "SELL": 0.0,
+      "HOLD": 0.0
+    },
+    "EUR_USD_RANGING_HI_GOOD_LON_BUL_N": {
+      "BUY": -0.34838055064743945,
+      "SELL": 0.0,
+      "HOLD": 0.0
+    },
+    "GBP_USD_RANGING_HI_GOOD_LON_BUL_N": {
+      "BUY": 0.2489174047551835,
+      "SELL": 0.0,
+      "HOLD": 0.0
+    },
+    "AUD_USD_RANGING_HI_GOOD_LON_BUL_N": {
+      "BUY": 0.4031962344902251,
+      "SELL": 0.0,
+      "HOLD": 0.0
+    },
+    "USD_CAD_RANGING_HI_GOOD_LON_BEA_N": {
+      "BUY": 1.367451783446575,
+      "SELL": 0.0,
+      "HOLD": 0.0
+    },
+    "USD_JPY_RANGING_HI_GOOD_LON_BUL_N": {
+      "BUY": 0.4213848988944744,
+      "SELL": 0.0,
+      "HOLD": 0.0
+    },
+    "AUD_USD_RANGING_MED_GOOD_LON_BEA_N": {
+      "BUY": 0.12401870246180545,
+      "SELL": 0.0,
+      "HOLD": 0.0
+    },
+    "GBP_USD_RANGING_MED_GOOD_NY_NEU_N": {
+      "BUY": 1.3941422164097552,
+      "SELL": 0.0,
+      "HOLD": 0.0
+    },
+    "USD_JPY_RANGING_HI_GOOD_NY_NEU_N": {
+      "BUY": 1.0941668198160954,
+      "SELL": 0.42409856940766477,
+      "HOLD": 0.0
+    },
+    "AUD_USD_RANGING_MED_GOOD_NY_NEU_N": {
+      "BUY": 1.6104269838413074,
+      "SELL": 0.0,
+      "HOLD": 0.0
+    },
+    "EUR_USD_RANGING_HI_GOOD_NY_BUL_N": {
+      "BUY": 0.5200713414321878,
+      "SELL": 0.0,
+      "HOLD": 0.0
+    },
+    "GBP_USD_RANGING_HI_GOOD_NY_BUL_N": {
+      "BUY": 0.8608386399767195,
+      "SELL": 0.0,
+      "HOLD": 0.0
+    },
+    "USD_JPY_RANGING_HI_GOOD_NY_BEA_N": {
+      "BUY": 0.0,
+      "SELL": 0.31229030434980176,
+      "HOLD": 0.0
+    },
+    "AUD_USD_RANGING_HI_GOOD_NY_BUL_N": {
+      "BUY": 0.24765486831350264,
+      "SELL": 0.0,
+      "HOLD": 0.0
+    },
+    "EUR_USD_RANGING_HI_GOOD_NY_NEU_N": {
+      "BUY": 2.2493584188226574,
+      "SELL": 0.0,
+      "HOLD": 0.0
+    },
+    "GBP_USD_RANGING_HI_GOOD_NY_NEU_N": {
+      "BUY": 1.6819724156824174,
+      "SELL": 0.0,
+      "HOLD": 0.0
+    },
+    "USD_JPY_RANGING_MED_GOOD_NY_NEU_N": {
+      "BUY": 0.0,
+      "SELL": -0.3076850214086154,
+      "HOLD": 0.0
+    },
+    "AUD_USD_RANGING_HI_GOOD_NY_NEU_N": {
+      "BUY": 2.0022706611393484,
+      "SELL": 0.1756621588051687,
+      "HOLD": 0.0
+    },
+    "EUR_USD_RANGING_MED_GOOD_AS_NEU_N": {
+      "BUY": 0.0,
+      "SELL": -0.01641207081301213,
+      "HOLD": 0.0
+    }
+  },
+  "epsilon": 0.05,
+  "episodes": 456,
+  "total_reward": 1077.3306062886106
+}

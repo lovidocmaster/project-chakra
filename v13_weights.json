@@ -1,0 +1,92 @@
+{
+  "weights": {
+    "EMA": 3.0,
+    "RSI": 0.5,
+    "MACD": 3.0,
+    "BOS": 1.1374355599740997,
+    "CHOCH": 3.0,
+    "OrderBlock": 1.1489644998808595,
+    "FVG": 0.49750312499999993,
+    "Killzone": 2.842875,
+    "OTE": 2.370744815079088,
+    "SilverBullet": 1.970044316014698,
+    "LiquiditySweep": 0.5,
+    "Wyckoff": 3.0,
+    "Bollinger": 1.0,
+    "Stochastic": 0.9925187343749998,
+    "Session": 3.0,
+    "ATR": 3.0,
+    "Breakout": 1.9799315994393987
+  },
+  "perf": {
+    "EMA": {
+      "correct": 159,
+      "wrong": 20
+    },
+    "RSI": {
+      "correct": 0,
+      "wrong": 0
+    },
+    "MACD": {
+      "correct": 210,
+      "wrong": 35
+    },
+    "BOS": {
+      "correct": 26,
+      "wrong": 6
+    },
+    "CHOCH": {
+      "correct": 104,
+      "wrong": 15
+    },
+    "OrderBlock": {
+      "correct": 6,
+      "wrong": 3
+    },
+    "FVG": {
+      "correct": 2,
+      "wrong": 2
+    },
+    "Killzone": {
+      "correct": 32,
+      "wrong": 5
+    },
+    "OTE": {
+      "correct": 24,
+      "wrong": 6
+    },
+    "SilverBullet": {
+      "correct": 16,
+      "wrong": 2
+    },
+    "LiquiditySweep": {
+      "correct": 0,
+      "wrong": 1
+    },
+    "Wyckoff": {
+      "correct": 225,
+      "wrong": 36
+    },
+    "Bollinger": {
+      "correct": 0,
+      "wrong": 0
+    },
+    "Stochastic": {
+      "correct": 3,
+      "wrong": 3
+    },
+    "Session": {
+      "correct": 97,
+      "wrong": 8
+    },
+    "ATR": {
+      "correct": 222,
+      "wrong": 31
+    },
+    "Breakout": {
+      "correct": 14,
+      "wrong": 0
+    }
+  },
+  "updated": "2026-05-08T08:12:35.179151"
+}
