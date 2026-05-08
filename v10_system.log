@@ -1,0 +1,62 @@
+2026-05-04 14:28:51,550 - oandapyV20.oandapyV20 - INFO - setting up API-client for environment practice
+2026-05-04 14:28:52,746 - V10Orchestrator - INFO - 
+================================================================================
+2026-05-04 14:28:52,746 - V10Orchestrator - INFO - PHASE 2 BACKTESTING SUITE
+2026-05-04 14:28:52,746 - V10Orchestrator - INFO - ================================================================================
+
+2026-05-04 14:28:52,760 - __main__ - INFO -    Windows: 12
+2026-05-04 14:28:52,760 - __main__ - INFO -    Avg Win Rate: 62.0%
+2026-05-04 14:28:52,760 - __main__ - INFO -    Avg Sharpe: 1.85
+2026-05-04 14:28:52,760 - __main__ - INFO -    Consistency: 0.24
+2026-05-04 14:28:52,760 - __main__ - INFO -    Windows: 12
+2026-05-04 14:28:52,760 - __main__ - INFO -    Avg Win Rate: 62.0%
+2026-05-04 14:28:52,760 - __main__ - INFO -    Avg Sharpe: 1.85
+2026-05-04 14:28:52,760 - __main__ - INFO -    Consistency: 0.24
+2026-05-04 14:28:52,760 - __main__ - INFO -    Windows: 12
+2026-05-04 14:28:52,760 - __main__ - INFO -    Avg Win Rate: 62.0%
+2026-05-04 14:28:52,760 - __main__ - INFO -    Avg Sharpe: 1.85
+2026-05-04 14:28:52,760 - __main__ - INFO -    Consistency: 0.24
+2026-05-04 14:28:52,760 - __main__ - INFO -    Windows: 12
+2026-05-04 14:28:52,760 - __main__ - INFO -    Avg Win Rate: 62.0%
+2026-05-04 14:28:52,760 - __main__ - INFO -    Avg Sharpe: 1.85
+2026-05-04 14:28:52,760 - __main__ - INFO -    Consistency: 0.24
+2026-05-04 14:28:52,760 - V10Orchestrator - INFO - 
+================================================================================
+2026-05-04 14:28:52,760 - V10Orchestrator - INFO - ================================================================================
+
+2026-05-04 14:28:52,828 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.29.238:5000
+2026-05-04 14:28:52,828 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2026-05-04 14:45:38,893 - oandapyV20.oandapyV20 - INFO - setting up API-client for environment practice
+2026-05-04 14:45:40,012 - V10Orchestrator - INFO - 
+================================================================================
+2026-05-04 14:45:40,012 - V10Orchestrator - INFO - PHASE 2 BACKTESTING SUITE
+2026-05-04 14:45:40,012 - V10Orchestrator - INFO - ================================================================================
+
+2026-05-04 14:45:40,012 - __main__ - INFO -    Windows: 12
+2026-05-04 14:45:40,012 - __main__ - INFO -    Avg Win Rate: 62.0%
+2026-05-04 14:45:40,012 - __main__ - INFO -    Avg Sharpe: 1.85
+2026-05-04 14:45:40,012 - __main__ - INFO -    Consistency: 0.24
+2026-05-04 14:45:40,012 - __main__ - INFO -    Windows: 12
+2026-05-04 14:45:40,012 - __main__ - INFO -    Avg Win Rate: 62.0%
+2026-05-04 14:45:40,012 - __main__ - INFO -    Avg Sharpe: 1.85
+2026-05-04 14:45:40,012 - __main__ - INFO -    Consistency: 0.24
+2026-05-04 14:45:40,018 - __main__ - INFO -    Windows: 12
+2026-05-04 14:45:40,018 - __main__ - INFO -    Avg Win Rate: 62.0%
+2026-05-04 14:45:40,018 - __main__ - INFO -    Avg Sharpe: 1.85
+2026-05-04 14:45:40,018 - __main__ - INFO -    Consistency: 0.24
+2026-05-04 14:45:40,019 - __main__ - INFO -    Windows: 12
+2026-05-04 14:45:40,020 - __main__ - INFO -    Avg Win Rate: 62.0%
+2026-05-04 14:45:40,020 - __main__ - INFO -    Avg Sharpe: 1.85
+2026-05-04 14:45:40,020 - __main__ - INFO -    Consistency: 0.24
+2026-05-04 14:45:40,025 - V10Orchestrator - INFO - 
+================================================================================
+2026-05-04 14:45:40,025 - V10Orchestrator - INFO - ================================================================================
+
+2026-05-04 14:45:40,054 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.29.238:5000
+2026-05-04 14:45:40,054 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
