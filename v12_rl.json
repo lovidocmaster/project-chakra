@@ -121,17 +121,17 @@
       "HOLD": 0.0
     },
     "EUR_USD_RANGING_HI_GOOD_LON_NEU_N": {
-      "BUY": 4.954242887386308,
-      "SELL": 2.518424744261063,
+      "BUY": 4.7290139500888815,
+      "SELL": 6.261394253045527,
       "HOLD": 0.0
     },
     "GBP_USD_RANGING_HI_GOOD_LON_NEU_N": {
-      "BUY": 6.935373001350864,
-      "SELL": 1.1553109348206516,
+      "BUY": 7.1224302378318605,
+      "SELL": 5.69907371173452,
       "HOLD": 0.0
     },
     "USD_JPY_RANGING_MED_GOOD_LON_NEU_N": {
-      "BUY": 0.18005165262011233,
+      "BUY": 0.4784539540439945,
       "SELL": 0.0,
       "HOLD": 0.0
     },
@@ -141,28 +141,28 @@
       "HOLD": 0.0
     },
     "USD_CAD_RANGING_HI_GOOD_LON_NEU_N": {
-      "BUY": 4.750310763876201,
-      "SELL": 5.378685406363168,
+      "BUY": 7.33767014950376,
+      "SELL": 5.818854339735788,
       "HOLD": 0.0
     },
     "USD_JPY_RANGING_HI_GOOD_LON_NEU_N": {
-      "BUY": 3.1238654421495875,
+      "BUY": 4.86083457928535,
       "SELL": 4.243759380132261,
       "HOLD": 0.0
     },
     "EUR_USD_RANGING_MED_GOOD_LON_NEU_N": {
-      "BUY": 0.40383367469920856,
+      "BUY": 1.0066449214099462,
       "SELL": 0.12695000748023252,
       "HOLD": 0.0
     },
     "AUD_USD_RANGING_HI_GOOD_LON_NEU_N": {
-      "BUY": 4.760802429571196,
-      "SELL": 0.8260430398284393,
+      "BUY": 6.052713276136138,
+      "SELL": 3.768351181223968,
       "HOLD": 0.0
     },
     "GBP_USD_RANGING_MED_GOOD_LON_NEU_N": {
-      "BUY": 0.6200983505087133,
-      "SELL": 0.0,
+      "BUY": 1.2316399194600414,
+      "SELL": 0.15509612860324568,
       "HOLD": 0.0
     },
     "USD_JPY_VOLATILE_HI_GOOD_LON_NEU_N": {
@@ -176,7 +176,7 @@
       "HOLD": 0.0
     },
     "EUR_USD_RANGING_MED_GOOD_NY_NEU_N": {
-      "BUY": 0.8861370363233152,
+      "BUY": 1.376126896818351,
       "SELL": 0.0,
       "HOLD": 0.0
     },
@@ -187,11 +187,11 @@
     },
     "USD_CAD_RANGING_MED_GOOD_NY_NEU_N": {
       "BUY": 1.081475388788903,
-      "SELL": 0.0,
+      "SELL": 0.3695567221326821,
       "HOLD": 0.0
     },
     "USD_CAD_RANGING_HI_GOOD_NY_NEU_N": {
-      "BUY": 0.03884330960009752,
+      "BUY": 1.3454935045775482,
       "SELL": 0.0,
       "HOLD": 0.0
     },
@@ -226,13 +226,13 @@
       "HOLD": 0.0
     },
     "GBP_USD_RANGING_MED_GOOD_NY_NEU_N": {
-      "BUY": 1.3941422164097552,
+      "BUY": 1.8855883223175776,
       "SELL": 0.0,
       "HOLD": 0.0
     },
     "USD_JPY_RANGING_HI_GOOD_NY_NEU_N": {
-      "BUY": 1.0941668198160954,
-      "SELL": 0.42409856940766477,
+      "BUY": 1.3118065287215992,
+      "SELL": 0.6462730769307015,
       "HOLD": 0.0
     },
     "AUD_USD_RANGING_MED_GOOD_NY_NEU_N": {
@@ -241,7 +241,7 @@
       "HOLD": 0.0
     },
     "EUR_USD_RANGING_HI_GOOD_NY_BUL_N": {
-      "BUY": 0.5200713414321878,
+      "BUY": 0.4423726732868489,
       "SELL": 0.0,
       "HOLD": 0.0
     },
@@ -261,22 +261,22 @@
       "HOLD": 0.0
     },
     "EUR_USD_RANGING_HI_GOOD_NY_NEU_N": {
-      "BUY": 2.2493584188226574,
+      "BUY": 3.689983431575017,
       "SELL": 0.0,
       "HOLD": 0.0
     },
     "GBP_USD_RANGING_HI_GOOD_NY_NEU_N": {
-      "BUY": 1.6819724156824174,
+      "BUY": 3.8735075305917697,
       "SELL": 0.0,
       "HOLD": 0.0
     },
     "USD_JPY_RANGING_MED_GOOD_NY_NEU_N": {
       "BUY": 0.0,
-      "SELL": -0.3076850214086154,
+      "SELL": 0.4627765720656175,
       "HOLD": 0.0
     },
     "AUD_USD_RANGING_HI_GOOD_NY_NEU_N": {
-      "BUY": 2.0022706611393484,
+      "BUY": 3.787199048873428,
       "SELL": 0.1756621588051687,
       "HOLD": 0.0
     },
@@ -284,9 +284,24 @@
       "BUY": 0.0,
       "SELL": -0.01641207081301213,
       "HOLD": 0.0
+    },
+    "USD_JPY_RANGING_HI_GOOD_LON_BEA_N": {
+      "BUY": 0.10698723680725788,
+      "SELL": 0.0,
+      "HOLD": 0.0
+    },
+    "AUD_USD_RANGING_MED_GOOD_LON_NEU_N": {
+      "BUY": 0.0,
+      "SELL": -0.2803129670356342,
+      "HOLD": 0.0
+    },
+    "USD_CAD_TRENDING_HI_GOOD_NY_NEU_N": {
+      "BUY": 0.21626449887832924,
+      "SELL": 0.0,
+      "HOLD": 0.0
     }
   },
   "epsilon": 0.05,
-  "episodes": 456,
-  "total_reward": 1077.3306062886106
+  "episodes": 559,
+  "total_reward": 1315.6341732101823
 }

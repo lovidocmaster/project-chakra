@@ -3,75 +3,75 @@
     "EMA": 3.0,
     "RSI": 0.6077531250000001,
     "MACD": 3.0,
-    "BOS": 2.4704803018853663,
+    "BOS": 3.0,
     "CHOCH": 3.0,
     "OrderBlock": 1.2064127248749024,
-    "FVG": 1.4071004226562505,
-    "Killzone": 2.9924999999999997,
-    "OTE": 2.9924999999999997,
-    "SilverBullet": 2.5206328198872012,
-    "LiquiditySweep": 1.1576250000000001,
+    "FVG": 1.8809350194674284,
+    "Killzone": 3.0,
+    "OTE": 3.0,
+    "SilverBullet": 2.6202969008768853,
+    "LiquiditySweep": 1.2155062500000002,
     "Wyckoff": 3.0,
     "Bollinger": 1.0,
     "Session": 3.0
   },
   "perf": {
     "EMA": {
-      "correct": 214,
-      "wrong": 23
+      "correct": 262,
+      "wrong": 27
     },
     "RSI": {
       "correct": 4,
       "wrong": 0
     },
     "MACD": {
-      "correct": 337,
-      "wrong": 42
+      "correct": 401,
+      "wrong": 46
     },
     "BOS": {
-      "correct": 38,
+      "correct": 52,
       "wrong": 5
     },
     "CHOCH": {
-      "correct": 148,
-      "wrong": 21
+      "correct": 189,
+      "wrong": 29
     },
     "OrderBlock": {
       "correct": 7,
       "wrong": 3
     },
     "FVG": {
-      "correct": 7,
-      "wrong": 0
+      "correct": 14,
+      "wrong": 1
     },
     "Killzone": {
-      "correct": 36,
+      "correct": 47,
       "wrong": 4
     },
     "OTE": {
-      "correct": 34,
-      "wrong": 6
+      "correct": 41,
+      "wrong": 8
     },
     "SilverBullet": {
-      "correct": 20,
-      "wrong": 1
+      "correct": 25,
+      "wrong": 5
     },
     "LiquiditySweep": {
-      "correct": 3,
+      "correct": 4,
       "wrong": 0
     },
     "Wyckoff": {
-      "correct": 362,
-      "wrong": 44
+      "correct": 445,
+      "wrong": 53
     },
     "Bollinger": {
       "correct": 0,
       "wrong": 0
     },
     "Session": {
-      "correct": 103,
-      "wrong": 16
+      "correct": 146,
+      "wrong": 25
     }
   },
-  "updated": "2026-05-08T08:06:12.859532"
+  "updated": "2026-05-08T19:14:29.261222"
 }
