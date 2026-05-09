@@ -699,9 +699,12 @@ body{background:#030308;color:#c8d0ff;font-family:'Courier New',monospace;min-he
      border-bottom:1px solid #2a1a6a;padding:12px 20px;
      display:flex;align-items:center;justify-content:space-between;
      position:sticky;top:0;z-index:100}
-.logo{font-size:1.3em;font-weight:bold;letter-spacing:3px;
-      background:linear-gradient(90deg,#7b5cff,#00f5ff);
-      -webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.logo-wrap{display:flex;align-items:center;gap:12px}
+.logo-img{width:52px;height:52px;object-fit:contain;
+          filter:drop-shadow(0 0 8px #7b5cff)}
+.logo-text{font-size:1.3em;font-weight:bold;letter-spacing:3px;
+           background:linear-gradient(90deg,#7b5cff,#00f5ff);
+           -webkit-background-clip:text;-webkit-text-fill-color:transparent}
 .hdr-stats{display:flex;gap:20px}
 .hstat{text-align:center}
 .hstat-v{font-size:1.3em;font-weight:bold;color:#00f5ff}
@@ -836,7 +839,11 @@ body{background:#030308;color:#c8d0ff;font-family:'Courier New',monospace;min-he
 <body>
 
 <div class="hdr">
-  <div class="logo">⚡ PROJECT CHAKRA V15</div>
+  <div class="logo-wrap">
+    <img src="https://raw.githubusercontent.com/lovidocmaster/project-chakra/main/chakra_logo.png"
+         alt="Project Chakra" class="logo-img">
+    <span class="logo-text">PROJECT CHAKRA V15</span>
+  </div>
   <div class="hdr-stats">
     <div class="hstat"><div class="hstat-v" id="hCycles">—</div><div class="hstat-l">CYCLES</div></div>
     <div class="hstat"><div class="hstat-v" id="hSignals">—</div><div class="hstat-l">SIGNALS</div></div>
