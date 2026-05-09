@@ -43,6 +43,17 @@ PAIRS = [
     'EUR_USD', 'GBP_USD', 'USD_JPY', 'AUD_USD', 'USD_CAD',
     'XAU_USD', 'GBP_JPY'
 ]
+
+# CME Futures — shown on dashboard as separate cards (signals only, no execution)
+CME_FUTURES = {
+    '6E=F': {'name': 'EUR Futures', 'equiv': 'EUR/USD', 'flag': '🇪🇺'},
+    '6B=F': {'name': 'GBP Futures', 'equiv': 'GBP/USD', 'flag': '🇬🇧'},
+    '6J=F': {'name': 'JPY Futures', 'equiv': 'USD/JPY', 'flag': '🇯🇵', 'inverse': True},
+    '6A=F': {'name': 'AUD Futures', 'equiv': 'AUD/USD', 'flag': '🇦🇺'},
+    '6C=F': {'name': 'CAD Futures', 'equiv': 'USD/CAD', 'flag': '🇨🇦', 'inverse': True},
+    '6N=F': {'name': 'NZD Futures', 'equiv': 'NZD/USD', 'flag': '🇳🇿'},
+    '6S=F': {'name': 'CHF Futures', 'equiv': 'USD/CHF', 'flag': '🇨🇭', 'inverse': True},
+}
 CONFIDENCE_BASE    = 0.60
 AUTO_EXECUTE       = True
 RISK_PCT           = 0.005
@@ -312,6 +323,176 @@ def fetch_bars(pair, granularity="H1", count=300):
     except Exception as e:
         log.warning(f"fetch_bars {pair} {granularity}: {e}")
         return []
+
+def analyze_cme_future(symbol, meta):
+    """Analyze a CME futures contract — same agents, real OHLCV data"""
+    try:
+        import yfinance as yf
+
+        # Fetch hourly data
+        d = yf.download(symbol, period="5d", interval="1h", progress=False)
+        if hasattr(d.columns, 'levels'):
+            d.columns = d.columns.droplevel(1)
+        if len(d) < 50:
+            return None
+
+        # Convert to BarData
+        bars = []
+        for ts, row in d.iterrows():
+            try:
+                bars.append(BarData(
+                    timestamp=str(ts),
+                    open=float(row['Open']),
+                    high=float(row['High']),
+                    low=float(row['Low']),
+                    close=float(row['Close']),
+                    volume=float(row['Volume'])
+                ))
+            except:
+                continue
+
+        if len(bars) < 50:
+            return None
+
+        # Fetch daily for H4 equivalent
+        d4 = yf.download(symbol, period="60d", interval="1d", progress=False)
+        if hasattr(d4.columns, 'levels'):
+            d4.columns = d4.columns.droplevel(1)
+
+        bars_d = []
+        for ts, row in d4.iterrows():
+            try:
+                bars_d.append(BarData(
+                    timestamp=str(ts),
+                    open=float(row['Open']),
+                    high=float(row['High']),
+                    low=float(row['Low']),
+                    close=float(row['Close']),
+                    volume=float(row['Volume'])
+                ))
+            except:
+                continue
+
+        price  = bars[-1].close
+        atr    = get_atr(bars)
+        is_inv = meta.get('inverse', False)
+
+        # Run subset of agents (fast ones only)
+        fast_agents = [EMAAgent, MACDAgent, RSIAgent, BollingerAgent,
+                       ATRAgent, VolumeAgent, TSMOMAgent]
+        buy_votes = sell_votes = hold_votes = 0
+        buy_conf  = sell_conf  = 0.0
+        agent_opinions = []
+
+        for AgentClass in fast_agents:
+            try:
+                ag  = AgentClass()
+                sig = ag.analyze(bars)
+                if sig is None: continue
+                d_raw = sig.direction
+                c     = float(sig.confidence)
+                # Flip direction for inverse pairs
+                if is_inv and d_raw in ("BUY", "SELL"):
+                    d_raw = "SELL" if d_raw == "BUY" else "BUY"
+                if d_raw == "BUY":
+                    buy_votes += 1; buy_conf  += c
+                elif d_raw == "SELL":
+                    sell_votes += 1; sell_conf += c
+                else:
+                    hold_votes += 1
+                agent_opinions.append({
+                    "agent":      ag.name,
+                    "signal":     d_raw,
+                    "confidence": round(c * 100, 1),
+                    "reason":     sig.reason
+                })
+            except:
+                hold_votes += 1
+
+        # Final signal
+        direction  = "HOLD"
+        final_conf = 0.0
+        active     = buy_votes + sell_votes
+
+        if active >= 2:
+            if buy_votes > sell_votes:
+                final_conf = min(0.99, (buy_conf / max(buy_votes,1)) / 3.0)
+                if final_conf >= 0.55:
+                    direction = "BUY"
+            elif sell_votes > buy_votes:
+                final_conf = min(0.99, (sell_conf / max(sell_votes,1)) / 3.0)
+                if final_conf >= 0.55:
+                    direction = "SELL"
+
+        # Trend from daily bars
+        trend = "NEUTRAL"
+        if len(bars_d) >= 20:
+            c_arr = np.array([b.close for b in bars_d])
+            e10   = np.mean(c_arr[-10:])
+            e20   = np.mean(c_arr[-20:])
+            if c_arr[-1] > e10 > e20:
+                trend = "BULLISH"
+            elif c_arr[-1] < e10 < e20:
+                trend = "BEARISH"
+            else:
+                trend = "RANGING"
+
+        # SL/TP
+        sl = tp = 0.0
+        if direction == "BUY":
+            sl = price - atr * 1.5
+            tp = price + atr * 4.5
+        elif direction == "SELL":
+            sl = price + atr * 1.5
+            tp = price - atr * 4.5
+
+        # Chart data — last 60 hourly bars
+        chart_bars = [[b.timestamp, b.open, b.high, b.low, b.close, b.volume]
+                      for b in bars[-60:]]
+
+        return {
+            "pair":          symbol,
+            "display_name":  f"{meta['flag']} {meta['name']}",
+            "equiv":         meta['equiv'],
+            "price":         round(price, 5),
+            "direction":     direction,
+            "confidence":    round(final_conf * 100, 1),
+            "regime":        trend,
+            "h4_trend":      trend,
+            "h4_reason":     f"Daily trend: {trend}",
+            "h4_aligned":    True,
+            "conflict":      "",
+            "buy_votes":     buy_votes,
+            "sell_votes":    sell_votes,
+            "hold_votes":    hold_votes,
+            "sl":            round(sl, 5),
+            "tp":            round(tp, 5),
+            "atr":           round(atr, 5),
+            "rr":            "3:1",
+            "sl_pips":       0,
+            "tp_pips":       0,
+            "dollar_risk":   0,
+            "is_futures":    True,
+            "agent_opinions": agent_opinions,
+            "headlines":     [f"CME {symbol} | Equiv: {meta['equiv']} | Volume confirmation available"],
+            "explanation":   (f"{meta['flag']} {meta['name']} ({symbol})\n"
+                             f"Equivalent to: {meta['equiv']}\n"
+                             f"Price: {price:.5f} | Trend: {trend}\n"
+                             f"Signal: {direction} ({final_conf*100:.1f}%)\n"
+                             f"Votes: {buy_votes}B / {sell_votes}S\n"
+                             f"⚡ Institutional futures — signals only, not executed on OANDA"),
+            "bars_m15":      chart_bars,
+            "bars_h1":       chart_bars,
+            "bars_h4":       chart_bars,
+            "bars_h8":       chart_bars,
+            "bars_d1":       [[b.timestamp, b.open, b.high, b.low, b.close, b.volume]
+                               for b in bars_d[-60:]],
+            "timestamp":     datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+        }
+    except Exception as e:
+        log.warning(f"CME {symbol}: {e}")
+        return None
+
 
 def get_atr(bars, period=14):
     if len(bars) < period + 1: return 0.001
@@ -622,6 +803,7 @@ class ChakraV15:
     def __init__(self):
         self.cycle        = 0
         self.results      = {}
+        self.futures      = {}
         self.paused       = False
         self.pause_reason = ""
         self._balance     = 100000.0
@@ -973,6 +1155,21 @@ class ChakraV15:
         with self.lock:
             self.results = new_results
 
+        # Analyse CME futures in background (non-blocking)
+        def fetch_futures():
+            futures_results = {}
+            for symbol, meta in CME_FUTURES.items():
+                result = analyze_cme_future(symbol, meta)
+                if result:
+                    futures_results[symbol] = result
+                    log.info(f"  {symbol:<8} {result['direction']:<5} "
+                             f"conf={result['confidence']:.1f}% "
+                             f"trend:{result['h4_trend']}")
+            with self.lock:
+                self.futures = futures_results
+
+        threading.Thread(target=fetch_futures, daemon=True).start()
+
     def run(self):
         while True:
             try:
@@ -1279,7 +1476,8 @@ function trendClass(t){
   return t==='BULLISH'?'t-bull':t==='BEARISH'?'t-bear':'t-rng';
 }
 
-function buildCard(r){
+function buildCard(r, displayName){
+  const pairLabel = displayName || r.pair.replace('_','/');
   const sc = r.direction==='BUY'?'buy-card':r.direction==='SELL'?'sell-card':'';
   const sb = r.direction==='BUY'?'sig-buy':r.direction==='SELL'?'sig-sell':'sig-hold';
   const tc = trendClass(r.h4_trend);
@@ -1299,7 +1497,7 @@ function buildCard(r){
   return `
   <div class="card ${sc}" id="card-${r.pair}">
     <div class="card-hdr">
-      <span class="pair-name">${r.pair.replace('_','/')}</span>
+      <span class="pair-name">${pairLabel}</span>
       <span class="sig-badge ${sb}">${r.direction}</span>
     </div>
     <div class="price-row">
@@ -1367,13 +1565,15 @@ function buildCard(r){
 
 function update(){
   fetch('/api/data').then(r=>r.json()).then(data=>{
-    window._pairData = data.pairs||{};
-    const pairs = Object.values(window._pairData);
+    window._pairData   = data.pairs||{};
+    window._futureData = data.futures||{};
+    const pairs   = Object.values(window._pairData);
+    const futures = Object.values(window._futureData);
 
     document.getElementById('hCycles').textContent  = data.cycle||'—';
     document.getElementById('hSignals').textContent =
-      pairs.filter(p=>p.direction!=='HOLD').length;
-    document.getElementById('hPairs').textContent   = pairs.length;
+      [...pairs,...futures].filter(p=>p.direction!=='HOLD').length;
+    document.getElementById('hPairs').textContent   = pairs.length + futures.length;
     document.getElementById('lastUp').textContent   =
       new Date().toLocaleTimeString();
     document.getElementById('sessStatus').textContent =
@@ -1382,6 +1582,8 @@ function update(){
       session() ? 'status-ok' : 'status-warn';
 
     const grid = document.getElementById('grid');
+
+    // ── Forex pairs ──────────────────────────────────────
     pairs.forEach(r=>{
       let card = document.getElementById('card-'+r.pair);
       if(!card){
@@ -1390,15 +1592,53 @@ function update(){
         grid.appendChild(div.firstElementChild);
         card = document.getElementById('card-'+r.pair);
       } else {
-        // Update price and explanation
         const px = document.getElementById('px-'+r.pair);
         if(px) px.textContent = r.price;
         const exp = document.getElementById('exp-'+r.pair);
         if(exp) exp.textContent = r.explanation||'';
       }
-      // Draw chart
       setTimeout(()=>drawChart(r.pair, r.bars_m15||[]), 50);
     });
+
+    // ── CME Futures section header ────────────────────────
+    if(futures.length > 0 && !document.getElementById('futures-hdr')){
+      const hdr = document.createElement('div');
+      hdr.id = 'futures-hdr';
+      hdr.style.cssText = 'grid-column:1/-1;padding:12px 4px 4px;'+
+        'font-size:0.78em;color:#7b5cff;letter-spacing:2px;'+
+        'border-top:1px solid #2a1a6a;margin-top:4px;';
+      hdr.innerHTML = '⚡ CME CURRENCY FUTURES &nbsp;—&nbsp; '+
+        '<span style="color:#445;font-size:0.9em">'+
+        'Institutional signals | Read only | Not executed on OANDA</span>';
+      grid.appendChild(hdr);
+    }
+
+    // ── CME Futures cards ─────────────────────────────────
+    futures.forEach(r=>{
+      const safeId = r.pair.replace(/[^a-zA-Z0-9]/g,'_');
+      const displayR = {...r,
+        pair: safeId,
+        price: r.price,
+        h4_reason: r.h4_reason + (r.equiv ? ` | Equiv: ${r.equiv}` : '')
+      };
+      let card = document.getElementById('card-'+safeId);
+      if(!card){
+        const div = document.createElement('div');
+        div.innerHTML = buildCard(displayR, r.display_name||r.pair);
+        const el = div.firstElementChild;
+        if(el){
+          el.style.borderColor = '#1e1040';
+          el.style.background  =
+            'linear-gradient(135deg,#07071a,#0a0820)';
+          grid.appendChild(el);
+        }
+      } else {
+        const px = document.getElementById('px-'+safeId);
+        if(px) px.textContent = r.price;
+      }
+      setTimeout(()=>drawChart(safeId, r.bars_h1||[]), 100);
+    });
+
   }).catch(e=>console.error('API error:',e));
 }
 
@@ -1416,9 +1656,10 @@ def dashboard():
 def api_data():
     with chakra.lock:
         return jsonify({
-            "cycle":  chakra.cycle,
-            "pairs":  chakra.results,
-            "paused": chakra.paused,
+            "cycle":   chakra.cycle,
+            "pairs":   chakra.results,
+            "futures": chakra.futures,
+            "paused":  chakra.paused,
             "timestamp": datetime.now(timezone.utc).isoformat()
         })
 
