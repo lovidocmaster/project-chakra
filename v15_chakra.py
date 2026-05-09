@@ -28,7 +28,7 @@ from v13_production import (
     EMAAgent, MACDAgent, RSIAgent, BollingerAgent, ATRAgent,
     StochasticAgent, BreakoutAgent, BOSAgent, CHOCHAgent,
     WyckoffAgent, SessionAgent, KillzoneAgent, OrderBlockAgent,
-    FVGAgent, LiquidityAgent,
+    FVGAgent, LiquidityAgent, OTEAgent, SilverBulletAgent,
     FinMem, AgentWeights, RLAgent, RegimeDetector, HiveMind,
     NewsIntelligence, FREDMacro,
     OANDA_TOKEN, OANDA_ENV, OANDA_ACCOUNT,
@@ -140,11 +140,153 @@ class TSMOMAgent(Agent):
 
 
 # ── ALL AGENTS ────────────────────────────────────────────────────────
+# ── CME FUTURES CONFIRMATION AGENT ───────────────────────────────────
+class CMEFuturesAgent(Agent):
+    """
+    Uses CME Currency Futures (6A, 6B, 6C, 6E, 6J, 6N, 6S) as
+    institutional confirmation for spot forex signals.
+    When futures trend aligns with spot signal — higher confidence.
+    Institutional money moves futures first, spot follows.
+    """
+
+    # Map OANDA pair → CME futures symbol
+    FUTURES_MAP = {
+        "EUR_USD": "6E=F",
+        "GBP_USD": "6B=F",
+        "USD_JPY": "6J=F",
+        "AUD_USD": "6A=F",
+        "USD_CAD": "6C=F",
+        "NZD_USD": "6N=F",
+        "USD_CHF": "6S=F",
+        "GBP_JPY": "6B=F",   # Use GBP futures as proxy
+        "XAU_USD": "GC=F",   # Gold futures
+    }
+
+    # Pairs where futures are inverse to spot
+    INVERSE_PAIRS = {"USD_JPY", "USD_CAD", "USD_CHF"}
+
+    def __init__(self): super().__init__("CMEFutures")
+
+    def analyze(self, bars):
+        # bars[0].timestamp contains pair info via agent_name context
+        # We use the last bar's context — pair passed via bars list
+        if not bars or len(bars) < 5:
+            return Signal("HOLD", 0.0, "Not enough bars", self.name)
+
+        # This agent needs pair name — stored as class attribute when called
+        pair = getattr(self, '_pair', None)
+        if not pair:
+            return Signal("HOLD", 0.0, "No pair context", self.name)
+
+        symbol = self.FUTURES_MAP.get(pair)
+        if not symbol:
+            return Signal("HOLD", 0.0, f"No futures for {pair}", self.name)
+
+        try:
+            import yfinance as yf
+            d = yf.download(symbol, period="10d", interval="1d",
+                           progress=False)
+            if hasattr(d.columns, 'levels'):
+                d.columns = d.columns.droplevel(1)
+            if len(d) < 3:
+                return Signal("HOLD", 0.0, "Not enough futures data", self.name)
+
+            closes  = d["Close"].dropna().values
+            current = float(closes[-1])
+            prev3   = float(closes[-4]) if len(closes) >= 4 else float(closes[0])
+            prev1   = float(closes[-2])
+
+            # 3-day trend direction
+            trend_3d = current - prev3
+            # 1-day momentum
+            trend_1d = current - prev1
+
+            is_inverse = pair in self.INVERSE_PAIRS
+
+            # Determine futures signal
+            if trend_3d > 0 and trend_1d > 0:
+                fut_dir = "SELL" if is_inverse else "BUY"
+                conf    = 0.72
+                reason  = (f"CME {symbol} bullish 3d:{trend_3d:+.5f} "
+                          f"1d:{trend_1d:+.5f} → {fut_dir}")
+            elif trend_3d < 0 and trend_1d < 0:
+                fut_dir = "BUY" if is_inverse else "SELL"
+                conf    = 0.72
+                reason  = (f"CME {symbol} bearish 3d:{trend_3d:+.5f} "
+                          f"1d:{trend_1d:+.5f} → {fut_dir}")
+            else:
+                return Signal("HOLD", 0.0,
+                    f"CME {symbol} mixed signals", self.name)
+
+            return Signal(fut_dir, conf, reason, self.name)
+
+        except Exception as e:
+            return Signal("HOLD", 0.0, f"CME fetch error: {e}", self.name)
+
+
+
+class NadarayaWatsonAgent(Agent):
+    """
+    Nadaraya-Watson Kernel Regression Envelope — Institutional Reversal.
+    Fits smooth curve to price using Gaussian kernel.
+    Upper/Lower bands = curve ± 2.5 * ATR.
+    SELL when price touches upper band (overbought reversal).
+    BUY  when price touches lower band (oversold reversal).
+    """
+    def __init__(self): super().__init__("NW_Envelope")
+
+    def _nw_estimate(self, closes, bandwidth=8.0):
+        n   = len(closes)
+        y   = np.array(closes, dtype=float)
+        idx = np.arange(n, dtype=float)
+        # Vectorized — compute all weights at once using broadcasting
+        diff    = idx[:, None] - idx[None, :]   # shape (n, n)
+        weights = np.exp(-(diff ** 2) / (2 * bandwidth ** 2))
+        fitted  = (weights * y[None, :]).sum(axis=1) / weights.sum(axis=1)
+        return fitted
+
+    def analyze(self, bars):
+        if len(bars) < 50:
+            return Signal("HOLD", 0.0,
+                f"Need 50 bars for NW Envelope", self.name)
+
+        closes     = np.array([b.close for b in bars[-50:]])
+        atr        = get_atr(bars)
+        fitted     = self._nw_estimate(closes, bandwidth=8.0)
+        nw_line    = fitted[-1]
+        upper_band = nw_line + 2.5 * atr
+        lower_band = nw_line - 2.5 * atr
+        current    = closes[-1]
+        band_width = upper_band - lower_band
+        pos        = (current - lower_band) / band_width if band_width > 0 else 0.5
+
+        reason = (f"NW={nw_line:.5f} U={upper_band:.5f} "
+                  f"L={lower_band:.5f} Pos={pos*100:.0f}%")
+
+        if current >= upper_band * 0.998:
+            conf = min(0.92, 0.72 + (current - upper_band*0.998) / max(atr,0.0001) * 0.05)
+            return Signal("SELL", conf,
+                f"NW UPPER BAND — Reversal SELL | {reason}", self.name)
+        elif current <= lower_band * 1.002:
+            conf = min(0.92, 0.72 + (lower_band*1.002 - current) / max(atr,0.0001) * 0.05)
+            return Signal("BUY", conf,
+                f"NW LOWER BAND — Reversal BUY | {reason}", self.name)
+        elif pos >= 0.75:
+            return Signal("SELL", 0.52,
+                f"NW Upper Zone {pos*100:.0f}% — Approaching SELL | {reason}", self.name)
+        elif pos <= 0.25:
+            return Signal("BUY", 0.52,
+                f"NW Lower Zone {pos*100:.0f}% — Approaching BUY | {reason}", self.name)
+        return Signal("HOLD", 0.0,
+            f"NW Mid Zone {pos*100:.0f}% | {reason}", self.name)
+
+
 ALL_AGENTS = [
     EMAAgent, MACDAgent, RSIAgent, BollingerAgent, ATRAgent,
     StochasticAgent, BreakoutAgent, BOSAgent, CHOCHAgent,
     WyckoffAgent, SessionAgent, KillzoneAgent, OrderBlockAgent,
-    FVGAgent, LiquidityAgent, VolumeAgent, TSMOMAgent,
+    FVGAgent, LiquidityAgent, OTEAgent, SilverBulletAgent,
+    VolumeAgent, TSMOMAgent, NadarayaWatsonAgent, CMEFuturesAgent,
 ]
 
 # ── HELPERS ──────────────────────────────────────────────────────────
@@ -198,19 +340,141 @@ def get_open_trades():
     except:
         return []
 
-def get_news_headlines(pair):
+def get_forex_factory_events():
+    """Fetch high impact events from Forex Factory calendar"""
     try:
-        currencies = pair.replace("_", " ").replace("XAU", "Gold")\
-                        .replace("BTC", "Bitcoin").replace("GBP", "British Pound")\
-                        .replace("JPY", "Japanese Yen").replace("USD", "Dollar")
-        url = (f"https://newsapi.org/v2/everything?q={currencies}+forex&"
-               f"sortBy=publishedAt&pageSize=3&apiKey={NEWS_KEY}")
+        # Try multiple FF endpoints
+        urls = [
+            "https://nfs.faireconomy.media/ff_calendar_thisweek.json",
+            "https://cdn-nfs.faireconomy.media/ff_calendar_thisweek.json",
+        ]
+        for url in urls:
+            try:
+                resp = requests.get(url, timeout=8,
+                    headers={"User-Agent": "Mozilla/5.0"})
+                if resp.status_code == 200 and resp.text.strip():
+                    events = resp.json()
+                    high_impact = []
+                    for e in events:
+                        if e.get("impact") not in ("High", "3"): continue
+                        high_impact.append({
+                            "title":    e.get("title", e.get("name", "")),
+                            "currency": e.get("country", e.get("currency", "")),
+                            "time":     e.get("time", e.get("date", "")),
+                            "forecast": e.get("forecast", ""),
+                            "previous": e.get("previous", "")
+                        })
+                    return high_impact[:5]
+            except:
+                continue
+        return []
+    except Exception as e:
+        log.warning(f"Forex Factory: {e}")
+        return []
+
+def get_fred_context():
+    """Get key FRED macro indicators affecting forex"""
+    try:
+        fred_key = os.getenv("FRED_KEY", "")
+        if not fred_key: return {}
+
+        indicators = {
+            "Fed Rate":    "FEDFUNDS",
+            "CPI":         "CPIAUCSL",
+            "Unemployment":"UNRATE",
+        }
+        results = {}
+        for name, series_id in indicators.items():
+            try:
+                url = (f"https://api.stlouisfed.org/fred/series/observations"
+                       f"?series_id={series_id}&api_key={fred_key}"
+                       f"&limit=1&sort_order=desc&file_type=json")
+                r = requests.get(url, timeout=5)
+                obs = r.json().get("observations", [])
+                if obs:
+                    results[name] = obs[0].get("value", "N/A")
+            except:
+                continue
+        return results
+    except Exception as e:
+        log.warning(f"FRED: {e}")
+        return {}
+
+def is_news_blackout():
+    """Check if within 30 min of high impact news event"""
+    try:
+        events = get_forex_factory_events()
+        now = datetime.now(timezone.utc)
+        for e in events:
+            try:
+                # Parse date and time from Forex Factory format
+                date_str = e.get("date", "")
+                time_str = e.get("time", "")
+                if not date_str or not time_str: continue
+                # Try parsing
+                from dateutil import parser as dparser
+                event_dt = dparser.parse(f"{date_str} {time_str}")
+                event_dt = event_dt.replace(tzinfo=timezone.utc)
+                diff = abs((event_dt - now).total_seconds() / 60)
+                if diff <= NEWS_BLACKOUT_MIN:
+                    log.info(f"📰 NEWS BLACKOUT: {e['title']} in {diff:.0f} min")
+                    return True
+            except:
+                continue
+        return False
+    except:
+        return False
+
+def get_news_headlines(pair):
+    """Fetch real news for pair + Forex Factory events + FRED context"""
+    headlines = []
+
+    # 1. NewsAPI headlines
+    try:
+        base = pair.split("_")[0]
+        currency_names = {
+            "EUR": "Euro eurozone", "GBP": "British pound sterling",
+            "USD": "US dollar Federal Reserve", "JPY": "Japanese yen Bank of Japan",
+            "AUD": "Australian dollar", "CAD": "Canadian dollar oil",
+            "XAU": "Gold prices", "GBP": "British pound"
+        }
+        query = currency_names.get(base, base) + " forex"
+        url = (f"https://newsapi.org/v2/everything?q={query}&"
+               f"sortBy=publishedAt&pageSize=3&language=en&apiKey={NEWS_KEY}")
         resp = requests.get(url, timeout=5)
         articles = resp.json().get("articles", [])
-        headlines = [a["title"] for a in articles[:3] if a.get("title")]
-        return headlines if headlines else ["No recent headlines"]
+        for a in articles[:2]:
+            if a.get("title"):
+                headlines.append(f"📰 {a['title'][:70]}")
     except:
-        return ["News unavailable"]
+        pass
+
+    # 2. Forex Factory high impact events
+    try:
+        events = get_forex_factory_events()
+        pair_currencies = pair.replace("_", "")
+        for e in events[:3]:
+            curr = e.get("currency", "").upper()
+            if curr and curr in pair_currencies:
+                headlines.append(
+                    f"⚡ {e['currency']} {e['title']} — "
+                    f"Forecast: {e.get('forecast','?')} "
+                    f"Prev: {e.get('previous','?')}"
+                )
+    except:
+        pass
+
+    # 3. FRED macro context for USD pairs
+    if "USD" in pair:
+        try:
+            fred = get_fred_context()
+            if fred:
+                parts = [f"{k}: {v}" for k, v in fred.items()]
+                headlines.append(f"📊 FRED Macro — {' | '.join(parts)}")
+        except:
+            pass
+
+    return headlines if headlines else ["No recent market news found"]
 
 def send_telegram(msg):
     try:
@@ -356,10 +620,13 @@ def execute_trade(pair, direction, bars, balance):
 # ── MAIN ORCHESTRATOR ─────────────────────────────────────────────────
 class ChakraV15:
     def __init__(self):
-        self.cycle       = 0
-        self.results     = {}
-        self.paused      = False
+        self.cycle        = 0
+        self.results      = {}
+        self.paused       = False
         self.pause_reason = ""
+        self._balance     = 100000.0
+        self._ff_events   = []
+        self._fred_data   = {}
         agent_names      = [ag().name for ag in ALL_AGENTS]
         self.mem         = FinMem()
         self.weights     = AgentWeights(agent_names)
@@ -377,6 +644,8 @@ class ChakraV15:
             bars_m15 = fetch_bars(pair, "M15", 100)
             bars_h1  = fetch_bars(pair, "H1",  300)
             bars_h4  = fetch_bars(pair, "H4",  300)
+            bars_h8  = fetch_bars(pair, "H8",  200)
+            bars_d1  = fetch_bars(pair, "D",   100)
 
             if not bars_h1 or len(bars_h1) < 50:
                 return None
@@ -404,6 +673,10 @@ class ChakraV15:
                                  for b in bars_h1[-50:]],
                     "bars_h4":  [[b.timestamp,b.open,b.high,b.low,b.close,b.volume]
                                  for b in bars_h4[-50:]],
+                    "bars_h8":  [[b.timestamp,b.open,b.high,b.low,b.close,b.volume]
+                                 for b in bars_h8[-50:]],
+                    "bars_d1":  [[b.timestamp,b.open,b.high,b.low,b.close,b.volume]
+                                 for b in bars_d1[-50:]],
                     "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
                 }
 
@@ -432,7 +705,15 @@ class ChakraV15:
             for AgentClass in ALL_AGENTS:
                 try:
                     ag  = AgentClass()
-                    sig = ag.analyze(bars_h1)
+                    # Pass pair context to CMEFuturesAgent
+                    if ag.name == "CMEFutures":
+                        ag._pair = pair
+                    # NadarayaWatson runs on 8H for reversal signals
+                    if ag.name == "NW_Envelope":
+                        bars_for_agent = bars_h8 if bars_h8 and len(bars_h8) >= 50 else bars_h1
+                    else:
+                        bars_for_agent = bars_h1
+                    sig = ag.analyze(bars_for_agent)
                     if sig is None: continue
                     w   = self.weights.get(ag.name)
                     if sig.direction == "BUY":
@@ -491,10 +772,25 @@ class ChakraV15:
                 sl_pips = round(abs(price - sl) / pip)
                 tp_pips = round(abs(price - tp) / pip)
 
-            dollar_risk = round(get_balance() * RISK_PCT, 2)
+            dollar_risk = round(self._balance * RISK_PCT, 2)
 
             # News
-            headlines = get_news_headlines(pair)
+            # News — build from cached FF events + FRED (no API call per pair)
+            headlines = []
+            pair_currencies = pair.replace("_", "")
+            for e in self._ff_events[:3]:
+                curr = e.get("currency", "").upper()
+                if curr and curr in pair_currencies:
+                    headlines.append(
+                        f"⚡ {e['currency']} {e['title']} "
+                        f"Forecast:{e.get('forecast','?')} "
+                        f"Prev:{e.get('previous','?')}"
+                    )
+            if "USD" in pair and self._fred_data:
+                parts = [f"{k}:{v}" for k, v in self._fred_data.items()]
+                headlines.append(f"📊 FRED: {' | '.join(parts)}")
+            if not headlines:
+                headlines = ["No high-impact events this cycle"]
 
             # Plain English explanation
             explanation = self._explain(
@@ -533,6 +829,10 @@ class ChakraV15:
                               for b in bars_h1[-60:]],
                 "bars_h4":  [[b.timestamp,b.open,b.high,b.low,b.close,b.volume]
                               for b in bars_h4[-60:]],
+                "bars_h8":  [[b.timestamp,b.open,b.high,b.low,b.close,b.volume]
+                              for b in (bars_h8 or [])[-60:]],
+                "bars_d1":  [[b.timestamp,b.open,b.high,b.low,b.close,b.volume]
+                              for b in (bars_d1 or [])[-60:]],
                 "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
             }
         except Exception as e:
@@ -602,6 +902,11 @@ class ChakraV15:
             log.info("🌙 Outside London/NY session — monitoring only")
 
         balance     = get_balance()
+        self._balance = balance
+
+        # Fetch news and FF events ONCE per cycle — not per pair
+        self._ff_events = get_forex_factory_events()
+        self._fred_data = get_fred_context()
         new_results = {}
 
         for pair in PAIRS:
@@ -840,15 +1145,51 @@ body{background:#030308;color:#c8d0ff;font-family:'Courier New',monospace;min-he
 
 <div class="hdr">
   <div class="logo-wrap">
-    <img src="https://raw.githubusercontent.com/lovidocmaster/project-chakra/main/chakra_logo.png"
-         alt="Project Chakra" class="logo-img">
+    <svg width="48" height="48" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="cg" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#9b6fff"/>
+          <stop offset="100%" stop-color="#3a0080"/>
+        </radialGradient>
+        <filter id="glow">
+          <feGaussianBlur stdDeviation="1.5" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
+      <!-- Outer ring -->
+      <circle cx="24" cy="24" r="22" fill="none" stroke="#7b5cff" stroke-width="1.5" opacity="0.8"/>
+      <circle cx="24" cy="24" r="18" fill="none" stroke="#4a3a9a" stroke-width="0.8" opacity="0.6"/>
+      <!-- Center glow -->
+      <circle cx="24" cy="24" r="6" fill="url(#cg)" filter="url(#glow)"/>
+      <circle cx="24" cy="24" r="3" fill="#fff" opacity="0.9"/>
+      <!-- 4 spikes -->
+      <polygon points="24,2 26,8 22,8" fill="#7b5cff"/>
+      <polygon points="24,46 26,40 22,40" fill="#7b5cff"/>
+      <polygon points="2,24 8,22 8,26" fill="#7b5cff"/>
+      <polygon points="46,24 40,22 40,26" fill="#7b5cff"/>
+      <!-- Connector lines -->
+      <line x1="24" y1="8" x2="24" y2="18" stroke="#7b5cff" stroke-width="1" opacity="0.7"/>
+      <line x1="24" y1="30" x2="24" y2="40" stroke="#7b5cff" stroke-width="1" opacity="0.7"/>
+      <line x1="8" y1="24" x2="18" y2="24" stroke="#7b5cff" stroke-width="1" opacity="0.7"/>
+      <line x1="30" y1="24" x2="40" y2="24" stroke="#7b5cff" stroke-width="1" opacity="0.7"/>
+      <!-- 4 corner nodes -->
+      <circle cx="24" cy="9" r="4" fill="#0a0a2e" stroke="#7b5cff" stroke-width="1"/>
+      <circle cx="24" cy="39" r="4" fill="#0a0a2e" stroke="#7b5cff" stroke-width="1"/>
+      <circle cx="9"  cy="24" r="4" fill="#0a0a2e" stroke="#7b5cff" stroke-width="1"/>
+      <circle cx="39" cy="24" r="4" fill="#0a0a2e" stroke="#7b5cff" stroke-width="1"/>
+      <!-- Node icons -->
+      <text x="24" y="11.5" text-anchor="middle" font-size="4" fill="#00f5ff">▲▼</text>
+      <text x="24" y="41.5" text-anchor="middle" font-size="4" fill="#7b5cff">🧠</text>
+      <text x="9"  y="26"   text-anchor="middle" font-size="4" fill="#00ff88">▐▌</text>
+      <text x="39" y="26"   text-anchor="middle" font-size="4" fill="#ffd700">$€</text>
+    </svg>
     <span class="logo-text">PROJECT CHAKRA V15</span>
   </div>
   <div class="hdr-stats">
     <div class="hstat"><div class="hstat-v" id="hCycles">—</div><div class="hstat-l">CYCLES</div></div>
     <div class="hstat"><div class="hstat-v" id="hSignals">—</div><div class="hstat-l">SIGNALS</div></div>
     <div class="hstat"><div class="hstat-v" id="hPairs">7</div><div class="hstat-l">PAIRS</div></div>
-    <div class="hstat"><div class="hstat-v" id="hAgents">17</div><div class="hstat-l">AGENTS</div></div>
+    <div class="hstat"><div class="hstat-v" id="hAgents">21</div><div class="hstat-l">AGENTS</div></div>
     <div class="live-badge"><div class="dot"></div>LIVE</div>
   </div>
 </div>
@@ -870,7 +1211,7 @@ function session(){
   return (h>=7&&h<=12)||(h>=13&&h<=18);
 }
 
-function tfKey(tf){ return {M15:'bars_m15',H1:'bars_h1',H4:'bars_h4'}[tf]||'bars_h1'; }
+function tfKey(tf){ return {M15:'bars_m15',H1:'bars_h1',H4:'bars_h4',H8:'bars_h8',D1:'bars_d1'}[tf]||'bars_h1'; }
 
 function drawChart(pair, barsData){
   const id = 'chart-'+pair;
@@ -1005,6 +1346,8 @@ function buildCard(r){
       <div class="tab active" onclick="switchTF('${r.pair}','M15',this)">M15</div>
       <div class="tab" onclick="switchTF('${r.pair}','H1',this)">H1</div>
       <div class="tab" onclick="switchTF('${r.pair}','H4',this)">H4</div>
+      <div class="tab" onclick="switchTF('${r.pair}','H8',this)">H8</div>
+      <div class="tab" onclick="switchTF('${r.pair}','D1',this)">1D</div>
     </div>
     <div class="chart-wrap">
       <canvas id="chart-${r.pair}"></canvas>
