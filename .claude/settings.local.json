@@ -10,7 +10,8 @@
       "Bash(py -3.11 -c \"import v13_production; print\\([x for x in dir\\(v13_production\\) if 'Agent' in x]\\)\")",
       "Bash(py -3.11 -c \"import v13_production; print\\([x for x in dir\\(v13_production\\) if not x.startswith\\('_'\\)]\\)\")",
       "Bash(py -3.11 -c \"import v13_production; fns = [x for x in dir\\(v13_production\\) if x.startswith\\('_'\\) and not x.startswith\\('__'\\)]; print\\(fns\\)\")",
-      "Bash(py -3.11 -c \"import inspect, v13_production; print\\(inspect.getsource\\(v13_production.AgentWeights\\)\\)\")"
+      "Bash(py -3.11 -c \"import inspect, v13_production; print\\(inspect.getsource\\(v13_production.AgentWeights\\)\\)\")",
+      "Bash(py -3.11 v15_chakra.py --once)"
     ]
   }
 }
