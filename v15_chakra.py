@@ -1026,16 +1026,24 @@ def execute_trade(pair, direction, bars, balance):
         units = max(units, MIN_UNITS)
         if direction == "SELL": units = -units
 
-        sl_price = price - atr*1.5 if direction == "BUY" else price + atr*1.5
-        tp_price = price + atr*4.5 if direction == "BUY" else price - atr*4.5
+        # Price precision — JPY pairs need 3 decimals, XAU needs 2, others need 5
+        if "JPY" in pair:
+            precision = 3
+        elif "XAU" in pair:
+            precision = 2
+        else:
+            precision = 5
+
+        sl_price = round(price - atr*1.5, precision) if direction=="BUY" else round(price + atr*1.5, precision)
+        tp_price = round(price + atr*4.5, precision) if direction=="BUY" else round(price - atr*4.5, precision)
 
         data = {
             "order": {
                 "type": "MARKET",
                 "instrument": pair,
                 "units": str(units),
-                "stopLossOnFill":   {"price": f"{sl_price:.5f}"},
-                "takeProfitOnFill": {"price": f"{tp_price:.5f}"},
+                "stopLossOnFill":   {"price": f"{sl_price:.{precision}f}"},
+                "takeProfitOnFill": {"price": f"{tp_price:.{precision}f}"},
                 "timeInForce": "FOK"
             }
         }
@@ -1043,7 +1051,7 @@ def execute_trade(pair, direction, bars, balance):
         r = OrderCreate(accountID=OANDA_ACCOUNT, data=data)
         client.request(r)
         log.info(f"[EXECUTED] {pair} {direction} units={units} "
-                 f"entry={price:.5f} SL={sl_price:.5f} TP={tp_price:.5f}")
+                 f"entry={price:.{precision}f} SL={sl_price:.{precision}f} TP={tp_price:.{precision}f}")
 
         # Calculate pip distances
         pip = 0.01 if "JPY" in pair or "XAU" in pair else 0.0001
@@ -1597,244 +1605,261 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:#030308;color:#d0d8ff;font-family:'Courier New',monospace;min-height:100vh}
-::-webkit-scrollbar{width:4px}
-::-webkit-scrollbar-thumb{background:#3a2a7a;border-radius:2px}
+body{background:#030308;color:#e0e8ff;font-family:'Courier New',monospace;min-height:100vh;font-size:14px}
+body.light{background:#f0f2ff;color:#111133}
+body.light .hdr{background:linear-gradient(135deg,#e8eaff,#d0d8ff);border-color:#9999cc}
+body.light .card{background:linear-gradient(160deg,#ffffff,#f0f2ff);border-color:#ccccee}
+body.light .c-price{color:#0066cc}
+body.light .c-regime{background:#e0e4ff;color:#334}
+body.light .c-conf-bar{background:#d0d4ee}
+body.light .side{background:#f8f9ff;border-color:#ccccee}
+body.light .side-title{background:#e8eaff;color:#5533aa}
+body.light .logic-box{background:#fff;border-color:#ccccee;color:#223}
+body.light .news-item{border-color:#dde}
+body.light .news-title{color:#112}
+body.light .ag-row{border-color:#eee}
+body.light .ag-name{color:#5533aa}
+body.light .ag-reason{color:#445}
+body.light .status-bar{background:#e8eaff;color:#445;border-color:#ccd}
+body.light .news-ticker{background:#e0e4ff;border-color:#ccd}
+body.light .tick{color:#334}
+body.light .signal-feed{background:#eef0ff;border-color:#ccd}
+body.light .feed-empty{color:#889}
+body.light .c-explain{background:#fff;border-color:#ccd;color:#223}
+body.light .tab{background:#e8eaff;color:#556;border-color:#ccd}
+body.light .tab.active{background:#d0d4ff;color:#3322aa}
+body.light .c-lev{background:#f8f9ff}
+body.light .c-levels{background:#dde}
+body.light .c-trend{border-color:#dde}
+body.light .c-votes{border-color:#dde}
+body.light .c-agents{border-color:#dde}
+body.light .c-agents-title{background:#eef0ff;color:#5533aa}
+body.light .hstat-v{color:#0055cc}
+body.light .hstat-l{color:#667}
+body.light .logo-text{background:linear-gradient(90deg,#5533aa,#0066cc);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-thumb{background:#3a2a7a;border-radius:3px}
 
-/* ── HEADER ── */
-.hdr{background:linear-gradient(135deg,#06061a,#0e0628);
-     border-bottom:1px solid #2a1a6a;padding:10px 20px;
-     display:flex;align-items:center;justify-content:space-between;
+/* HEADER */
+.hdr{background:linear-gradient(135deg,#06061a,#0e0628);border-bottom:2px solid #2a1a6a;
+     padding:12px 20px;display:flex;align-items:center;justify-content:space-between;
      position:sticky;top:0;z-index:200}
-.logo-wrap{display:flex;align-items:center;gap:10px}
-.logo-svg{width:44px;height:44px}
-.logo-text{font-size:1.2em;font-weight:bold;letter-spacing:3px;
+.logo-wrap{display:flex;align-items:center;gap:12px}
+.logo-svg{width:48px;height:48px;flex-shrink:0}
+.logo-text{font-size:1.3em;font-weight:bold;letter-spacing:3px;
            background:linear-gradient(90deg,#7b5cff,#00f5ff);
            -webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.hdr-stats{display:flex;gap:16px;align-items:center}
+.logo-sub{font-size:0.65em;color:#667;letter-spacing:2px;margin-top:2px}
+.hdr-stats{display:flex;gap:20px;align-items:center}
 .hstat{text-align:center}
-.hstat-v{font-size:1.2em;font-weight:bold;color:#00f5ff}
-.hstat-l{font-size:0.6em;color:#667;letter-spacing:1px}
-.live-badge{display:flex;align-items:center;gap:5px;background:#0a1a0a;
-            border:1px solid #00ff66;border-radius:20px;
-            padding:3px 10px;font-size:0.75em;color:#00ff66}
-.dot{width:7px;height:7px;border-radius:50%;background:#00ff66;
-     animation:blink 1s infinite}
-@keyframes blink{0%,100%{opacity:1;box-shadow:0 0 6px #00ff66}50%{opacity:0.3}}
+.hstat-v{font-size:1.3em;font-weight:bold;color:#00f5ff}
+.hstat-l{font-size:0.65em;color:#889;letter-spacing:1px}
+.live-badge{display:flex;align-items:center;gap:6px;background:#061a06;
+            border:1px solid #00ff66;border-radius:20px;padding:5px 14px;
+            font-size:0.8em;color:#00ff66;font-weight:bold}
+.dot{width:8px;height:8px;border-radius:50%;background:#00ff66;animation:blink 1s infinite}
+@keyframes blink{0%,100%{opacity:1;box-shadow:0 0 8px #00ff66}50%{opacity:0.2}}
+.sound-btn{background:#0a0a20;border:1px solid #3a3a6a;color:#889;padding:5px 12px;
+           border-radius:6px;cursor:pointer;font-size:0.75em;font-family:inherit}
+.sound-btn.on{color:#00ff66;border-color:#00ff6650}
 
-/* ── NEWS TICKER ── */
-.news-ticker{background:#05050f;border-bottom:1px solid #1a1a4a;
-             padding:5px 0;overflow:hidden;white-space:nowrap;
-             position:relative;height:28px}
-.ticker-inner{display:inline-flex;animation:ticker 60s linear infinite;
-              align-items:center}
+/* NEWS TICKER */
+.news-ticker{background:#030310;border-bottom:1px solid #1a1a5a;padding:0;
+             overflow:hidden;height:32px;display:flex;align-items:center}
+.ticker-label{background:#0a0a2a;color:#7b5cff;font-size:0.68em;padding:0 12px;
+              height:100%;display:flex;align-items:center;border-right:1px solid #1a1a5a;
+              white-space:nowrap;flex-shrink:0;letter-spacing:1px}
+.ticker-scroll{overflow:hidden;flex:1}
+.ticker-inner{display:inline-flex;animation:scroll 80s linear infinite;white-space:nowrap}
 .ticker-inner:hover{animation-play-state:paused}
-@keyframes ticker{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
-.ticker-item{display:inline-flex;align-items:center;gap:8px;
-             padding:0 24px;font-size:0.72em;color:#99a;
-             border-right:1px solid #1a1a4a}
-.ticker-item.impact-high{color:#ff6655}
-.ticker-item.impact-med{color:#ffaa44}
-.ticker-item.ticker-ff{color:#7b5cff}
+@keyframes scroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+.tick{display:inline-block;padding:0 20px;font-size:0.72em;color:#aab;
+      border-right:1px solid #1a1a4a;height:32px;line-height:32px}
+.tick-high{color:#ff6655}
+.tick-med{color:#ffaa44}
+.tick-ff{color:#7b5cff;font-weight:bold}
 
-/* ── SIGNAL FEED ── */
-.signal-feed{background:#04040e;border-bottom:1px solid #1a1a4a;
-             padding:6px 16px;display:flex;gap:8px;overflow-x:auto;
-             align-items:center;min-height:36px}
-.feed-label{font-size:0.65em;color:#445;letter-spacing:1px;
-            white-space:nowrap;flex-shrink:0}
-.feed-item{display:inline-flex;align-items:center;gap:6px;
-           padding:3px 10px;border-radius:12px;font-size:0.72em;
-           white-space:nowrap;flex-shrink:0;animation:fadeIn 0.5s}
-@keyframes fadeIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+/* SIGNAL FEED */
+.signal-feed{background:#04040f;border-bottom:1px solid #1a1a4a;
+             padding:7px 16px;display:flex;align-items:center;gap:10px;
+             min-height:40px;overflow-x:auto}
+.feed-label{font-size:0.68em;color:#556;letter-spacing:1px;white-space:nowrap;flex-shrink:0;
+            font-weight:bold}
+.feed-item{display:inline-flex;align-items:center;gap:5px;padding:4px 12px;
+           border-radius:14px;font-size:0.75em;white-space:nowrap;flex-shrink:0;
+           cursor:pointer;transition:opacity .2s;font-weight:bold}
+.feed-item:hover{opacity:0.8}
 .feed-buy{background:#0a2a0a;border:1px solid #00ff66;color:#00ff66}
 .feed-sell{background:#2a0a0a;border:1px solid #ff4455;color:#ff4455}
-.feed-no{color:#334;font-size:0.72em;font-style:italic}
+.feed-empty{font-size:0.72em;color:#445;font-style:italic}
 
-/* ── STATUS BAR ── */
-.status-bar{background:#03030a;border-bottom:1px solid #0f0f2a;
-            padding:4px 16px;display:flex;gap:20px;font-size:0.68em;color:#556}
-.s-ok{color:#00ff66}.s-warn{color:#ffaa44}.s-err{color:#ff4455}
+/* STATUS BAR */
+.status-bar{background:#02020a;border-bottom:1px solid #0f0f2a;
+            padding:5px 16px;display:flex;gap:20px;font-size:0.72em;color:#778;flex-wrap:wrap}
+.s-ok{color:#00ff66;font-weight:bold}
+.s-warn{color:#ffaa44;font-weight:bold}
+.s-err{color:#ff4455;font-weight:bold}
 
-/* ── MAIN LAYOUT ── */
-.main-layout{display:grid;grid-template-columns:1fr 320px;gap:0;min-height:calc(100vh - 140px)}
-@media(max-width:900px){.main-layout{grid-template-columns:1fr}.side-panel{display:none}}
+/* MAIN LAYOUT: 3 columns */
+.main-wrap{display:grid;grid-template-columns:1fr 300px;min-height:calc(100vh - 140px)}
 
-/* ── PAIR GRID ── */
+/* PAIR GRID */
 .pair-grid{padding:12px;display:grid;
-           grid-template-columns:repeat(auto-fill,minmax(340px,1fr));
-           gap:12px;align-content:start}
+           grid-template-columns:repeat(auto-fill,minmax(360px,1fr));
+           gap:14px;align-content:start;overflow-y:auto}
 
-/* ── SIDE PANEL ── */
-.side-panel{background:#04040e;border-left:1px solid #1a1a4a;
-            display:flex;flex-direction:column;overflow:hidden}
-.side-section{border-bottom:1px solid #0f0f2a}
-.side-title{padding:8px 12px;font-size:0.68em;color:#7b5cff;
-            letter-spacing:2px;background:#06061a}
-
-/* NEWS PANEL */
-.news-panel{flex:1;overflow-y:auto;max-height:50vh}
-.news-card{padding:8px 12px;border-bottom:1px solid #08081a;cursor:pointer}
-.news-card:hover{background:#06060f}
-.news-title{font-size:0.7em;color:#bbc;line-height:1.4;margin-bottom:4px}
-.news-meta{display:flex;gap:8px;font-size:0.62em;color:#445}
-.news-pairs{display:flex;gap:4px;flex-wrap:wrap}
-.news-pair-tag{background:#0a0a2a;border:1px solid #2a2a5a;
-               color:#7b5cff;padding:1px 5px;border-radius:3px;font-size:0.85em}
-.news-time{color:#334}
-
-/* FF EVENTS PANEL */
-.ff-panel{max-height:200px;overflow-y:auto}
-.ff-event{padding:6px 12px;border-bottom:1px solid #08081a;
-          display:flex;justify-content:space-between;align-items:center}
-.ff-curr{font-size:0.72em;color:#7b5cff;font-weight:bold;width:36px}
-.ff-title{font-size:0.68em;color:#aab;flex:1}
-.ff-time{font-size:0.62em;color:#445}
-.ff-high{border-left:2px solid #ff4455}
-.ff-med{border-left:2px solid #ffaa44}
+/* SIDE PANEL */
+.side{background:#030310;border-left:2px solid #1a1a5a;display:flex;
+      flex-direction:column;overflow:hidden;max-height:calc(100vh - 140px);position:sticky;top:140px}
+.side-section{border-bottom:1px solid #0f0f2a;flex-shrink:0}
+.side-title{padding:8px 14px;font-size:0.68em;color:#7b5cff;letter-spacing:2px;
+            background:#050520;border-bottom:1px solid #0f0f2a;font-weight:bold}
+.side-scroll{overflow-y:auto}
 
 /* LOGIC BOARD */
-.logic-panel{flex:1;overflow-y:auto;padding:10px 12px;max-height:50vh}
-.logic-pair-select{width:100%;background:#06061a;border:1px solid #2a2a5a;
-                   color:#aab;padding:5px;border-radius:4px;
-                   font-family:inherit;font-size:0.72em;margin-bottom:8px}
-.logic-content{font-size:0.68em;line-height:1.8;color:#889;
-               white-space:pre-wrap;background:#06060f;
-               padding:8px;border-radius:6px;border:1px solid #1a1a3a}
-.logic-buy{color:#00ff66}.logic-sell{color:#ff4455}
-.logic-warn{color:#ffaa44}.logic-info{color:#7b5cff}
+.logic-sel{width:100%;background:#06061a;border:1px solid #2a2a6a;color:#ccd;
+           padding:6px 10px;border-radius:5px;font-family:inherit;font-size:0.75em;
+           margin:10px 12px;width:calc(100% - 24px)}
+.logic-box{margin:0 12px 10px;padding:10px;background:#030315;
+           border:1px solid #1a1a4a;border-radius:6px;
+           font-size:0.7em;line-height:1.8;color:#bbc;
+           max-height:280px;overflow-y:auto;white-space:pre-wrap}
 
-/* ── PAIR CARD ── */
-.card{background:linear-gradient(135deg,#07071a,#0b0b22);
-      border:1px solid #1a1a4a;border-radius:12px;overflow:hidden;
-      transition:border-color .3s,transform .2s}
-.card:hover{transform:translateY(-2px);border-color:#3a2a7a}
-.card.buy-card{border-color:#0a3a1a}
-.card.sell-card{border-color:#3a0a1a}
+/* NEWS PANEL */
+.news-scroll{overflow-y:auto;max-height:220px}
+.news-item{padding:8px 14px;border-bottom:1px solid #08081a;cursor:pointer}
+.news-item:hover{background:#06060f}
+.news-title{font-size:0.72em;color:#ccd;line-height:1.5;margin-bottom:4px}
+.news-tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:3px}
+.news-tag{background:#0a0a2a;border:1px solid #2a2a6a;color:#7b5cff;
+          padding:1px 6px;border-radius:3px;font-size:0.68em}
+.news-src{font-size:0.65em;color:#556;margin-top:2px}
+
+/* FF EVENTS */
+.ff-scroll{overflow-y:auto;max-height:180px}
+.ff-item{padding:7px 14px;border-bottom:1px solid #08081a;display:grid;
+         grid-template-columns:40px 1fr auto;gap:6px;align-items:center}
+.ff-curr{font-size:0.72em;color:#7b5cff;font-weight:bold}
+.ff-name{font-size:0.7em;color:#ccd}
+.ff-time{font-size:0.65em;color:#556}
+.ff-high{border-left:3px solid #ff4455}
+.ff-med{border-left:3px solid #ffaa44}
+.ff-low{border-left:3px solid #334}
+
+/* CARD */
+.card{background:linear-gradient(160deg,#07071c,#0b0b25);
+      border:1px solid #1e1e4e;border-radius:14px;overflow:hidden;
+      transition:border-color .3s,transform .15s;position:relative}
+.card:hover{transform:translateY(-2px);border-color:#4a3a9a}
+.card.buy-card{border-color:#0d3d1a}
+.card.sell-card{border-color:#3d0d1a}
 
 /* Card header */
-.card-hdr{padding:10px 14px;display:flex;justify-content:space-between;
-          align-items:center;border-bottom:1px solid #1a1a3a}
-.pair-name{font-size:1.15em;font-weight:bold;color:#fff;letter-spacing:1px}
-.sig-badge{padding:3px 10px;border-radius:16px;font-weight:bold;
-           font-size:0.85em;letter-spacing:1px}
-.sig-buy{background:#0a2a0a;color:#00ff66;border:1px solid #00ff662a;
-         box-shadow:0 0 8px #00ff6618}
-.sig-sell{background:#2a0a0a;color:#ff4455;border:1px solid #ff44552a;
-          box-shadow:0 0 8px #ff445518}
-.sig-hold{background:#141428;color:#667;border:1px solid #2a2a5a}
+.c-hdr{padding:12px 16px;display:flex;justify-content:space-between;align-items:center;
+       border-bottom:1px solid #1a1a3e}
+.c-pair{font-size:1.2em;font-weight:bold;color:#fff;letter-spacing:2px}
+.c-sig{padding:4px 14px;border-radius:16px;font-weight:bold;font-size:0.85em;letter-spacing:1px}
+.sig-buy{background:#0a2e0a;color:#00ff88;border:1px solid #00ff8830;box-shadow:0 0 10px #00ff8820}
+.sig-sell{background:#2e0a0a;color:#ff3355;border:1px solid #ff335530;box-shadow:0 0 10px #ff335520}
+.sig-hold{background:#141430;color:#778;border:1px solid #2a2a5a}
 
 /* Price */
-.price-row{padding:8px 14px;display:flex;align-items:baseline;gap:10px;
-           border-bottom:1px solid #0a0a1a}
-.price-big{font-size:1.7em;font-weight:bold;color:#00f5ff;
-           font-variant-numeric:tabular-nums}
-.regime-tag{font-size:0.72em;color:#667;padding:2px 6px;
-            background:#0a0a1a;border-radius:4px}
+.c-price-row{padding:10px 16px;display:flex;align-items:baseline;gap:12px;
+             border-bottom:1px solid #0a0a1e}
+.c-price{font-size:1.9em;font-weight:bold;color:#00f5ff;font-variant-numeric:tabular-nums}
+.c-regime{font-size:0.75em;color:#889;padding:2px 8px;background:#0a0a1e;border-radius:4px}
 
 /* Levels */
-.levels{display:grid;grid-template-columns:1fr 1fr 1fr;
-        gap:1px;background:#0a0a1a}
-.lev{padding:7px;text-align:center;background:#07071a}
-.lev-l{font-size:0.58em;color:#556;letter-spacing:1px;margin-bottom:2px}
-.lev-v{font-size:0.82em;font-weight:bold;font-variant-numeric:tabular-nums}
-.lev-sl .lev-v{color:#ff4455}
-.lev-entry .lev-v{color:#00f5ff}
-.lev-tp .lev-v{color:#00ff66}
-.lev-pips{font-size:0.58em;color:#445}
+.c-levels{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:#0a0a1e}
+.c-lev{padding:8px 6px;text-align:center;background:#07071c}
+.c-lev-l{font-size:0.62em;color:#778;letter-spacing:1px;margin-bottom:3px;font-weight:bold}
+.c-lev-v{font-size:0.88em;font-weight:bold;font-variant-numeric:tabular-nums}
+.sl-v{color:#ff3355}
+.en-v{color:#00f5ff}
+.tp-v{color:#00ff88}
+.c-lev-p{font-size:0.62em;color:#556}
 
-/* H4 trend */
-.trend-row{padding:6px 14px;display:flex;align-items:center;gap:8px;
-           border-bottom:1px solid #0a0a1a;flex-wrap:wrap}
-.trend-pill{padding:2px 8px;border-radius:10px;font-weight:bold;font-size:0.75em}
-.t-bull{background:#0a2a0a;color:#00ff66;border:1px solid #00ff6630}
-.t-bear{background:#2a0a0a;color:#ff4455;border:1px solid #ff445530}
-.t-rng{background:#141428;color:#99a;border:1px solid #2a2a5a}
-.trend-reason{font-size:0.66em;color:#556;flex:1}
+/* Trend */
+.c-trend{padding:7px 16px;display:flex;align-items:center;gap:8px;
+         border-bottom:1px solid #0a0a1e;flex-wrap:wrap}
+.t-pill{padding:3px 10px;border-radius:10px;font-weight:bold;font-size:0.75em}
+.t-bull{background:#0a2e0a;color:#00ff88;border:1px solid #00ff8840}
+.t-bear{background:#2e0a0a;color:#ff3355;border:1px solid #ff335540}
+.t-rng{background:#14142e;color:#aab;border:1px solid #2a2a5a}
+.t-rsn{font-size:0.68em;color:#778;flex:1}
 
-/* Conflict warning */
-.conflict{margin:6px 14px;padding:5px 8px;border-radius:5px;
-          background:#1a0e00;border:1px solid #ffaa44;
-          color:#ffaa44;font-size:0.68em}
+/* Conflict */
+.c-conflict{margin:6px 16px;padding:6px 10px;border-radius:6px;
+            background:#1e0e00;border:1px solid #ffaa44;color:#ffaa44;font-size:0.72em}
 
 /* Confidence */
-.conf-wrap{padding:5px 14px}
-.conf-row{display:flex;justify-content:space-between;
-          font-size:0.68em;color:#667;margin-bottom:3px}
-.conf-bar{height:4px;background:#0a0a1a;border-radius:2px;overflow:hidden}
-.conf-fill{height:100%;border-radius:2px;
-           background:linear-gradient(90deg,#3a1a8a,#7b5cff,#00f5ff);
-           transition:width .6s}
+.c-conf{padding:6px 16px}
+.c-conf-row{display:flex;justify-content:space-between;font-size:0.72em;color:#889;margin-bottom:4px}
+.c-conf-bar{height:5px;background:#0a0a1e;border-radius:3px;overflow:hidden}
+.c-conf-fill{height:100%;border-radius:3px;
+             background:linear-gradient(90deg,#4a1aaa,#7b5cff,#00f5ff);transition:width .6s}
 
 /* Votes */
-.votes{padding:4px 14px;display:flex;gap:10px;
-       border-bottom:1px solid #0a0a1a;font-size:0.72em}
-.vb{color:#00ff66}.vs{color:#ff4455}.vh{color:#334}
+.c-votes{padding:5px 16px;display:flex;gap:14px;border-bottom:1px solid #0a0a1e;font-size:0.78em}
+.vb{color:#00ff88;font-weight:bold}
+.vs{color:#ff3355;font-weight:bold}
+.vh{color:#445}
 
-/* Agent heatmap */
-.heatmap{padding:6px 14px;display:flex;flex-wrap:wrap;gap:3px;
-         border-bottom:1px solid #0a0a1a}
-.hm-cell{width:22px;height:22px;border-radius:3px;cursor:pointer;
-         display:flex;align-items:center;justify-content:center;
-         font-size:0.5em;font-weight:bold;transition:transform .2s}
-.hm-cell:hover{transform:scale(1.3);z-index:10}
-.hm-buy{background:#0a2a0a;color:#00ff66;border:1px solid #00ff6640}
-.hm-sell{background:#2a0a0a;color:#ff4455;border:1px solid #ff445540}
-.hm-hold{background:#141428;color:#445;border:1px solid #2a2a4a}
+/* AGENT LOGIC PANEL — always visible */
+.c-agents{border-bottom:1px solid #0a0a1e}
+.c-agents-title{padding:6px 16px;font-size:0.65em;color:#7b5cff;letter-spacing:2px;
+                background:#050518;border-bottom:1px solid #0a0a1e;font-weight:bold;
+                display:flex;justify-content:space-between;align-items:center}
+.c-agents-body{max-height:160px;overflow-y:auto}
+.ag-row{display:grid;grid-template-columns:90px 50px 50px 1fr;
+        gap:4px;padding:4px 16px;border-bottom:1px solid #08081a;font-size:0.68em;align-items:center}
+.ag-row:hover{background:#06060f}
+.ag-name{color:#9988ff;font-weight:bold}
+.ag-buy{color:#00ff88;font-weight:bold}
+.ag-sell{color:#ff3355;font-weight:bold}
+.ag-hold{color:#445}
+.ag-conf{color:#778;text-align:right}
+.ag-reason{color:#889;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
 /* Timeframe tabs */
-.tabs{display:flex;gap:2px;padding:6px 14px 0;flex-wrap:wrap}
-.tab{padding:3px 8px;border-radius:5px 5px 0 0;cursor:pointer;
-     font-size:0.65em;border:1px solid #1a1a4a;border-bottom:none;
-     color:#556;background:#04040e;transition:all .2s}
-.tab.active{background:#0b0b22;color:#00f5ff;border-color:#3a2a7a}
+.c-tabs{display:flex;gap:3px;padding:8px 16px 0;flex-wrap:wrap}
+.tab{padding:4px 10px;border-radius:6px 6px 0 0;cursor:pointer;font-size:0.68em;
+     border:1px solid #1a1a4e;border-bottom:none;color:#778;background:#04040f;
+     transition:all .2s;font-weight:bold}
+.tab.active{background:#0b0b25;color:#00f5ff;border-color:#4a3a9a}
 
 /* Chart */
-.chart-wrap{padding:0 14px 4px;height:150px;position:relative}
+.c-chart{padding:0 16px 6px;height:155px;position:relative}
+
+/* Explain */
+.c-explain{margin:6px 16px;padding:8px 10px;background:#04040f;border:1px solid #1a1a4e;
+           border-radius:6px;font-size:0.7em;line-height:1.8;color:#aab;
+           max-height:110px;overflow-y:auto;white-space:pre-wrap}
 
 /* Logic button */
-.logic-btn{margin:6px 14px;background:#0a0a20;border:1px solid #2a2a5a;
-           color:#7b5cff;padding:4px 10px;border-radius:5px;
-           cursor:pointer;font-size:0.68em;font-family:inherit;
-           width:calc(100% - 28px);text-align:left}
-.logic-btn:hover{background:#12122a}
-
-/* Explanation */
-.explain{margin:4px 14px;padding:7px;background:#04040e;
-         border:1px solid #1a1a3a;border-radius:6px;
-         font-size:0.66em;line-height:1.7;color:#99a;
-         max-height:100px;overflow-y:auto;white-space:pre-wrap}
-
-/* Agents list */
-.agents-btn{margin:4px 14px 6px;background:#06060f;
-            border:1px solid #1a1a4a;color:#7b5cff;
-            padding:4px 10px;border-radius:5px;cursor:pointer;
-            font-size:0.66em;font-family:inherit;
-            width:calc(100% - 28px)}
-.agents-panel{display:none;margin:0 14px 6px;max-height:160px;
-              overflow-y:auto}
-.agent-row{display:flex;align-items:center;gap:6px;padding:2px 0;
-           border-bottom:1px solid #08081a;font-size:0.65em}
-.ag-name{color:#7b5cff;width:90px;flex-shrink:0}
-.ag-buy{color:#00ff66}.ag-sell{color:#ff4455}.ag-hold{color:#334}
-.ag-conf{color:#445;width:38px;text-align:right;flex-shrink:0}
-.ag-reason{color:#445;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.c-logic-btn{margin:6px 16px;background:#080820;border:1px solid #2a2a6a;
+             color:#7b5cff;padding:5px 12px;border-radius:6px;cursor:pointer;
+             font-size:0.7em;font-family:inherit;width:calc(100% - 32px);text-align:left;
+             font-weight:bold}
+.c-logic-btn:hover{background:#0e0e30}
 
 /* Card footer */
-.card-foot{padding:5px 14px;font-size:0.6em;color:#2a2a4a;
-           border-top:1px solid #0a0a1a;display:flex;justify-content:space-between}
+.c-foot{padding:5px 16px;font-size:0.62em;color:#334;border-top:1px solid #0a0a1e;
+        display:flex;justify-content:space-between}
 
-/* Futures section */
-.futures-hdr{grid-column:1/-1;padding:10px 4px 4px;font-size:0.72em;
-             color:#7b5cff;letter-spacing:2px;
-             border-top:1px solid #2a1a6a;margin-top:4px}
-.futures-hdr span{color:#334;font-size:0.85em}
+/* Futures */
+.fut-hdr{grid-column:1/-1;padding:12px 4px 6px;font-size:0.78em;color:#7b5cff;
+         letter-spacing:2px;border-top:2px solid #2a1a6a;margin-top:6px;font-weight:bold}
+.fut-hdr span{color:#556;font-size:0.85em;font-weight:normal}
+.fut-card{border-color:#181840}
+.fut-card:hover{border-color:#2a1a7a}
 
-/* Sound toggle */
-.sound-btn{background:#06060f;border:1px solid #2a2a5a;color:#667;
-           padding:3px 8px;border-radius:4px;cursor:pointer;
-           font-size:0.68em;font-family:inherit}
-.sound-btn.on{color:#00ff66;border-color:#00ff6640}
+/* Mobile */
+@media(max-width:900px){
+  .main-wrap{grid-template-columns:1fr}
+  .side{display:none}
+  .pair-grid{grid-template-columns:1fr}
+}
 </style>
 </head>
 <body>
@@ -1842,35 +1867,37 @@ body{background:#030308;color:#d0d8ff;font-family:'Courier New',monospace;min-he
 <!-- HEADER -->
 <div class="hdr">
   <div class="logo-wrap">
-    <svg class="logo-svg" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+    <svg class="logo-svg" viewBox="0 0 48 48">
       <defs>
-        <radialGradient id="cg" cx="50%" cy="50%" r="50%">
+        <radialGradient id="g1" cx="50%" cy="50%" r="50%">
           <stop offset="0%" stop-color="#9b6fff"/>
           <stop offset="100%" stop-color="#3a0080"/>
         </radialGradient>
       </defs>
-      <circle cx="24" cy="24" r="22" fill="none" stroke="#7b5cff" stroke-width="1.5" opacity="0.8"/>
-      <circle cx="24" cy="24" r="6" fill="url(#cg)"/>
-      <circle cx="24" cy="24" r="3" fill="#fff" opacity="0.9"/>
-      <polygon points="24,2 26,8 22,8" fill="#7b5cff"/>
-      <polygon points="24,46 26,40 22,40" fill="#7b5cff"/>
-      <polygon points="2,24 8,22 8,26" fill="#7b5cff"/>
-      <polygon points="46,24 40,22 40,26" fill="#7b5cff"/>
-      <line x1="24" y1="8" x2="24" y2="18" stroke="#7b5cff" stroke-width="1" opacity="0.7"/>
-      <line x1="24" y1="30" x2="24" y2="40" stroke="#7b5cff" stroke-width="1" opacity="0.7"/>
-      <line x1="8" y1="24" x2="18" y2="24" stroke="#7b5cff" stroke-width="1" opacity="0.7"/>
-      <line x1="30" y1="24" x2="40" y2="24" stroke="#7b5cff" stroke-width="1" opacity="0.7"/>
-      <circle cx="24" cy="9" r="4" fill="#04040e" stroke="#7b5cff" stroke-width="1"/>
-      <circle cx="24" cy="39" r="4" fill="#04040e" stroke="#7b5cff" stroke-width="1"/>
-      <circle cx="9" cy="24" r="4" fill="#04040e" stroke="#7b5cff" stroke-width="1"/>
-      <circle cx="39" cy="24" r="4" fill="#04040e" stroke="#7b5cff" stroke-width="1"/>
-      <text x="24" y="11.5" text-anchor="middle" font-size="4" fill="#00f5ff">▲▼</text>
-      <text x="9" y="26" text-anchor="middle" font-size="4" fill="#00ff66">▐▌</text>
-      <text x="39" y="26" text-anchor="middle" font-size="4" fill="#ffd700">$€</text>
+      <circle cx="24" cy="24" r="22" fill="none" stroke="#7b5cff" stroke-width="1.5" opacity="0.9"/>
+      <circle cx="24" cy="24" r="17" fill="none" stroke="#4a3a8a" stroke-width="0.8" opacity="0.5"/>
+      <circle cx="24" cy="24" r="7" fill="url(#g1)"/>
+      <circle cx="24" cy="24" r="3" fill="#fff" opacity="0.95"/>
+      <polygon points="24,1 26.5,8 21.5,8" fill="#7b5cff"/>
+      <polygon points="24,47 26.5,40 21.5,40" fill="#7b5cff"/>
+      <polygon points="1,24 8,21.5 8,26.5" fill="#7b5cff"/>
+      <polygon points="47,24 40,21.5 40,26.5" fill="#7b5cff"/>
+      <line x1="24" y1="8" x2="24" y2="17" stroke="#7b5cff" stroke-width="1" opacity="0.8"/>
+      <line x1="24" y1="31" x2="24" y2="40" stroke="#7b5cff" stroke-width="1" opacity="0.8"/>
+      <line x1="8" y1="24" x2="17" y2="24" stroke="#7b5cff" stroke-width="1" opacity="0.8"/>
+      <line x1="31" y1="24" x2="40" y2="24" stroke="#7b5cff" stroke-width="1" opacity="0.8"/>
+      <circle cx="24" cy="9" r="4.5" fill="#04040e" stroke="#7b5cff" stroke-width="1"/>
+      <circle cx="24" cy="39" r="4.5" fill="#04040e" stroke="#7b5cff" stroke-width="1"/>
+      <circle cx="9" cy="24" r="4.5" fill="#04040e" stroke="#7b5cff" stroke-width="1"/>
+      <circle cx="39" cy="24" r="4.5" fill="#04040e" stroke="#7b5cff" stroke-width="1"/>
+      <text x="24" y="11" text-anchor="middle" font-size="4.5" fill="#00f5ff">▲</text>
+      <text x="24" y="42" text-anchor="middle" font-size="4" fill="#7b5cff">AI</text>
+      <text x="9" y="26" text-anchor="middle" font-size="4" fill="#00ff88">$</text>
+      <text x="39" y="26" text-anchor="middle" font-size="4" fill="#ffd700">€</text>
     </svg>
     <div>
       <div class="logo-text">PROJECT CHAKRA V15</div>
-      <div style="font-size:0.55em;color:#445;letter-spacing:1px">AUTONOMOUS AI FOREX SYSTEM</div>
+      <div class="logo-sub">AUTONOMOUS AI FOREX TRADING SYSTEM</div>
     </div>
   </div>
   <div class="hdr-stats">
@@ -1878,531 +1905,452 @@ body{background:#030308;color:#d0d8ff;font-family:'Courier New',monospace;min-he
     <div class="hstat"><div class="hstat-v" id="hSignals">—</div><div class="hstat-l">SIGNALS</div></div>
     <div class="hstat"><div class="hstat-v">21</div><div class="hstat-l">AGENTS</div></div>
     <div class="hstat"><div class="hstat-v">14</div><div class="hstat-l">PAIRS</div></div>
-    <div class="hstat"><div class="hstat-v" id="hSession" class="s-warn">—</div><div class="hstat-l">SESSION</div></div>
+    <div class="hstat"><div class="hstat-v s-warn" id="hSess">ASIAN</div><div class="hstat-l">SESSION</div></div>
     <div class="live-badge"><div class="dot"></div>LIVE</div>
-    <button class="sound-btn" id="soundBtn" onclick="toggleSound()">🔇 Sound</button>
+    <button class="sound-btn" id="sndBtn" onclick="toggleSound()">🔇 Sound</button>
+    <button class="sound-btn" id="modeBtn" onclick="toggleMode()">☀️ Light</button>
   </div>
 </div>
 
 <!-- NEWS TICKER -->
 <div class="news-ticker">
-  <div class="ticker-inner" id="ticker">
-    <span class="ticker-item">⚡ Loading market news...</span>
+  <div class="ticker-label">📡 LIVE NEWS</div>
+  <div class="ticker-scroll">
+    <div class="ticker-inner" id="ticker">
+      <span class="tick">⚡ Connecting to market news feed...</span>
+      <span class="tick">⚡ Connecting to market news feed...</span>
+    </div>
   </div>
 </div>
 
 <!-- SIGNAL FEED -->
 <div class="signal-feed">
-  <span class="feed-label">📡 SIGNALS:</span>
-  <span class="feed-no" id="feedEmpty">No signals yet — waiting for market setup</span>
-  <div id="signalFeed" style="display:flex;gap:6px;flex-wrap:nowrap"></div>
+  <span class="feed-label">🎯 NEW SIGNALS:</span>
+  <span class="feed-empty" id="feedEmpty">Monitoring market — no new signals yet</span>
+  <div id="feedItems" style="display:flex;gap:6px;align-items:center"></div>
 </div>
 
 <!-- STATUS BAR -->
 <div class="status-bar">
-  <span>Session: <span id="sessStatus" class="s-warn">Checking...</span></span>
-  <span>Trailing Stop: <span class="s-ok">ACTIVE</span></span>
-  <span>Pyramid: <span class="s-ok">ACTIVE</span></span>
-  <span>Auto-Execute: <span class="s-ok">ON</span></span>
-  <span>Self-Learning: <span class="s-ok">ON</span></span>
-  <span>Updated: <span id="lastUp">—</span></span>
+  <span>Session: <span id="sessEl" class="s-warn">Checking...</span></span>
+  <span>Trailing: <span class="s-ok">ON</span></span>
+  <span>Pyramid: <span class="s-ok">ON</span></span>
+  <span>Execute: <span class="s-ok">AUTO</span></span>
+  <span>Learning: <span class="s-ok">ON</span></span>
+  <span>Supabase: <span class="s-ok">LOGGING</span></span>
+  <span style="margin-left:auto">Updated: <span id="upd">—</span></span>
 </div>
 
-<!-- MAIN LAYOUT -->
-<div class="main-layout">
-  <!-- LEFT: Pair Cards -->
+<!-- MAIN -->
+<div class="main-wrap">
+
+  <!-- PAIR GRID -->
   <div class="pair-grid" id="grid"></div>
 
-  <!-- RIGHT: Side Panel -->
-  <div class="side-panel">
-    <!-- LOGIC BOARD -->
-    <div class="side-section">
-      <div class="side-title">🧠 SIGNAL LOGIC BOARD</div>
-      <div style="padding:8px 12px">
-        <select class="logic-pair-select" id="logicPairSelect" onchange="updateLogic()">
-          <option value="">— Select a pair —</option>
-        </select>
-        <div class="logic-content" id="logicContent">
-Select a pair above to see the full reasoning behind its current signal.
+  <!-- SIDE PANEL -->
+  <div class="side">
 
-The logic board shows:
-• Which agents voted BUY/SELL and why
-• What H4 trend says
-• Whether signal aligns with trend
-• News context affecting this pair
+    <!-- LOGIC BOARD -->
+    <div class="side-section" style="flex-shrink:0">
+      <div class="side-title">🧠 SIGNAL LOGIC BOARD</div>
+      <div style="padding:8px 0 0">
+        <select class="logic-sel" id="logicSel" onchange="renderLogic()">
+          <option value="">— Select pair to analyse —</option>
+        </select>
+        <div class="logic-box" id="logicBox">
+Select a pair above to see:
+• Why signal is BUY / SELL / HOLD
+• Which agents agree and their reasons
+• H4 trend alignment
+• News affecting this pair
 • Weekly bias direction
-• Predictive alerts (approaching key levels)
+• Risk levels explanation
         </div>
       </div>
     </div>
 
-    <!-- FOREX FACTORY EVENTS -->
-    <div class="side-section">
-      <div class="side-title">📅 HIGH IMPACT EVENTS THIS WEEK</div>
-      <div class="ff-panel" id="ffPanel">
-        <div style="padding:8px 12px;font-size:0.68em;color:#445">Loading events...</div>
+    <!-- FOREX FACTORY -->
+    <div class="side-section" style="flex-shrink:0">
+      <div class="side-title">📅 HIGH IMPACT EVENTS</div>
+      <div class="ff-scroll" id="ffPanel">
+        <div style="padding:10px 14px;font-size:0.72em;color:#556">Loading calendar...</div>
       </div>
     </div>
 
-    <!-- NEWS IMPACT BOARD -->
-    <div class="side-section" style="flex:1">
-      <div class="side-title">📰 MARKET NEWS & PAIR IMPACT</div>
-      <div class="news-panel" id="newsPanel">
-        <div style="padding:8px 12px;font-size:0.68em;color:#445">Loading news...</div>
+    <!-- NEWS -->
+    <div class="side-section" style="flex:1;overflow:hidden">
+      <div class="side-title">📰 NEWS & PAIR IMPACT</div>
+      <div class="news-scroll" id="newsPanel">
+        <div style="padding:10px 14px;font-size:0.72em;color:#556">Loading news...</div>
       </div>
     </div>
+
   </div>
 </div>
 
-<!-- AUDIO -->
-<audio id="signalSound" preload="auto">
-  <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAA..." type="audio/wav">
-</audio>
-
 <script>
-const charts = {};
-let soundOn = false;
-let lastSignalCount = 0;
-window._allData = {};
+const charts={};
+let soundOn=false, prevSigCount=0;
+window._D={};  // all pair data
 
-function toggleSound(){
-  soundOn = !soundOn;
-  const btn = document.getElementById('soundBtn');
-  btn.textContent = soundOn ? '🔊 Sound' : '🔇 Sound';
-  btn.className = soundOn ? 'sound-btn on' : 'sound-btn';
+function toggleMode(){
+  document.body.classList.toggle('light');
+  const b=document.getElementById('modeBtn');
+  b.textContent=document.body.classList.contains('light')?'🌙 Dark':'☀️ Light';
 }
-
-function playAlert(){
-  if(!soundOn) return;
+function toggleSound(){
+  soundOn=!soundOn;
+  const b=document.getElementById('sndBtn');
+  b.textContent=soundOn?'🔊 Sound':'🔇 Sound';
+  b.className=soundOn?'sound-btn on':'sound-btn';
+}
+function beep(){
+  if(!soundOn)return;
   try{
-    const ctx = new AudioContext();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.frequency.setValueAtTime(880, ctx.currentTime);
-    osc.frequency.setValueAtTime(660, ctx.currentTime+0.1);
-    gain.gain.setValueAtTime(0.3, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+0.4);
-    osc.start(ctx.currentTime);
-    osc.stop(ctx.currentTime+0.4);
+    const a=new AudioContext(),o=a.createOscillator(),g=a.createGain();
+    o.connect(g);g.connect(a.destination);
+    o.frequency.setValueAtTime(900,a.currentTime);
+    o.frequency.setValueAtTime(700,a.currentTime+0.12);
+    g.gain.setValueAtTime(0.25,a.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001,a.currentTime+0.45);
+    o.start();o.stop(a.currentTime+0.45);
   }catch(e){}
 }
-
-function session(){
-  const h = new Date().getUTCHours();
+function inSession(){
+  const h=new Date().getUTCHours();
   return (h>=7&&h<=12)||(h>=13&&h<=18);
 }
-
 function tfKey(tf){
-  return {M5:'bars_m15',M15:'bars_m15',M30:'bars_h1',H1:'bars_h1',
-          H4:'bars_h4',H8:'bars_h8',D1:'bars_d1'}[tf]||'bars_h1';
+  const m={M15:'bars_m15',M30:'bars_h1',H1:'bars_h1',H4:'bars_h4',H8:'bars_h8',D1:'bars_d1'};
+  return m[tf]||'bars_m15';
 }
-
 function switchTF(pair,tf,el){
   el.closest('.card').querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
-  const safeId = pair.replace(/[^a-zA-Z0-9]/g,'_');
-  const d = window._allData[pair] || window._allData[safeId];
-  if(d) drawChart(safeId, d[tfKey(tf)]||d.bars_h1||[]);
+  const sid=safe(pair);
+  const d=window._D[pair]||window._D[sid];
+  if(d)drawChart(sid,d[tfKey(tf)]||d.bars_m15||[]);
 }
+function safe(s){return s.replace(/[^a-zA-Z0-9]/g,'_')}
+function trendCls(t){return t==='BULLISH'?'t-bull':t==='BEARISH'?'t-bear':'t-rng'}
 
-function toggleAgents(pair){
-  const p = document.getElementById('ap-'+pair);
-  if(p) p.style.display = p.style.display==='block'?'none':'block';
-}
-
-function trendClass(t){
-  return t==='BULLISH'?'t-bull':t==='BEARISH'?'t-bear':'t-rng';
-}
-
-function drawChart(safeId, barsData){
-  const canvas = document.getElementById('chart-'+safeId);
-  if(!canvas||!barsData||barsData.length===0) return;
-  if(charts[safeId]) charts[safeId].destroy();
-  const closes = barsData.map(b=>b[4]);
-  const labels  = barsData.map(b=>b[0].substring(11,16));
-  const rising  = closes[closes.length-1] >= closes[0];
-  const lc = rising?'#00ff66':'#ff4455';
-  charts[safeId] = new Chart(canvas,{
+function drawChart(sid,bars){
+  if(!bars||bars.length<2)return;
+  const cv=document.getElementById('chart-'+sid);
+  if(!cv)return;
+  if(charts[sid])charts[sid].destroy();
+  const closes=bars.map(b=>b[4]);
+  const labels=bars.map(b=>b[0].substring(11,16));
+  const up=closes[closes.length-1]>=closes[0];
+  const lc=up?'#00ff88':'#ff3355';
+  charts[sid]=new Chart(cv,{
     type:'line',
-    data:{labels,datasets:[{data:closes,borderColor:lc,
-      backgroundColor:lc+'12',borderWidth:1.5,pointRadius:0,fill:true,tension:0.1}]},
+    data:{labels,datasets:[{data:closes,borderColor:lc,backgroundColor:lc+'15',
+          borderWidth:1.8,pointRadius:0,fill:true,tension:0.1}]},
     options:{responsive:true,maintainAspectRatio:false,animation:false,
-      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.raw.toFixed(5)}`}}},
-      scales:{x:{ticks:{color:'#445',font:{size:8},maxTicksLimit:8},grid:{color:'#0a0a1a'}},
-              y:{ticks:{color:'#445',font:{size:8},maxTicksLimit:5},grid:{color:'#0a0a1a'},position:'right'}}}
+      plugins:{legend:{display:false}},
+      scales:{x:{ticks:{color:'#556',font:{size:9},maxTicksLimit:8},grid:{color:'#0a0a1e'}},
+              y:{ticks:{color:'#556',font:{size:9},maxTicksLimit:5},grid:{color:'#0a0a1e'},position:'right'}}}
   });
 }
 
-function buildHeatmap(opinions, safeId){
-  if(!opinions||opinions.length===0) return '';
-  return opinions.map(a=>{
-    const cls = a.signal==='BUY'?'hm-buy':a.signal==='SELL'?'hm-sell':'hm-hold';
-    const lbl = a.agent.substring(0,2).toUpperCase();
-    return `<div class="hm-cell ${cls}" title="${a.agent}: ${a.signal} ${a.confidence}%\n${a.reason}">${lbl}</div>`;
+function buildAgentRows(ops){
+  if(!ops||ops.length===0)return '<div class="ag-row"><span class="ag-name" style="color:#445">No agent data</span></div>';
+  return ops.map(a=>{
+    const cls=a.signal==='BUY'?'ag-buy':a.signal==='SELL'?'ag-sell':'ag-hold';
+    return `<div class="ag-row">
+      <span class="ag-name">${a.agent}</span>
+      <span class="${cls}">${a.signal}</span>
+      <span class="ag-conf">${a.confidence}%</span>
+      <span class="ag-reason" title="${a.reason||''}">${(a.reason||'').substring(0,44)}</span>
+    </div>`;
   }).join('');
 }
 
-function buildCard(r, displayName){
-  const label  = displayName || r.pair.replace(/_/g,'/');
-  const safeId = r.pair.replace(/[^a-zA-Z0-9]/g,'_');
-  const sc   = r.direction==='BUY'?'buy-card':r.direction==='SELL'?'sell-card':'';
-  const sb   = r.direction==='BUY'?'sig-buy':r.direction==='SELL'?'sig-sell':'sig-hold';
-  const tc   = trendClass(r.h4_trend);
-  const conf = r.direction==='HOLD'?'—':r.confidence+'%';
-
-  const conflict = r.conflict?`<div class="conflict">⚠️ ${r.conflict}</div>`:'';
-  const isFut = r.is_futures?`<div style="font-size:0.6em;color:#445;padding:0 14px 4px">⚡ Institutional signal — read only</div>`:'';
-
-  const agentRows = (r.agent_opinions||[]).map(a=>`
-    <div class="agent-row">
-      <span class="ag-name">${a.agent}</span>
-      <span class="ag-${a.signal.toLowerCase()}">${a.signal}</span>
-      <span class="ag-conf">${a.confidence}%</span>
-      <span class="ag-reason">${(a.reason||'').substring(0,42)}</span>
-    </div>`).join('');
+function buildCard(r,label,isFut){
+  const sid=safe(r.pair);
+  const lbl=label||r.pair.replace(/_/g,'/');
+  const sc=r.direction==='BUY'?'buy-card':r.direction==='SELL'?'sell-card':'';
+  const sb=r.direction==='BUY'?'sig-buy':r.direction==='SELL'?'sig-sell':'sig-hold';
+  const tc=trendCls(r.h4_trend);
+  const conf=r.direction==='HOLD'?'—':r.confidence+'%';
+  const conflict=r.conflict?`<div class="c-conflict">⚠️ ${r.conflict}</div>`:'';
+  const futBadge=isFut?`<div style="font-size:0.62em;color:#556;padding:2px 16px 4px">⚡ Institutional signal — read only</div>`:'';
 
   return `
-  <div class="card ${sc}" id="card-${safeId}">
-    <div class="card-hdr">
-      <span class="pair-name">${label}</span>
-      <span class="sig-badge ${sb}">${r.direction}</span>
+  <div class="card ${sc} ${isFut?'fut-card':''}" id="card-${sid}">
+    <div class="c-hdr">
+      <span class="c-pair">${lbl}</span>
+      <span class="c-sig ${sb}">${r.direction}</span>
     </div>
-    <div class="price-row">
-      <span class="price-big" id="px-${safeId}">${r.price}</span>
-      <span class="regime-tag">${r.regime||'—'}</span>
+    <div class="c-price-row">
+      <span class="c-price" id="px-${sid}">${r.price}</span>
+      <span class="c-regime">${r.regime||'—'}</span>
     </div>
-    <div class="levels">
-      <div class="lev lev-sl">
-        <div class="lev-l">STOP LOSS</div>
-        <div class="lev-v">${r.sl||'—'}</div>
-        <div class="lev-pips">${r.sl_pips||0} pips</div>
-      </div>
-      <div class="lev lev-entry">
-        <div class="lev-l">ENTRY</div>
-        <div class="lev-v">${r.price}</div>
-        <div class="lev-pips">Risk $${r.dollar_risk||0}</div>
-      </div>
-      <div class="lev lev-tp">
-        <div class="lev-l">TAKE PROFIT</div>
-        <div class="lev-v">${r.tp||'—'}</div>
-        <div class="lev-pips">${r.tp_pips||0} pips</div>
-      </div>
+    <div class="c-levels">
+      <div class="c-lev"><div class="c-lev-l">STOP LOSS</div>
+        <div class="c-lev-v sl-v">${r.sl||'—'}</div>
+        <div class="c-lev-p">${r.sl_pips||0} pips</div></div>
+      <div class="c-lev"><div class="c-lev-l">ENTRY</div>
+        <div class="c-lev-v en-v">${r.price}</div>
+        <div class="c-lev-p">Risk $${r.dollar_risk||0}</div></div>
+      <div class="c-lev"><div class="c-lev-l">TAKE PROFIT</div>
+        <div class="c-lev-v tp-v">${r.tp||'—'}</div>
+        <div class="c-lev-p">${r.tp_pips||0} pips</div></div>
     </div>
-    <div class="trend-row">
-      <span class="trend-pill ${tc}">H4 ${r.h4_trend}</span>
-      <span class="trend-reason">${(r.h4_reason||'').substring(0,50)}</span>
+    <div class="c-trend">
+      <span class="t-pill ${tc}">H4 ${r.h4_trend}</span>
+      <span class="t-rsn">${(r.h4_reason||'').substring(0,52)}</span>
     </div>
     ${conflict}
-    <div class="conf-wrap">
-      <div class="conf-row">
-        <span>Confidence</span>
-        <span>${conf} | RR ${r.rr||'3:1'}</span>
+    <div class="c-conf">
+      <div class="c-conf-row"><span>Confidence</span><span>${conf} | RR ${r.rr||'3:1'}</span></div>
+      <div class="c-conf-bar"><div class="c-conf-fill" style="width:${Math.min(r.confidence||0,100)}%"></div></div>
+    </div>
+    <div class="c-votes">
+      <span class="vb">▲ ${r.buy_votes} BUY</span>
+      <span class="vs">▼ ${r.sell_votes} SELL</span>
+      <span class="vh">◆ ${r.hold_votes} HOLD</span>
+    </div>
+    <div class="c-agents">
+      <div class="c-agents-title">
+        <span>🤖 AGENT OPINIONS (${(r.agent_opinions||[]).length})</span>
+        <span style="color:#556;font-size:0.9em">scroll →</span>
       </div>
-      <div class="conf-bar">
-        <div class="conf-fill" style="width:${Math.min(r.confidence||0,100)}%"></div>
-      </div>
+      <div class="c-agents-body">${buildAgentRows(r.agent_opinions)}</div>
     </div>
-    <div class="votes">
-      <span class="vb">▲${r.buy_votes} BUY</span>
-      <span class="vs">▼${r.sell_votes} SELL</span>
-      <span class="vh">◆${r.hold_votes} HOLD</span>
-    </div>
-    <div class="heatmap" title="Agent heatmap — hover for details">
-      ${buildHeatmap(r.agent_opinions, safeId)}
-    </div>
-    <div class="tabs">
+    <div class="c-tabs">
       <div class="tab active" onclick="switchTF('${r.pair}','M15',this)">M15</div>
       <div class="tab" onclick="switchTF('${r.pair}','H1',this)">H1</div>
       <div class="tab" onclick="switchTF('${r.pair}','H4',this)">H4</div>
       <div class="tab" onclick="switchTF('${r.pair}','H8',this)">H8</div>
       <div class="tab" onclick="switchTF('${r.pair}','D1',this)">1D</div>
     </div>
-    <div class="chart-wrap"><canvas id="chart-${safeId}"></canvas></div>
-    ${isFut}
-    <div class="explain" id="exp-${safeId}">${r.explanation||''}</div>
-    <button class="logic-btn" onclick="selectPairLogic('${r.pair}')">
-      🧠 View Full Signal Logic
-    </button>
-    <button class="agents-btn" onclick="toggleAgents('${safeId}')">
-      🤖 All Agent Opinions (${(r.agent_opinions||[]).length})
-    </button>
-    <div class="agents-panel" id="ap-${safeId}">${agentRows}</div>
-    <div class="card-foot">
+    <div class="c-chart"><canvas id="chart-${sid}"></canvas></div>
+    ${futBadge}
+    <div class="c-explain" id="exp-${sid}">${r.explanation||''}</div>
+    <button class="c-logic-btn" onclick="pickLogic('${r.pair}')">🧠 Open Full Logic Board →</button>
+    <div class="c-foot">
       <span>${r.timestamp||''}</span>
       <span>ATR: ${r.atr||'—'}</span>
     </div>
   </div>`;
 }
 
-function selectPairLogic(pair){
-  const sel = document.getElementById('logicPairSelect');
-  sel.value = pair;
-  updateLogic();
-  // Scroll to logic panel on mobile
-  document.querySelector('.side-panel').scrollIntoView({behavior:'smooth'});
+function pickLogic(pair){
+  document.getElementById('logicSel').value=pair;
+  renderLogic();
+  document.querySelector('.side').scrollTo(0,0);
 }
 
-function updateLogic(){
-  const pair = document.getElementById('logicPairSelect').value;
-  const el   = document.getElementById('logicContent');
-  if(!pair){ el.textContent = 'Select a pair above.'; return; }
+function renderLogic(){
+  const pair=document.getElementById('logicSel').value;
+  const box=document.getElementById('logicBox');
+  if(!pair){box.textContent='Select a pair above.';return;}
+  const sid=safe(pair);
+  const r=window._D[pair]||window._D[sid];
+  if(!r){box.textContent='No data yet for this pair.';return;}
 
-  const safeId = pair.replace(/[^a-zA-Z0-9]/g,'_');
-  const r = window._allData[pair] || window._allData[safeId];
-  if(!r){ el.textContent = 'No data for this pair yet.'; return; }
-
-  const opinions = r.agent_opinions || [];
-  const agreed   = opinions.filter(a=>a.signal===r.direction);
-  const opp      = opinions.filter(a=>a.signal!==r.direction&&a.signal!=='HOLD');
-  const neutral  = opinions.filter(a=>a.signal==='HOLD');
-
-  let txt = '';
-  txt += `═══════════════════════════════\n`;
-  txt += ` ${r.pair.replace('_','/')} — ${r.direction} SIGNAL\n`;
-  txt += `═══════════════════════════════\n\n`;
-
-  txt += `📍 TRADE LEVELS\n`;
-  txt += `  Price:  ${r.price}\n`;
-  txt += `  Entry:  ${r.price}\n`;
-  txt += `  SL:     ${r.sl||'—'} (${r.sl_pips||0} pips)\n`;
-  txt += `  TP:     ${r.tp||'—'} (${r.tp_pips||0} pips)\n`;
-  txt += `  RR:     ${r.rr||'3:1'} | Risk: $${r.dollar_risk||0}\n\n`;
-
-  txt += `📈 TREND ANALYSIS\n`;
-  txt += `  H4 Trend:  ${r.h4_trend}\n`;
-  txt += `  H4 Reason: ${r.h4_reason||'—'}\n`;
-  txt += `  Regime:    ${r.regime}\n`;
-  txt += `  Aligned:   ${r.h4_aligned?'YES ✅':'NO ⚠️'}\n`;
-  if(r.conflict) txt += `  ⚠️ ${r.conflict}\n`;
-  txt += '\n';
-
-  txt += `🤖 AGENT VOTES (${opinions.length} total)\n`;
-  txt += `  ${r.buy_votes} BUY | ${r.sell_votes} SELL | ${r.hold_votes} HOLD\n\n`;
-
-  if(agreed.length>0){
-    txt += `✅ AGENTS AGREEING (${agreed.length}):\n`;
-    agreed.forEach(a=>{
-      txt += `  • ${a.agent} (${a.confidence}%): ${a.reason||''}\n`;
-    });
-    txt += '\n';
+  const ops=r.agent_opinions||[];
+  const agreed=ops.filter(a=>a.signal===r.direction);
+  const oppose=ops.filter(a=>a.signal!==r.direction&&a.signal!=='HOLD');
+  const neut=ops.filter(a=>a.signal==='HOLD');
+  let t='';
+  t+=`╔══════════════════════════════════╗\n`;
+  t+=`  ${r.pair.replace('_','/')} — ${r.direction}  (${r.confidence}% conf)\n`;
+  t+=`╚══════════════════════════════════╝\n\n`;
+  t+=`📍 TRADE PLAN\n`;
+  t+=`  Entry:  ${r.price}\n`;
+  t+=`  SL:     ${r.sl||'—'} (${r.sl_pips||0} pips)\n`;
+  t+=`  TP:     ${r.tp||'—'} (${r.tp_pips||0} pips)\n`;
+  t+=`  RR:     ${r.rr||'3:1'} | Risk $${r.dollar_risk||0}\n\n`;
+  t+=`📈 TREND ANALYSIS\n`;
+  t+=`  H4 Trend:  ${r.h4_trend}\n`;
+  t+=`  Detail:    ${r.h4_reason||'—'}\n`;
+  t+=`  Regime:    ${r.regime||'—'}\n`;
+  t+=`  Aligned:   ${r.h4_aligned?'YES ✅':'NO ⚠️'}\n`;
+  if(r.conflict)t+=`  WARNING:   ${r.conflict}\n`;
+  t+=`\n🤖 AGENT VOTES\n`;
+  t+=`  Total: ${ops.length} | BUY: ${r.buy_votes} | SELL: ${r.sell_votes} | HOLD: ${r.hold_votes}\n\n`;
+  if(agreed.length){
+    t+=`✅ AGREEING AGENTS (${agreed.length}):\n`;
+    agreed.forEach(a=>{t+=`  • ${a.agent} [${a.confidence}%]\n    → ${a.reason||'no reason'}\n`;});
+    t+='\n';
   }
-
-  if(opp.length>0){
-    txt += `❌ OPPOSING AGENTS (${opp.length}):\n`;
-    opp.forEach(a=>{
-      txt += `  • ${a.agent} (${a.confidence}%): ${a.reason||''}\n`;
-    });
-    txt += '\n';
+  if(oppose.length){
+    t+=`❌ OPPOSING AGENTS (${oppose.length}):\n`;
+    oppose.forEach(a=>{t+=`  • ${a.agent} says ${a.signal} [${a.confidence}%]\n    → ${a.reason||'no reason'}\n`;});
+    t+='\n';
   }
-
-  txt += `⏸️ NEUTRAL AGENTS: ${neutral.length}\n\n`;
-
-  txt += `📰 NEWS CONTEXT:\n`;
-  (r.headlines||[]).forEach(h=>{ txt += `  • ${h}\n`; });
-  txt += '\n';
-
-  txt += `📊 SELF-LEARNING:\n`;
-  txt += `  Confidence: ${r.confidence}%\n`;
-  txt += `  ATR: ${r.atr}\n`;
-  txt += `  Timestamp: ${r.timestamp}\n`;
-
-  el.textContent = txt;
+  t+=`⏸️ NEUTRAL: ${neut.length} agents holding\n\n`;
+  t+=`📰 NEWS:\n`;
+  (r.headlines||[]).forEach(h=>{t+=`  • ${h}\n`;});
+  box.textContent=t;
 }
 
 function updateSignalFeed(feed){
-  if(!feed||feed.length===0) return;
-  document.getElementById('feedEmpty').style.display = 'none';
-  const container = document.getElementById('signalFeed');
-  container.innerHTML = '';
+  if(!feed||feed.length===0)return;
+  document.getElementById('feedEmpty').style.display='none';
+  const c=document.getElementById('feedItems');
+  c.innerHTML='';
   feed.slice(0,8).forEach(s=>{
-    const cls  = s.direction==='BUY'?'feed-buy':'feed-sell';
-    const icon = s.direction==='BUY'?'▲':'▼';
-    const el   = document.createElement('div');
-    el.className = `feed-item ${cls}`;
-    el.innerHTML = `${icon} <b>${s.pair.replace('_','/')}</b> ${s.direction} ${s.conf}% <span style="color:#445">${s.time}</span>`;
-    el.onclick   = ()=>selectPairLogic(s.pair);
-    el.style.cursor = 'pointer';
-    container.appendChild(el);
+    const cls=s.direction==='BUY'?'feed-buy':'feed-sell';
+    const ic=s.direction==='BUY'?'▲':'▼';
+    const el=document.createElement('div');
+    el.className=`feed-item ${cls}`;
+    el.innerHTML=`${ic} <b>${s.pair.replace('_','/')}</b> ${s.direction} ${s.conf}% <span style="color:#556;font-weight:normal">${s.time}</span>`;
+    el.onclick=()=>pickLogic(s.pair);
+    el.title='Click to view signal logic';
+    c.appendChild(el);
   });
-
-  // Play sound on new signal
-  if(feed.length > lastSignalCount){ playAlert(); }
-  lastSignalCount = feed.length;
+  if(feed.length>prevSigCount)beep();
+  prevSigCount=feed.length;
 }
 
-function updateTicker(newsItems, ffEvents){
-  const ticker = document.getElementById('ticker');
-  let html = '';
-
-  // FF events first
-  (ffEvents||[]).slice(0,5).forEach(e=>{
-    html += `<span class="ticker-item ticker-ff">⚡ ${e.currency} ${e.title} — Forecast: ${e.forecast||'?'} Prev: ${e.previous||'?'}</span>`;
+function updateTicker(news,ff){
+  const t=document.getElementById('ticker');
+  let html='';
+  (ff||[]).slice(0,5).forEach(e=>{
+    html+=`<span class="tick tick-ff">⚡ ${e.currency||''}: ${e.title||''} | Forecast:${e.forecast||'?'} Prev:${e.previous||'?'}</span>`;
   });
-
-  // News
-  (newsItems||[]).slice(0,15).forEach(n=>{
-    const cls = (n.impacts||[]).length>3?'impact-high':(n.impacts||[]).length>0?'impact-med':'';
-    const pairs = (n.impacts||[]).join(' ');
-    html += `<span class="ticker-item ${cls}">${pairs?'['+pairs+'] ':''} ${n.title} <span style="color:#334">— ${n.source}</span></span>`;
+  (news||[]).slice(0,12).forEach(n=>{
+    const p=(n.impacts||[]).join(' ');
+    const cls=(n.impacts||[]).length>=3?'tick-high':(n.impacts||[]).length>0?'tick-med':'';
+    html+=`<span class="tick ${cls}">${p?'['+p+'] ':''}${n.title}</span>`;
   });
-
-  if(!html) html = '<span class="ticker-item">⚡ Market monitoring active — news loading...</span>';
-  // Duplicate for seamless loop
-  ticker.innerHTML = html + html;
+  if(!html)html='<span class="tick">⚡ Market monitoring active...</span>';
+  t.innerHTML=html+html;
 }
 
-function updateNewsPanel(newsItems){
-  const panel = document.getElementById('newsPanel');
-  if(!newsItems||newsItems.length===0){
-    panel.innerHTML = '<div style="padding:8px 12px;font-size:0.68em;color:#445">No news loaded yet</div>';
-    return;
-  }
-  panel.innerHTML = newsItems.slice(0,20).map(n=>{
-    const tags = (n.impacts||[]).map(p=>`<span class="news-pair-tag">${p.replace('_','/')}</span>`).join('');
-    return `<div class="news-card" onclick="selectPairLogic('${(n.impacts||[])[0]||''}')">
+function updateNewsPanel(news){
+  const p=document.getElementById('newsPanel');
+  if(!news||news.length===0){p.innerHTML='<div style="padding:10px 14px;font-size:0.72em;color:#556">No news loaded</div>';return;}
+  p.innerHTML=news.slice(0,15).map(n=>{
+    const tags=(n.impacts||[]).map(x=>`<span class="news-tag">${x.replace('_','/')}</span>`).join('');
+    return `<div class="news-item" onclick="pickLogic('${(n.impacts||[])[0]||''}')">
       <div class="news-title">${n.title}</div>
-      <div class="news-meta">
-        <span class="news-pairs">${tags||'<span style="color:#334">General</span>'}</span>
-        <span class="news-time">${n.time||''} — ${n.source||''}</span>
-      </div>
+      <div class="news-tags">${tags||'<span style="color:#445;font-size:0.68em">General</span>'}</div>
+      <div class="news-src">${n.source||''} — ${n.time||''}</div>
     </div>`;
   }).join('');
 }
 
-function updateFFPanel(events){
-  const panel = document.getElementById('ffPanel');
-  if(!events||events.length===0){
-    panel.innerHTML = '<div style="padding:8px 12px;font-size:0.68em;color:#445">No events this week or API unavailable</div>';
-    return;
-  }
-  panel.innerHTML = events.slice(0,10).map(e=>{
-    const cls = e.impact==='High'||e.impact==='3'?'ff-high':'ff-med';
-    return `<div class="ff-event ${cls}">
-      <span class="ff-curr">${e.currency||''}</span>
-      <span class="ff-title">${e.title||''}</span>
+function updateFFPanel(ff){
+  const p=document.getElementById('ffPanel');
+  if(!ff||ff.length===0){p.innerHTML='<div style="padding:10px 14px;font-size:0.72em;color:#556">No events or API unavailable</div>';return;}
+  p.innerHTML=ff.slice(0,8).map(e=>{
+    const cls=e.impact==='High'||e.impact==='3'?'ff-high':e.impact==='Medium'||e.impact==='2'?'ff-med':'ff-low';
+    return `<div class="ff-item ${cls}">
+      <span class="ff-curr">${e.currency||'—'}</span>
+      <span class="ff-name">${e.title||''}</span>
       <span class="ff-time">${e.time||''}</span>
     </div>`;
   }).join('');
 }
 
 function updateLogicSelect(pairs){
-  const sel = document.getElementById('logicPairSelect');
-  const cur = sel.value;
-  sel.innerHTML = '<option value="">— Select a pair —</option>';
+  const s=document.getElementById('logicSel');
+  const cur=s.value;
+  s.innerHTML='<option value="">— Select pair to analyse —</option>';
   pairs.forEach(p=>{
-    const opt = document.createElement('option');
-    opt.value = p;
-    opt.textContent = p.replace(/_/g,'/');
-    sel.appendChild(opt);
+    const o=document.createElement('option');
+    o.value=p;o.textContent=p.replace(/_/g,'/');
+    s.appendChild(o);
   });
-  if(cur) sel.value = cur;
+  if(cur)s.value=cur;
 }
 
 function update(){
-  fetch('/api/data').then(r=>r.json()).then(data=>{
-    const pairs   = Object.values(data.pairs||{});
-    const futures = Object.values(data.futures||{});
+  fetch('/api/data').then(r=>r.json()).then(d=>{
+    const pairs=Object.values(d.pairs||{});
+    const futs=Object.values(d.futures||{});
 
-    // Store all data for logic board
-    window._allData = {};
-    pairs.forEach(p=>{ window._allData[p.pair] = p; });
-    futures.forEach(f=>{ window._allData[f.pair] = f; });
+    // Store all data
+    window._D={};
+    pairs.forEach(p=>{window._D[p.pair]=p;});
+    futs.forEach(f=>{window._D[f.pair]=f; window._D[safe(f.pair)]=f;});
 
-    document.getElementById('hCycles').textContent  = data.cycle||'—';
-    document.getElementById('hSignals').textContent =
-      [...pairs,...futures].filter(p=>p.direction!=='HOLD').length;
-    document.getElementById('lastUp').textContent   = new Date().toLocaleTimeString();
-
-    const inSess = session();
-    document.getElementById('sessStatus').textContent =
-      inSess?'London/NY Active':'Asian Session';
-    document.getElementById('sessStatus').className =
-      inSess?'s-ok':'s-warn';
-
-    // Session element in header
-    const hSess = document.getElementById('hSession');
-    if(hSess){ hSess.textContent = inSess?'LONDON/NY':'ASIAN';
-               hSess.className = inSess?'hstat-v s-ok':'hstat-v s-warn'; }
+    // Header
+    document.getElementById('hCycles').textContent=d.cycle||'—';
+    document.getElementById('hSignals').textContent=[...pairs,...futs].filter(p=>p.direction!=='HOLD').length;
+    document.getElementById('upd').textContent=new Date().toLocaleTimeString();
+    const sess=inSession();
+    document.getElementById('sessEl').textContent=sess?'London/NY':'Asian';
+    document.getElementById('sessEl').className=sess?'s-ok':'s-warn';
+    document.getElementById('hSess').textContent=sess?'LONDON':'ASIAN';
+    document.getElementById('hSess').className=sess?'hstat-v s-ok':'hstat-v s-warn';
 
     // Signal feed
-    updateSignalFeed(data.signal_feed||[]);
+    updateSignalFeed(d.signal_feed||[]);
 
-    // News ticker
-    updateTicker(data.news_feed||[], data.ff_events||[]);
+    // Ticker
+    updateTicker(d.news_feed||[],d.ff_events||[]);
 
-    // Side panel updates
-    updateNewsPanel(data.news_feed||[]);
-    updateFFPanel(data.ff_events||[]);
+    // Side panels
+    updateNewsPanel(d.news_feed||[]);
+    updateFFPanel(d.ff_events||[]);
+    updateLogicSelect([...pairs.map(p=>p.pair),...futs.map(f=>f.pair)]);
 
-    // Logic pair select
-    updateLogicSelect([...pairs.map(p=>p.pair), ...futures.map(f=>f.pair)]);
-
-    // Render pair cards
-    const grid = document.getElementById('grid');
+    // Render forex pairs
+    const grid=document.getElementById('grid');
     pairs.forEach(r=>{
-      const safeId = r.pair.replace(/[^a-zA-Z0-9]/g,'_');
-      let card = document.getElementById('card-'+safeId);
+      const sid=safe(r.pair);
+      let card=document.getElementById('card-'+sid);
       if(!card){
-        const div = document.createElement('div');
-        div.innerHTML = buildCard(r);
+        const div=document.createElement('div');
+        div.innerHTML=buildCard(r,null,false);
         grid.appendChild(div.firstElementChild);
       } else {
-        const px = document.getElementById('px-'+safeId);
-        if(px) px.textContent = r.price;
-        const exp = document.getElementById('exp-'+safeId);
-        if(exp) exp.textContent = r.explanation||'';
+        const px=document.getElementById('px-'+sid);
+        if(px)px.textContent=r.price;
+        const ex=document.getElementById('exp-'+sid);
+        if(ex)ex.textContent=r.explanation||'';
+        // Refresh agent rows
+        const ab=card.querySelector('.c-agents-body');
+        if(ab)ab.innerHTML=buildAgentRows(r.agent_opinions);
       }
-      setTimeout(()=>drawChart(safeId, r.bars_m15||[]), 50);
+      setTimeout(()=>drawChart(sid,r.bars_m15||[]),50);
     });
 
-    // CME Futures section header
-    if(futures.length>0){
-      let hdr = document.getElementById('futures-hdr-el');
-      if(!hdr){
-        hdr = document.createElement('div');
-        hdr.id = 'futures-hdr-el';
-        hdr.className = 'futures-hdr';
-        hdr.innerHTML = '⚡ CME CURRENCY FUTURES &nbsp;<span>Institutional signals — Read only — Not executed on OANDA</span>';
-        grid.appendChild(hdr);
-      }
+    // Futures header
+    if(futs.length>0&&!document.getElementById('fut-hdr-el')){
+      const h=document.createElement('div');
+      h.id='fut-hdr-el';h.className='fut-hdr';
+      h.innerHTML='⚡ CME CURRENCY FUTURES &nbsp;<span>Institutional signals — Read only — Not executed on OANDA</span>';
+      grid.appendChild(h);
     }
 
-    // Render futures cards
-    futures.forEach(r=>{
-      const safeId = r.pair.replace(/[^a-zA-Z0-9]/g,'_');
-      const displayR = {...r, pair: safeId};
-      let card = document.getElementById('card-'+safeId);
+    // Render futures
+    futs.forEach(r=>{
+      const sid=safe(r.pair);
+      const displayR={...r,pair:sid};
+      let card=document.getElementById('card-'+sid);
       if(!card){
-        const div = document.createElement('div');
-        div.innerHTML = buildCard(displayR, r.display_name||r.pair);
-        const el = div.firstElementChild;
-        if(el){
-          el.style.borderColor = '#1e1040';
-          el.style.background  = 'linear-gradient(135deg,#06061a,#08081e)';
-          grid.appendChild(el);
-        }
+        const div=document.createElement('div');
+        div.innerHTML=buildCard(displayR,r.display_name||r.pair,true);
+        const el=div.firstElementChild;
+        if(el)grid.appendChild(el);
       } else {
-        const px = document.getElementById('px-'+safeId);
-        if(px) px.textContent = r.price;
+        const px=document.getElementById('px-'+sid);
+        if(px)px.textContent=r.price;
+        const ab=card.querySelector('.c-agents-body');
+        if(ab)ab.innerHTML=buildAgentRows(r.agent_opinions);
       }
-      setTimeout(()=>drawChart(safeId, r.bars_h1||[]), 100);
+      setTimeout(()=>drawChart(sid,r.bars_h1||[]),80);
     });
 
-    // Auto-refresh logic board
-    if(document.getElementById('logicPairSelect').value){
-      updateLogic();
-    }
+    // Auto-update logic board
+    if(document.getElementById('logicSel').value)renderLogic();
 
-  }).catch(e=>console.error('API error:',e));
+  }).catch(e=>console.error(e));
 }
 
 update();
-setInterval(update, 30000);
+setInterval(update,30000);
 </script>
 </body>
 </html>"""
+
 
 
 @app.route("/")
