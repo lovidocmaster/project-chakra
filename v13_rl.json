@@ -161,13 +161,13 @@
       "HOLD": 0.0
     },
     "USD_JPY_RANGING_HI_GD_LON_NE_NT_N": {
-      "BUY": 1.9481088695908482,
+      "BUY": 2.5303823210522554,
       "SELL": 0.5868842276460157,
       "HOLD": 0.0
     },
     "AUD_USD_TRENDING_HI_GD_LON_NE_NT_N": {
       "BUY": 2.8928880717482146,
-      "SELL": 0.0,
+      "SELL": -0.02199555535172193,
       "HOLD": 0.0
     },
     "AUD_USD_TRENDING_MD_OK_LON_NE_NT_N": {
@@ -304,9 +304,29 @@
       "BUY": -0.13861238817475127,
       "SELL": 0.0,
       "HOLD": 0.0
+    },
+    "EUR_USD_TRENDING_HI_GD_LON_BU_NT_N": {
+      "BUY": 0.0,
+      "SELL": 0.9428070016266499,
+      "HOLD": 0.0
+    },
+    "GBP_USD_TRENDING_HI_GD_LON_NE_NT_N": {
+      "BUY": 0.0,
+      "SELL": 0.6225895906199144,
+      "HOLD": 0.0
+    },
+    "EUR_USD_TRENDING_HI_GD_LON_BE_NT_N": {
+      "BUY": 0.0,
+      "SELL": 0.30502640777733286,
+      "HOLD": 0.0
+    },
+    "GBP_USD_TRENDING_HI_GD_LON_BE_NT_N": {
+      "BUY": 0.0,
+      "SELL": 0.16929616713375029,
+      "HOLD": 0.0
     }
   },
-  "eps": 0.05737700841867631,
-  "episodes": 330,
-  "reward_total": 0.0
+  "eps": 0.0542989946930088,
+  "episodes": 341,
+  "reward_total": 4.743225749110831
 }
