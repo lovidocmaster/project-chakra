@@ -1588,13 +1588,12 @@ class ChakraV15:
             try:
                 self.run_cycle()
             except Exception as e:
-                log.error(f"Cycle error: {e}")
-            time.sleep(CYCLE_SECS)
-
-
-# ── QUANTUM DASHBOARD ─────────────────────────────────────────────────
-app    = Flask(__name__)
-chakra = None
+    if "--once" in sys.argv:
+        chakra.run_cycle()
+    else:
+        t = threading.Thread(target=chakra.run, daemon=True)
+        t.start()
+        app.run(host="0.0.0.0", port=PORT, debug=False)
 
 DASHBOARD_HTML = """<!DOCTYPE html>
 <html>
@@ -1605,753 +1604,123 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:#030308;color:#e0e8ff;font-family:'Courier New',monospace;min-height:100vh;font-size:14px}
-body.light{background:#f0f2ff;color:#111133}
-body.light .hdr{background:linear-gradient(135deg,#e8eaff,#d0d8ff);border-color:#9999cc}
-body.light .card{background:linear-gradient(160deg,#ffffff,#f0f2ff);border-color:#ccccee}
-body.light .c-price{color:#0066cc}
-body.light .c-regime{background:#e0e4ff;color:#334}
-body.light .c-conf-bar{background:#d0d4ee}
-body.light .side{background:#f8f9ff;border-color:#ccccee}
-body.light .side-title{background:#e8eaff;color:#5533aa}
-body.light .logic-box{background:#fff;border-color:#ccccee;color:#223}
-body.light .news-item{border-color:#dde}
-body.light .news-title{color:#112}
-body.light .ag-row{border-color:#eee}
-body.light .ag-name{color:#5533aa}
-body.light .ag-reason{color:#445}
-body.light .status-bar{background:#e8eaff;color:#445;border-color:#ccd}
-body.light .news-ticker{background:#e0e4ff;border-color:#ccd}
-body.light .tick{color:#334}
-body.light .signal-feed{background:#eef0ff;border-color:#ccd}
-body.light .feed-empty{color:#889}
-body.light .c-explain{background:#fff;border-color:#ccd;color:#223}
-body.light .tab{background:#e8eaff;color:#556;border-color:#ccd}
-body.light .tab.active{background:#d0d4ff;color:#3322aa}
-body.light .c-lev{background:#f8f9ff}
-body.light .c-levels{background:#dde}
-body.light .c-trend{border-color:#dde}
-body.light .c-votes{border-color:#dde}
-body.light .c-agents{border-color:#dde}
-body.light .c-agents-title{background:#eef0ff;color:#5533aa}
-body.light .hstat-v{color:#0055cc}
-body.light .hstat-l{color:#667}
-body.light .logo-text{background:linear-gradient(90deg,#5533aa,#0066cc);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-::-webkit-scrollbar{width:5px}
-::-webkit-scrollbar-thumb{background:#3a2a7a;border-radius:3px}
-
-/* HEADER */
-.hdr{background:linear-gradient(135deg,#06061a,#0e0628);border-bottom:2px solid #2a1a6a;
-     padding:12px 20px;display:flex;align-items:center;justify-content:space-between;
-     position:sticky;top:0;z-index:200}
-.logo-wrap{display:flex;align-items:center;gap:12px}
-.logo-svg{width:48px;height:48px;flex-shrink:0}
-.logo-text{font-size:1.3em;font-weight:bold;letter-spacing:3px;
-           background:linear-gradient(90deg,#7b5cff,#00f5ff);
-           -webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.logo-sub{font-size:0.65em;color:#667;letter-spacing:2px;margin-top:2px}
-.hdr-stats{display:flex;gap:20px;align-items:center}
-.hstat{text-align:center}
-.hstat-v{font-size:1.3em;font-weight:bold;color:#00f5ff}
-.hstat-l{font-size:0.65em;color:#889;letter-spacing:1px}
-.live-badge{display:flex;align-items:center;gap:6px;background:#061a06;
-            border:1px solid #00ff66;border-radius:20px;padding:5px 14px;
-            font-size:0.8em;color:#00ff66;font-weight:bold}
-.dot{width:8px;height:8px;border-radius:50%;background:#00ff66;animation:blink 1s infinite}
-@keyframes blink{0%,100%{opacity:1;box-shadow:0 0 8px #00ff66}50%{opacity:0.2}}
-.sound-btn{background:#0a0a20;border:1px solid #3a3a6a;color:#889;padding:5px 12px;
-           border-radius:6px;cursor:pointer;font-size:0.75em;font-family:inherit}
-.sound-btn.on{color:#00ff66;border-color:#00ff6650}
-
-/* NEWS TICKER */
-.news-ticker{background:#030310;border-bottom:1px solid #1a1a5a;padding:0;
-             overflow:hidden;height:32px;display:flex;align-items:center}
-.ticker-label{background:#0a0a2a;color:#7b5cff;font-size:0.68em;padding:0 12px;
-              height:100%;display:flex;align-items:center;border-right:1px solid #1a1a5a;
-              white-space:nowrap;flex-shrink:0;letter-spacing:1px}
-.ticker-scroll{overflow:hidden;flex:1}
-.ticker-inner{display:inline-flex;animation:scroll 80s linear infinite;white-space:nowrap}
-.ticker-inner:hover{animation-play-state:paused}
-@keyframes scroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
-.tick{display:inline-block;padding:0 20px;font-size:0.72em;color:#aab;
-      border-right:1px solid #1a1a4a;height:32px;line-height:32px}
-.tick-high{color:#ff6655}
-.tick-med{color:#ffaa44}
-.tick-ff{color:#7b5cff;font-weight:bold}
-
-/* SIGNAL FEED */
-.signal-feed{background:#04040f;border-bottom:1px solid #1a1a4a;
-             padding:7px 16px;display:flex;align-items:center;gap:10px;
-             min-height:40px;overflow-x:auto}
-.feed-label{font-size:0.68em;color:#556;letter-spacing:1px;white-space:nowrap;flex-shrink:0;
-            font-weight:bold}
-.feed-item{display:inline-flex;align-items:center;gap:5px;padding:4px 12px;
-           border-radius:14px;font-size:0.75em;white-space:nowrap;flex-shrink:0;
-           cursor:pointer;transition:opacity .2s;font-weight:bold}
-.feed-item:hover{opacity:0.8}
-.feed-buy{background:#0a2a0a;border:1px solid #00ff66;color:#00ff66}
-.feed-sell{background:#2a0a0a;border:1px solid #ff4455;color:#ff4455}
-.feed-empty{font-size:0.72em;color:#445;font-style:italic}
-
-/* STATUS BAR */
-.status-bar{background:#02020a;border-bottom:1px solid #0f0f2a;
-            padding:5px 16px;display:flex;gap:20px;font-size:0.72em;color:#778;flex-wrap:wrap}
-.s-ok{color:#00ff66;font-weight:bold}
-.s-warn{color:#ffaa44;font-weight:bold}
-.s-err{color:#ff4455;font-weight:bold}
-
-/* MAIN LAYOUT: 3 columns */
-.main-wrap{display:grid;grid-template-columns:1fr 300px;min-height:calc(100vh - 140px)}
-
-/* PAIR GRID */
-.pair-grid{padding:12px;display:grid;
-           grid-template-columns:repeat(auto-fill,minmax(360px,1fr));
-           gap:14px;align-content:start;overflow-y:auto}
-
-/* SIDE PANEL */
-.side{background:#030310;border-left:2px solid #1a1a5a;display:flex;
-      flex-direction:column;overflow:hidden;max-height:calc(100vh - 140px);position:sticky;top:140px}
-.side-section{border-bottom:1px solid #0f0f2a;flex-shrink:0}
-.side-title{padding:8px 14px;font-size:0.68em;color:#7b5cff;letter-spacing:2px;
-            background:#050520;border-bottom:1px solid #0f0f2a;font-weight:bold}
-.side-scroll{overflow-y:auto}
-
-/* LOGIC BOARD */
-.logic-sel{width:100%;background:#06061a;border:1px solid #2a2a6a;color:#ccd;
-           padding:6px 10px;border-radius:5px;font-family:inherit;font-size:0.75em;
-           margin:10px 12px;width:calc(100% - 24px)}
-.logic-box{margin:0 12px 10px;padding:10px;background:#030315;
-           border:1px solid #1a1a4a;border-radius:6px;
-           font-size:0.7em;line-height:1.8;color:#bbc;
-           max-height:280px;overflow-y:auto;white-space:pre-wrap}
-
-/* NEWS PANEL */
-.news-scroll{overflow-y:auto;max-height:220px}
-.news-item{padding:8px 14px;border-bottom:1px solid #08081a;cursor:pointer}
-.news-item:hover{background:#06060f}
-.news-title{font-size:0.72em;color:#ccd;line-height:1.5;margin-bottom:4px}
-.news-tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:3px}
-.news-tag{background:#0a0a2a;border:1px solid #2a2a6a;color:#7b5cff;
-          padding:1px 6px;border-radius:3px;font-size:0.68em}
-.news-src{font-size:0.65em;color:#556;margin-top:2px}
-
-/* FF EVENTS */
-.ff-scroll{overflow-y:auto;max-height:180px}
-.ff-item{padding:7px 14px;border-bottom:1px solid #08081a;display:grid;
-         grid-template-columns:40px 1fr auto;gap:6px;align-items:center}
-.ff-curr{font-size:0.72em;color:#7b5cff;font-weight:bold}
-.ff-name{font-size:0.7em;color:#ccd}
-.ff-time{font-size:0.65em;color:#556}
-.ff-high{border-left:3px solid #ff4455}
-.ff-med{border-left:3px solid #ffaa44}
-.ff-low{border-left:3px solid #334}
-
-/* CARD */
-.card{background:linear-gradient(160deg,#07071c,#0b0b25);
-      border:1px solid #1e1e4e;border-radius:14px;overflow:hidden;
-      transition:border-color .3s,transform .15s;position:relative}
-.card:hover{transform:translateY(-2px);border-color:#4a3a9a}
-.card.buy-card{border-color:#0d3d1a}
-.card.sell-card{border-color:#3d0d1a}
-
-/* Card header */
-.c-hdr{padding:12px 16px;display:flex;justify-content:space-between;align-items:center;
-       border-bottom:1px solid #1a1a3e}
-.c-pair{font-size:1.2em;font-weight:bold;color:#fff;letter-spacing:2px}
-.c-sig{padding:4px 14px;border-radius:16px;font-weight:bold;font-size:0.85em;letter-spacing:1px}
-.sig-buy{background:#0a2e0a;color:#00ff88;border:1px solid #00ff8830;box-shadow:0 0 10px #00ff8820}
-.sig-sell{background:#2e0a0a;color:#ff3355;border:1px solid #ff335530;box-shadow:0 0 10px #ff335520}
-.sig-hold{background:#141430;color:#778;border:1px solid #2a2a5a}
-
-/* Price */
-.c-price-row{padding:10px 16px;display:flex;align-items:baseline;gap:12px;
-             border-bottom:1px solid #0a0a1e}
-.c-price{font-size:1.9em;font-weight:bold;color:#00f5ff;font-variant-numeric:tabular-nums}
-.c-regime{font-size:0.75em;color:#889;padding:2px 8px;background:#0a0a1e;border-radius:4px}
-
-/* Levels */
-.c-levels{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:#0a0a1e}
-.c-lev{padding:8px 6px;text-align:center;background:#07071c}
-.c-lev-l{font-size:0.62em;color:#778;letter-spacing:1px;margin-bottom:3px;font-weight:bold}
-.c-lev-v{font-size:0.88em;font-weight:bold;font-variant-numeric:tabular-nums}
-.sl-v{color:#ff3355}
-.en-v{color:#00f5ff}
-.tp-v{color:#00ff88}
-.c-lev-p{font-size:0.62em;color:#556}
-
-/* Trend */
-.c-trend{padding:7px 16px;display:flex;align-items:center;gap:8px;
-         border-bottom:1px solid #0a0a1e;flex-wrap:wrap}
-.t-pill{padding:3px 10px;border-radius:10px;font-weight:bold;font-size:0.75em}
-.t-bull{background:#0a2e0a;color:#00ff88;border:1px solid #00ff8840}
-.t-bear{background:#2e0a0a;color:#ff3355;border:1px solid #ff335540}
-.t-rng{background:#14142e;color:#aab;border:1px solid #2a2a5a}
-.t-rsn{font-size:0.68em;color:#778;flex:1}
-
-/* Conflict */
-.c-conflict{margin:6px 16px;padding:6px 10px;border-radius:6px;
-            background:#1e0e00;border:1px solid #ffaa44;color:#ffaa44;font-size:0.72em}
-
-/* Confidence */
-.c-conf{padding:6px 16px}
-.c-conf-row{display:flex;justify-content:space-between;font-size:0.72em;color:#889;margin-bottom:4px}
-.c-conf-bar{height:5px;background:#0a0a1e;border-radius:3px;overflow:hidden}
-.c-conf-fill{height:100%;border-radius:3px;
-             background:linear-gradient(90deg,#4a1aaa,#7b5cff,#00f5ff);transition:width .6s}
-
-/* Votes */
-.c-votes{padding:5px 16px;display:flex;gap:14px;border-bottom:1px solid #0a0a1e;font-size:0.78em}
-.vb{color:#00ff88;font-weight:bold}
-.vs{color:#ff3355;font-weight:bold}
-.vh{color:#445}
-
-/* AGENT LOGIC PANEL — always visible */
-.c-agents{border-bottom:1px solid #0a0a1e}
-.c-agents-title{padding:6px 16px;font-size:0.65em;color:#7b5cff;letter-spacing:2px;
-                background:#050518;border-bottom:1px solid #0a0a1e;font-weight:bold;
-                display:flex;justify-content:space-between;align-items:center}
-.c-agents-body{max-height:160px;overflow-y:auto}
-.ag-row{display:grid;grid-template-columns:90px 50px 50px 1fr;
-        gap:4px;padding:4px 16px;border-bottom:1px solid #08081a;font-size:0.68em;align-items:center}
-.ag-row:hover{background:#06060f}
-.ag-name{color:#9988ff;font-weight:bold}
-.ag-buy{color:#00ff88;font-weight:bold}
-.ag-sell{color:#ff3355;font-weight:bold}
-.ag-hold{color:#445}
-.ag-conf{color:#778;text-align:right}
-.ag-reason{color:#889;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-
-/* Timeframe tabs */
-.c-tabs{display:flex;gap:3px;padding:8px 16px 0;flex-wrap:wrap}
-.tab{padding:4px 10px;border-radius:6px 6px 0 0;cursor:pointer;font-size:0.68em;
-     border:1px solid #1a1a4e;border-bottom:none;color:#778;background:#04040f;
-     transition:all .2s;font-weight:bold}
-.tab.active{background:#0b0b25;color:#00f5ff;border-color:#4a3a9a}
-
-/* Chart */
-.c-chart{padding:0 16px 6px;height:155px;position:relative}
-
-/* Explain */
-.c-explain{margin:6px 16px;padding:8px 10px;background:#04040f;border:1px solid #1a1a4e;
-           border-radius:6px;font-size:0.7em;line-height:1.8;color:#aab;
-           max-height:110px;overflow-y:auto;white-space:pre-wrap}
-
-/* Logic button */
-.c-logic-btn{margin:6px 16px;background:#080820;border:1px solid #2a2a6a;
-             color:#7b5cff;padding:5px 12px;border-radius:6px;cursor:pointer;
-             font-size:0.7em;font-family:inherit;width:calc(100% - 32px);text-align:left;
-             font-weight:bold}
-.c-logic-btn:hover{background:#0e0e30}
-
-/* Card footer */
-.c-foot{padding:5px 16px;font-size:0.62em;color:#334;border-top:1px solid #0a0a1e;
-        display:flex;justify-content:space-between}
-
-/* Futures */
-.fut-hdr{grid-column:1/-1;padding:12px 4px 6px;font-size:0.78em;color:#7b5cff;
-         letter-spacing:2px;border-top:2px solid #2a1a6a;margin-top:6px;font-weight:bold}
-.fut-hdr span{color:#556;font-size:0.85em;font-weight:normal}
-.fut-card{border-color:#181840}
-.fut-card:hover{border-color:#2a1a7a}
-
-/* Mobile */
-@media(max-width:900px){
-  .main-wrap{grid-template-columns:1fr}
-  .side{display:none}
-  .pair-grid{grid-template-columns:1fr}
-}
+body{background:#030308;color:#e8eeff;font-family:monospace;overflow-x:hidden}
+.hdr{background:#06061a;border-bottom:2px solid #1e1e4e;padding:15px;display:flex;justify-content:space-between;align-items:center}
+.logo{color:#00f5ff;font-size:1.2em;font-weight:bold;letter-spacing:2px}
+.stats{display:flex;gap:20px;font-size:0.9em}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(350px,1fr));gap:12px;padding:15px}
+.card{background:#0b0b22;border:1px solid #1e1e4e;border-radius:8px;padding:15px;transition:all 0.2s}
+.card:hover{border-color:#7b5cff;box-shadow:0 0 10px #7b5cff30}
+.pair-name{font-size:1.1em;font-weight:bold;color:#00f5ff;margin-bottom:10px}
+.price{font-size:1.8em;color:#00ff88;font-weight:bold;margin:10px 0}
+.direction{display:inline-block;padding:5px 15px;border-radius:5px;font-weight:bold;font-size:0.9em;margin:10px 0}
+.buy{background:#061a0a;color:#00ff88;border:1px solid #00ff88}
+.sell{background:#1a060a;color:#ff3355;border:1px solid #ff3355}
+.hold{background:#141428;color:#aab8ff;border:1px solid #1e1e4e}
+.chart-container{height:150px;margin:10px 0}
+.info{font-size:0.75em;color:#aab8ff;margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.info-row{display:flex;justify-content:space-between}
+.loading{text-align:center;padding:50px;color:#556}
 </style>
 </head>
 <body>
-
-<!-- HEADER -->
 <div class="hdr">
-  <div class="logo-wrap">
-    <svg class="logo-svg" viewBox="0 0 48 48">
-      <defs>
-        <radialGradient id="g1" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stop-color="#9b6fff"/>
-          <stop offset="100%" stop-color="#3a0080"/>
-        </radialGradient>
-      </defs>
-      <circle cx="24" cy="24" r="22" fill="none" stroke="#7b5cff" stroke-width="1.5" opacity="0.9"/>
-      <circle cx="24" cy="24" r="17" fill="none" stroke="#4a3a8a" stroke-width="0.8" opacity="0.5"/>
-      <circle cx="24" cy="24" r="7" fill="url(#g1)"/>
-      <circle cx="24" cy="24" r="3" fill="#fff" opacity="0.95"/>
-      <polygon points="24,1 26.5,8 21.5,8" fill="#7b5cff"/>
-      <polygon points="24,47 26.5,40 21.5,40" fill="#7b5cff"/>
-      <polygon points="1,24 8,21.5 8,26.5" fill="#7b5cff"/>
-      <polygon points="47,24 40,21.5 40,26.5" fill="#7b5cff"/>
-      <line x1="24" y1="8" x2="24" y2="17" stroke="#7b5cff" stroke-width="1" opacity="0.8"/>
-      <line x1="24" y1="31" x2="24" y2="40" stroke="#7b5cff" stroke-width="1" opacity="0.8"/>
-      <line x1="8" y1="24" x2="17" y2="24" stroke="#7b5cff" stroke-width="1" opacity="0.8"/>
-      <line x1="31" y1="24" x2="40" y2="24" stroke="#7b5cff" stroke-width="1" opacity="0.8"/>
-      <circle cx="24" cy="9" r="4.5" fill="#04040e" stroke="#7b5cff" stroke-width="1"/>
-      <circle cx="24" cy="39" r="4.5" fill="#04040e" stroke="#7b5cff" stroke-width="1"/>
-      <circle cx="9" cy="24" r="4.5" fill="#04040e" stroke="#7b5cff" stroke-width="1"/>
-      <circle cx="39" cy="24" r="4.5" fill="#04040e" stroke="#7b5cff" stroke-width="1"/>
-      <text x="24" y="11" text-anchor="middle" font-size="4.5" fill="#00f5ff">▲</text>
-      <text x="24" y="42" text-anchor="middle" font-size="4" fill="#7b5cff">AI</text>
-      <text x="9" y="26" text-anchor="middle" font-size="4" fill="#00ff88">$</text>
-      <text x="39" y="26" text-anchor="middle" font-size="4" fill="#ffd700">€</text>
-    </svg>
-    <div>
-      <div class="logo-text">PROJECT CHAKRA V15</div>
-      <div class="logo-sub">AUTONOMOUS AI FOREX TRADING SYSTEM</div>
-    </div>
-  </div>
-  <div class="hdr-stats">
-    <div class="hstat"><div class="hstat-v" id="hCycles">—</div><div class="hstat-l">CYCLES</div></div>
-    <div class="hstat"><div class="hstat-v" id="hSignals">—</div><div class="hstat-l">SIGNALS</div></div>
-    <div class="hstat"><div class="hstat-v">21</div><div class="hstat-l">AGENTS</div></div>
-    <div class="hstat"><div class="hstat-v">14</div><div class="hstat-l">PAIRS</div></div>
-    <div class="hstat"><div class="hstat-v s-warn" id="hSess">ASIAN</div><div class="hstat-l">SESSION</div></div>
-    <div class="live-badge"><div class="dot"></div>LIVE</div>
-    <button class="sound-btn" id="sndBtn" onclick="toggleSound()">🔇 Sound</button>
-    <button class="sound-btn" id="modeBtn" onclick="toggleMode()">☀️ Light</button>
+  <div class="logo">⚡ PROJECT CHAKRA V15</div>
+  <div class="stats">
+    <span>Cycle: <span id="cyc">—</span></span>
+    <span>Pairs: <span id="pcnt">—</span></span>
+    <span>Status: <span style="color:#00ff88">LIVE</span></span>
   </div>
 </div>
-
-<!-- NEWS TICKER -->
-<div class="news-ticker">
-  <div class="ticker-label">📡 LIVE NEWS</div>
-  <div class="ticker-scroll">
-    <div class="ticker-inner" id="ticker">
-      <span class="tick">⚡ Connecting to market news feed...</span>
-      <span class="tick">⚡ Connecting to market news feed...</span>
-    </div>
-  </div>
+<div class="grid" id="grid">
+  <div class="loading">Loading pairs...</div>
 </div>
-
-<!-- SIGNAL FEED -->
-<div class="signal-feed">
-  <span class="feed-label">🎯 NEW SIGNALS:</span>
-  <span class="feed-empty" id="feedEmpty">Monitoring market — no new signals yet</span>
-  <div id="feedItems" style="display:flex;gap:6px;align-items:center"></div>
-</div>
-
-<!-- STATUS BAR -->
-<div class="status-bar">
-  <span>Session: <span id="sessEl" class="s-warn">Checking...</span></span>
-  <span>Trailing: <span class="s-ok">ON</span></span>
-  <span>Pyramid: <span class="s-ok">ON</span></span>
-  <span>Execute: <span class="s-ok">AUTO</span></span>
-  <span>Learning: <span class="s-ok">ON</span></span>
-  <span>Supabase: <span class="s-ok">LOGGING</span></span>
-  <span style="margin-left:auto">Updated: <span id="upd">—</span></span>
-</div>
-
-<!-- MAIN -->
-<div class="main-wrap">
-
-  <!-- PAIR GRID -->
-  <div class="pair-grid" id="grid"></div>
-
-  <!-- SIDE PANEL -->
-  <div class="side">
-
-    <!-- LOGIC BOARD -->
-    <div class="side-section" style="flex-shrink:0">
-      <div class="side-title">🧠 SIGNAL LOGIC BOARD</div>
-      <div style="padding:8px 0 0">
-        <select class="logic-sel" id="logicSel" onchange="renderLogic()">
-          <option value="">— Select pair to analyse —</option>
-        </select>
-        <div class="logic-box" id="logicBox">
-Select a pair above to see:
-• Why signal is BUY / SELL / HOLD
-• Which agents agree and their reasons
-• H4 trend alignment
-• News affecting this pair
-• Weekly bias direction
-• Risk levels explanation
-        </div>
-      </div>
-    </div>
-
-    <!-- FOREX FACTORY -->
-    <div class="side-section" style="flex-shrink:0">
-      <div class="side-title">📅 HIGH IMPACT EVENTS</div>
-      <div class="ff-scroll" id="ffPanel">
-        <div style="padding:10px 14px;font-size:0.72em;color:#556">Loading calendar...</div>
-      </div>
-    </div>
-
-    <!-- NEWS -->
-    <div class="side-section" style="flex:1;overflow:hidden">
-      <div class="side-title">📰 NEWS & PAIR IMPACT</div>
-      <div class="news-scroll" id="newsPanel">
-        <div style="padding:10px 14px;font-size:0.72em;color:#556">Loading news...</div>
-      </div>
-    </div>
-
-  </div>
-</div>
-
 <script>
-const charts={};
-let soundOn=false, prevSigCount=0;
-window._D={};  // all pair data
-
-function toggleMode(){
-  document.body.classList.toggle('light');
-  const b=document.getElementById('modeBtn');
-  b.textContent=document.body.classList.contains('light')?'🌙 Dark':'☀️ Light';
-}
-function toggleSound(){
-  soundOn=!soundOn;
-  const b=document.getElementById('sndBtn');
-  b.textContent=soundOn?'🔊 Sound':'🔇 Sound';
-  b.className=soundOn?'sound-btn on':'sound-btn';
-}
-function beep(){
-  if(!soundOn)return;
-  try{
-    const a=new AudioContext(),o=a.createOscillator(),g=a.createGain();
-    o.connect(g);g.connect(a.destination);
-    o.frequency.setValueAtTime(900,a.currentTime);
-    o.frequency.setValueAtTime(700,a.currentTime+0.12);
-    g.gain.setValueAtTime(0.25,a.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.001,a.currentTime+0.45);
-    o.start();o.stop(a.currentTime+0.45);
-  }catch(e){}
-}
-function inSession(){
-  const h=new Date().getUTCHours();
-  return (h>=7&&h<=12)||(h>=13&&h<=18);
-}
-function tfKey(tf){
-  const m={M15:'bars_m15',M30:'bars_h1',H1:'bars_h1',H4:'bars_h4',H8:'bars_h8',D1:'bars_d1'};
-  return m[tf]||'bars_m15';
-}
-function switchTF(pair,tf,el){
-  el.closest('.card').querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  el.classList.add('active');
-  const sid=safe(pair);
-  const d=window._D[pair]||window._D[sid];
-  if(d)drawChart(sid,d[tfKey(tf)]||d.bars_m15||[]);
-}
-function safe(s){return s.replace(/[^a-zA-Z0-9]/g,'_')}
-function trendCls(t){return t==='BULLISH'?'t-bull':t==='BEARISH'?'t-bear':'t-rng'}
-
-function drawChart(sid,bars){
-  if(!bars||bars.length<2)return;
-  const cv=document.getElementById('chart-'+sid);
-  if(!cv)return;
-  if(charts[sid])charts[sid].destroy();
-  const closes=bars.map(b=>b[4]);
-  const labels=bars.map(b=>b[0].substring(11,16));
-  const up=closes[closes.length-1]>=closes[0];
-  const lc=up?'#00ff88':'#ff3355';
-  charts[sid]=new Chart(cv,{
-    type:'line',
-    data:{labels,datasets:[{data:closes,borderColor:lc,backgroundColor:lc+'15',
-          borderWidth:1.8,pointRadius:0,fill:true,tension:0.1}]},
-    options:{responsive:true,maintainAspectRatio:false,animation:false,
-      plugins:{legend:{display:false}},
-      scales:{x:{ticks:{color:'#556',font:{size:9},maxTicksLimit:8},grid:{color:'#0a0a1e'}},
-              y:{ticks:{color:'#556',font:{size:9},maxTicksLimit:5},grid:{color:'#0a0a1e'},position:'right'}}}
-  });
-}
-
-function buildAgentRows(ops){
-  if(!ops||ops.length===0)return '<div class="ag-row"><span class="ag-name" style="color:#445">No agent data</span></div>';
-  return ops.map(a=>{
-    const cls=a.signal==='BUY'?'ag-buy':a.signal==='SELL'?'ag-sell':'ag-hold';
-    return `<div class="ag-row">
-      <span class="ag-name">${a.agent}</span>
-      <span class="${cls}">${a.signal}</span>
-      <span class="ag-conf">${a.confidence}%</span>
-      <span class="ag-reason" title="${a.reason||''}">${(a.reason||'').substring(0,44)}</span>
-    </div>`;
-  }).join('');
-}
-
-function buildCard(r,label,isFut){
-  const sid=safe(r.pair);
-  const lbl=label||r.pair.replace(/_/g,'/');
-  const sc=r.direction==='BUY'?'buy-card':r.direction==='SELL'?'sell-card':'';
-  const sb=r.direction==='BUY'?'sig-buy':r.direction==='SELL'?'sig-sell':'sig-hold';
-  const tc=trendCls(r.h4_trend);
-  const conf=r.direction==='HOLD'?'—':r.confidence+'%';
-  const conflict=r.conflict?`<div class="c-conflict">⚠️ ${r.conflict}</div>`:'';
-  const futBadge=isFut?`<div style="font-size:0.62em;color:#556;padding:2px 16px 4px">⚡ Institutional signal — read only</div>`:'';
-
-  return `
-  <div class="card ${sc} ${isFut?'fut-card':''}" id="card-${sid}">
-    <div class="c-hdr">
-      <span class="c-pair">${lbl}</span>
-      <span class="c-sig ${sb}">${r.direction}</span>
-    </div>
-    <div class="c-price-row">
-      <span class="c-price" id="px-${sid}">${r.price}</span>
-      <span class="c-regime">${r.regime||'—'}</span>
-    </div>
-    <div class="c-levels">
-      <div class="c-lev"><div class="c-lev-l">STOP LOSS</div>
-        <div class="c-lev-v sl-v">${r.sl||'—'}</div>
-        <div class="c-lev-p">${r.sl_pips||0} pips</div></div>
-      <div class="c-lev"><div class="c-lev-l">ENTRY</div>
-        <div class="c-lev-v en-v">${r.price}</div>
-        <div class="c-lev-p">Risk $${r.dollar_risk||0}</div></div>
-      <div class="c-lev"><div class="c-lev-l">TAKE PROFIT</div>
-        <div class="c-lev-v tp-v">${r.tp||'—'}</div>
-        <div class="c-lev-p">${r.tp_pips||0} pips</div></div>
-    </div>
-    <div class="c-trend">
-      <span class="t-pill ${tc}">H4 ${r.h4_trend}</span>
-      <span class="t-rsn">${(r.h4_reason||'').substring(0,52)}</span>
-    </div>
-    ${conflict}
-    <div class="c-conf">
-      <div class="c-conf-row"><span>Confidence</span><span>${conf} | RR ${r.rr||'3:1'}</span></div>
-      <div class="c-conf-bar"><div class="c-conf-fill" style="width:${Math.min(r.confidence||0,100)}%"></div></div>
-    </div>
-    <div class="c-votes">
-      <span class="vb">▲ ${r.buy_votes} BUY</span>
-      <span class="vs">▼ ${r.sell_votes} SELL</span>
-      <span class="vh">◆ ${r.hold_votes} HOLD</span>
-    </div>
-    <div class="c-agents">
-      <div class="c-agents-title">
-        <span>🤖 AGENT OPINIONS (${(r.agent_opinions||[]).length})</span>
-        <span style="color:#556;font-size:0.9em">scroll →</span>
-      </div>
-      <div class="c-agents-body">${buildAgentRows(r.agent_opinions)}</div>
-    </div>
-    <div class="c-tabs">
-      <div class="tab active" onclick="switchTF('${r.pair}','M15',this)">M15</div>
-      <div class="tab" onclick="switchTF('${r.pair}','H1',this)">H1</div>
-      <div class="tab" onclick="switchTF('${r.pair}','H4',this)">H4</div>
-      <div class="tab" onclick="switchTF('${r.pair}','H8',this)">H8</div>
-      <div class="tab" onclick="switchTF('${r.pair}','D1',this)">1D</div>
-    </div>
-    <div class="c-chart"><canvas id="chart-${sid}"></canvas></div>
-    ${futBadge}
-    <div class="c-explain" id="exp-${sid}">${r.explanation||''}</div>
-    <button class="c-logic-btn" onclick="pickLogic('${r.pair}')">🧠 Open Full Logic Board →</button>
-    <div class="c-foot">
-      <span>${r.timestamp||''}</span>
-      <span>ATR: ${r.atr||'—'}</span>
-    </div>
-  </div>`;
-}
-
-function pickLogic(pair){
-  document.getElementById('logicSel').value=pair;
-  renderLogic();
-  document.querySelector('.side').scrollTo(0,0);
-}
-
-function renderLogic(){
-  const pair=document.getElementById('logicSel').value;
-  const box=document.getElementById('logicBox');
-  if(!pair){box.textContent='Select a pair above.';return;}
-  const sid=safe(pair);
-  const r=window._D[pair]||window._D[sid];
-  if(!r){box.textContent='No data yet for this pair.';return;}
-
-  const ops=r.agent_opinions||[];
-  const agreed=ops.filter(a=>a.signal===r.direction);
-  const oppose=ops.filter(a=>a.signal!==r.direction&&a.signal!=='HOLD');
-  const neut=ops.filter(a=>a.signal==='HOLD');
-  let t='';
-  t+=`╔══════════════════════════════════╗\n`;
-  t+=`  ${r.pair.replace('_','/')} — ${r.direction}  (${r.confidence}% conf)\n`;
-  t+=`╚══════════════════════════════════╝\n\n`;
-  t+=`📍 TRADE PLAN\n`;
-  t+=`  Entry:  ${r.price}\n`;
-  t+=`  SL:     ${r.sl||'—'} (${r.sl_pips||0} pips)\n`;
-  t+=`  TP:     ${r.tp||'—'} (${r.tp_pips||0} pips)\n`;
-  t+=`  RR:     ${r.rr||'3:1'} | Risk $${r.dollar_risk||0}\n\n`;
-  t+=`📈 TREND ANALYSIS\n`;
-  t+=`  H4 Trend:  ${r.h4_trend}\n`;
-  t+=`  Detail:    ${r.h4_reason||'—'}\n`;
-  t+=`  Regime:    ${r.regime||'—'}\n`;
-  t+=`  Aligned:   ${r.h4_aligned?'YES ✅':'NO ⚠️'}\n`;
-  if(r.conflict)t+=`  WARNING:   ${r.conflict}\n`;
-  t+=`\n🤖 AGENT VOTES\n`;
-  t+=`  Total: ${ops.length} | BUY: ${r.buy_votes} | SELL: ${r.sell_votes} | HOLD: ${r.hold_votes}\n\n`;
-  if(agreed.length){
-    t+=`✅ AGREEING AGENTS (${agreed.length}):\n`;
-    agreed.forEach(a=>{t+=`  • ${a.agent} [${a.confidence}%]\n    → ${a.reason||'no reason'}\n`;});
-    t+='\n';
-  }
-  if(oppose.length){
-    t+=`❌ OPPOSING AGENTS (${oppose.length}):\n`;
-    oppose.forEach(a=>{t+=`  • ${a.agent} says ${a.signal} [${a.confidence}%]\n    → ${a.reason||'no reason'}\n`;});
-    t+='\n';
-  }
-  t+=`⏸️ NEUTRAL: ${neut.length} agents holding\n\n`;
-  t+=`📰 NEWS:\n`;
-  (r.headlines||[]).forEach(h=>{t+=`  • ${h}\n`;});
-  box.textContent=t;
-}
-
-function updateSignalFeed(feed){
-  if(!feed||feed.length===0)return;
-  document.getElementById('feedEmpty').style.display='none';
-  const c=document.getElementById('feedItems');
-  c.innerHTML='';
-  feed.slice(0,8).forEach(s=>{
-    const cls=s.direction==='BUY'?'feed-buy':'feed-sell';
-    const ic=s.direction==='BUY'?'▲':'▼';
-    const el=document.createElement('div');
-    el.className=`feed-item ${cls}`;
-    el.innerHTML=`${ic} <b>${s.pair.replace('_','/')}</b> ${s.direction} ${s.conf}% <span style="color:#556;font-weight:normal">${s.time}</span>`;
-    el.onclick=()=>pickLogic(s.pair);
-    el.title='Click to view signal logic';
-    c.appendChild(el);
-  });
-  if(feed.length>prevSigCount)beep();
-  prevSigCount=feed.length;
-}
-
-function updateTicker(news,ff){
-  const t=document.getElementById('ticker');
-  let html='';
-  (ff||[]).slice(0,5).forEach(e=>{
-    html+=`<span class="tick tick-ff">⚡ ${e.currency||''}: ${e.title||''} | Forecast:${e.forecast||'?'} Prev:${e.previous||'?'}</span>`;
-  });
-  (news||[]).slice(0,12).forEach(n=>{
-    const p=(n.impacts||[]).join(' ');
-    const cls=(n.impacts||[]).length>=3?'tick-high':(n.impacts||[]).length>0?'tick-med':'';
-    html+=`<span class="tick ${cls}">${p?'['+p+'] ':''}${n.title}</span>`;
-  });
-  if(!html)html='<span class="tick">⚡ Market monitoring active...</span>';
-  t.innerHTML=html+html;
-}
-
-function updateNewsPanel(news){
-  const p=document.getElementById('newsPanel');
-  if(!news||news.length===0){p.innerHTML='<div style="padding:10px 14px;font-size:0.72em;color:#556">No news loaded</div>';return;}
-  p.innerHTML=news.slice(0,15).map(n=>{
-    const tags=(n.impacts||[]).map(x=>`<span class="news-tag">${x.replace('_','/')}</span>`).join('');
-    return `<div class="news-item" onclick="pickLogic('${(n.impacts||[])[0]||''}')">
-      <div class="news-title">${n.title}</div>
-      <div class="news-tags">${tags||'<span style="color:#445;font-size:0.68em">General</span>'}</div>
-      <div class="news-src">${n.source||''} — ${n.time||''}</div>
-    </div>`;
-  }).join('');
-}
-
-function updateFFPanel(ff){
-  const p=document.getElementById('ffPanel');
-  if(!ff||ff.length===0){p.innerHTML='<div style="padding:10px 14px;font-size:0.72em;color:#556">No events or API unavailable</div>';return;}
-  p.innerHTML=ff.slice(0,8).map(e=>{
-    const cls=e.impact==='High'||e.impact==='3'?'ff-high':e.impact==='Medium'||e.impact==='2'?'ff-med':'ff-low';
-    return `<div class="ff-item ${cls}">
-      <span class="ff-curr">${e.currency||'—'}</span>
-      <span class="ff-name">${e.title||''}</span>
-      <span class="ff-time">${e.time||''}</span>
-    </div>`;
-  }).join('');
-}
-
-function updateLogicSelect(pairs){
-  const s=document.getElementById('logicSel');
-  const cur=s.value;
-  s.innerHTML='<option value="">— Select pair to analyse —</option>';
-  pairs.forEach(p=>{
-    const o=document.createElement('option');
-    o.value=p;o.textContent=p.replace(/_/g,'/');
-    s.appendChild(o);
-  });
-  if(cur)s.value=cur;
-}
-
-function update(){
-  fetch('/api/data').then(r=>r.json()).then(d=>{
-    const pairs=Object.values(d.pairs||{});
-    const futs=Object.values(d.futures||{});
-
-    // Store all data
-    window._D={};
-    pairs.forEach(p=>{window._D[p.pair]=p;});
-    futs.forEach(f=>{window._D[f.pair]=f; window._D[safe(f.pair)]=f;});
-
-    // Header
-    document.getElementById('hCycles').textContent=d.cycle||'—';
-    document.getElementById('hSignals').textContent=[...pairs,...futs].filter(p=>p.direction!=='HOLD').length;
-    document.getElementById('upd').textContent=new Date().toLocaleTimeString();
-    const sess=inSession();
-    document.getElementById('sessEl').textContent=sess?'London/NY':'Asian';
-    document.getElementById('sessEl').className=sess?'s-ok':'s-warn';
-    document.getElementById('hSess').textContent=sess?'LONDON':'ASIAN';
-    document.getElementById('hSess').className=sess?'hstat-v s-ok':'hstat-v s-warn';
-
-    // Signal feed
-    updateSignalFeed(d.signal_feed||[]);
-
-    // Ticker
-    updateTicker(d.news_feed||[],d.ff_events||[]);
-
-    // Side panels
-    updateNewsPanel(d.news_feed||[]);
-    updateFFPanel(d.ff_events||[]);
-    updateLogicSelect([...pairs.map(p=>p.pair),...futs.map(f=>f.pair)]);
-
-    // Render forex pairs
-    const grid=document.getElementById('grid');
-    pairs.forEach(r=>{
-      const sid=safe(r.pair);
-      let card=document.getElementById('card-'+sid);
-      if(!card){
-        const div=document.createElement('div');
-        div.innerHTML=buildCard(r,null,false);
-        grid.appendChild(div.firstElementChild);
-      } else {
-        const px=document.getElementById('px-'+sid);
-        if(px)px.textContent=r.price;
-        const ex=document.getElementById('exp-'+sid);
-        if(ex)ex.textContent=r.explanation||'';
-        // Refresh agent rows
-        const ab=card.querySelector('.c-agents-body');
-        if(ab)ab.innerHTML=buildAgentRows(r.agent_opinions);
+function drawChart(container, closes) {
+  if(!container || closes.length < 2) return;
+  try {
+    const up = closes[closes.length-1] >= closes[0];
+    const c = new Chart(container, {
+      type: 'line',
+      data: {
+        labels: closes.map((_, i) => i),
+        datasets: [{
+          data: closes,
+          borderColor: up ? '#00ff88' : '#ff3355',
+          backgroundColor: (up ? '#00ff88' : '#ff3355') + '20',
+          borderWidth: 1.5,
+          fill: true,
+          tension: 0.1,
+          pointRadius: 0
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { display: false },
+          y: { display: false }
+        }
       }
-      setTimeout(()=>drawChart(sid,r.bars_m15||[]),50);
     });
+  } catch(e) {}
+}
 
-    // Futures header
-    if(futs.length>0&&!document.getElementById('fut-hdr-el')){
-      const h=document.createElement('div');
-      h.id='fut-hdr-el';h.className='fut-hdr';
-      h.innerHTML='⚡ CME CURRENCY FUTURES &nbsp;<span>Institutional signals — Read only — Not executed on OANDA</span>';
-      grid.appendChild(h);
+function update() {
+  fetch('/api/data').then(r => r.json()).then(d => {
+    const grid = document.getElementById('grid');
+    const pairs = Object.values(d.pairs || {});
+    
+    if(pairs.length === 0) {
+      grid.innerHTML = '<div class="loading">No data yet...</div>';
+      return;
     }
-
-    // Render futures
-    futs.forEach(r=>{
-      const sid=safe(r.pair);
-      const displayR={...r,pair:sid};
-      let card=document.getElementById('card-'+sid);
-      if(!card){
-        const div=document.createElement('div');
-        div.innerHTML=buildCard(displayR,r.display_name||r.pair,true);
-        const el=div.firstElementChild;
-        if(el)grid.appendChild(el);
-      } else {
-        const px=document.getElementById('px-'+sid);
-        if(px)px.textContent=r.price;
-        const ab=card.querySelector('.c-agents-body');
-        if(ab)ab.innerHTML=buildAgentRows(r.agent_opinions);
+    
+    document.getElementById('cyc').textContent = d.cycle || 0;
+    document.getElementById('pcnt').textContent = pairs.length;
+    
+    grid.innerHTML = '';
+    pairs.forEach(p => {
+      const dir = p.direction || 'HOLD';
+      const dirClass = dir === 'BUY' ? 'buy' : dir === 'SELL' ? 'sell' : 'hold';
+      const chart = document.createElement('canvas');
+      
+      const html = `
+        <div class="card">
+          <div class="pair-name">${p.pair.replace('_', '/')}</div>
+          <div class="price">${p.price}</div>
+          <div class="direction ${dirClass}">${dir} ${p.confidence}%</div>
+          <div class="chart-container"></div>
+          <div class="info">
+            <div class="info-row"><span>H4:</span><span>${p.h4_trend || '—'}</span></div>
+            <div class="info-row"><span>Votes:</span><span>${p.buy_votes}B/${p.sell_votes}S</span></div>
+            <div class="info-row"><span>SL:</span><span>${p.sl || '—'}</span></div>
+            <div class="info-row"><span>TP:</span><span>${p.tp || '—'}</span></div>
+          </div>
+        </div>
+      `;
+      
+      const div = document.createElement('div');
+      div.innerHTML = html;
+      grid.appendChild(div);
+      
+      const canvas = div.querySelector('canvas');
+      if(p.bars_h1 && p.bars_h1.length > 0) {
+        const closes = p.bars_h1.map(b => b[4]);
+        setTimeout(() => drawChart(canvas, closes), 50);
       }
-      setTimeout(()=>drawChart(sid,r.bars_h1||[]),80);
     });
-
-    // Auto-update logic board
-    if(document.getElementById('logicSel').value)renderLogic();
-
-  }).catch(e=>console.error(e));
+  }).catch(e => console.error(e));
 }
 
 update();
-setInterval(update,30000);
+setInterval(update, 30000);
 </script>
 </body>
-</html>"""
-
-
+</html>
+"""
 
 @app.route("/")
 def dashboard():
@@ -2359,34 +1728,24 @@ def dashboard():
 
 @app.route("/api/data")
 def api_data():
-    with chakra.lock:
+    try:
         return jsonify({
-            "cycle":        chakra.cycle,
-            "pairs":        chakra.results,
-            "futures":      chakra.futures,
-            "paused":       chakra.paused,
-            "weekly_bias":  chakra.weekly_bias.get_summary(),
-            "signal_feed":  list(chakra._signal_feed),
-            "news_feed":    list(chakra._news_feed),
-            "ff_events":    chakra._ff_events,
-            "timestamp":    datetime.now(timezone.utc).isoformat()
+            "cycle": chakra.cycle,
+            "pairs": chakra.results or {},
+            "futures": chakra.futures or {},
         })
+    except:
+        return jsonify({"cycle": 0, "pairs": {}, "futures": {}})
 
 @app.route("/api/pair/<pair>")
 def api_pair(pair):
-    with chakra.lock:
-        return jsonify(chakra.results.get(pair, {}))
+    return jsonify(chakra.results.get(pair, {}))
 
 @app.route("/health")
 def health():
-    return jsonify({"status":"ok","cycle":chakra.cycle if chakra else 0})
+    return "OK"
 
 if __name__ == "__main__":
-    import sys
-    chakra = ChakraV15()
-    if "--once" in sys.argv:
-        chakra.run_cycle()
-    else:
-        t = threading.Thread(target=chakra.run, daemon=True)
-        t.start()
-        app.run(host="0.0.0.0", port=PORT, debug=False)
+    chakra = ChakraEngine()
+    chakra.start()
+    app.run(host="0.0.0.0", port=PORT, debug=False)
