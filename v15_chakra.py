@@ -566,7 +566,9 @@ class NewsIntelligence:
         top_headline = "No major news"
 
         for art in arts:
-            txt = (art.get("title","") + " " + art.get("description","")).lower()
+            title = art.get("title") or ""
+            desc = art.get("description") or ""
+            txt = (title + " " + desc).lower()
             is_base  = any(kw in txt for kw in self.KEYWORDS.get(base, []))
             is_quote = any(kw in txt for kw in self.KEYWORDS.get(quote, []))
             if not (is_base or is_quote):
@@ -2148,13 +2150,13 @@ def api_status():
             
             pairs_data[pair] = {
                 'pair': pair,
-                'price': record.price,
+                'price': record.where_entry,  # Use where_entry not price
                 'direction': record.direction,
                 'confidence': record.confidence,
-                'h4_trend': record.h4_trend if hasattr(record, 'h4_trend') else '—',
-                'regime': record.regime if hasattr(record, 'regime') else '—',
-                'sl': record.sl if hasattr(record, 'sl') else '—',
-                'tp': record.tp if hasattr(record, 'tp') else '—',
+                'h4_trend': '—',  # Not stored in record
+                'regime': record.regime,
+                'sl': round(record.where_sl, 5) if record.where_sl else '—',
+                'tp': round(record.where_tp, 5) if record.where_tp else '—',
                 'bars_h1': bars_array,  # Last 50 H1 bars for charting
             }
     except Exception as e:
