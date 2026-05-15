@@ -1552,6 +1552,7 @@ class V13Orchestrator:
         self.running  = False
         self.records:  List[TradeRecord] = []
         self.open_pos: Dict[str, TradeRecord] = {}
+        self.bars_cache: Dict[str, List[BarData]] = {}  # Store bars for each pair
         self.stats = {
             "cycles": 0, "signals": 0, "tv_signals": 0,
             "trades_executed": 0, "hive_cycles": 0
@@ -1597,6 +1598,9 @@ class V13Orchestrator:
         rec = None  # always defined — prevents UnboundLocalError if construction fails
         bars = _get_bars(pair, 100)
         if len(bars) < 30: return None
+        
+        # Cache bars for dashboard charts
+        self.bars_cache[pair] = bars
 
         # ── WHEN ──────────────────────────────────────────────────────────────
         session   = _get_session()
@@ -2134,28 +2138,32 @@ def api_status():
     if not orch:
         return jsonify({"status": "starting", "cycle": 0, "pairs": {}})
     
-    # Build pairs data with chart bars
+    # Build pairs data from last signals + cached bars
     pairs_data = {}
-    if orch.results:
-        for pair_name, pair_info in orch.results.items():
-            pairs_data[pair_name] = {
-                'pair': pair_name,
-                'price': pair_info.get('price', 0),
-                'direction': pair_info.get('direction', 'HOLD'),
-                'confidence': pair_info.get('confidence', 0),
-                'buy_votes': pair_info.get('buy_votes', 0),
-                'sell_votes': pair_info.get('sell_votes', 0),
-                'sl': pair_info.get('sl', '—'),
-                'tp': pair_info.get('tp', '—'),
-                'h4_trend': pair_info.get('h4_trend', '—'),
-                'regime': pair_info.get('regime', '—'),
-                'bars_h1': pair_info.get('bars_h1', [])[-50:],  # Last 50 bars for chart
+    try:
+        for record in orch.records[-7:]:  # Last 7 signals
+            pair = record.pair
+            bars = orch.bars_cache.get(pair, [])
+            bars_array = [[b.open, b.high, b.low, b.close, b.volume] for b in bars[-50:]] if bars else []
+            
+            pairs_data[pair] = {
+                'pair': pair,
+                'price': record.price,
+                'direction': record.direction,
+                'confidence': record.confidence,
+                'h4_trend': record.h4_trend if hasattr(record, 'h4_trend') else '—',
+                'regime': record.regime if hasattr(record, 'regime') else '—',
+                'sl': record.sl if hasattr(record, 'sl') else '—',
+                'tp': record.tp if hasattr(record, 'tp') else '—',
+                'bars_h1': bars_array,  # Last 50 H1 bars for charting
             }
+    except Exception as e:
+        log.error(f"API pairs build error: {e}")
+        pass
     
     return jsonify({
-        "cycle": orch.cycle,
+        "cycle": getattr(orch, 'cycle', 0),
         "pairs": pairs_data,
-        "futures": orch.futures or {},
         "system": "V13 Production",
         "running": orch.running,
         "memory": {
@@ -2164,11 +2172,13 @@ def api_status():
             "wins": orch.mem.wins,
             "losses": orch.mem.losses,
         },
-        "pnl_usd": orch.mem.total_pnl if hasattr(orch.mem, 'total_pnl') else 0,
-        "max_drawdown": orch.mem.max_dd if hasattr(orch.mem, 'max_dd') else 0,
-        "rl": {"episodes": orch.rl.episodes, "epsilon": round(orch.rl.eps, 4),
-               "states": len(orch.rl.q), "reward": round(orch.rl.reward_total, 2)},
-        "recent_signals": [asdict(r) for r in orch.records[-5:]],
+        "rl": {
+            "episodes": orch.rl.episodes,
+            "epsilon": round(orch.rl.eps, 4),
+            "states": len(orch.rl.q),
+            "reward": round(orch.rl.reward_total, 2)
+        },
+        "recent_signals": [asdict(r) for r in orch.records[-5:]] if orch.records else [],
     })
 
 @app.route("/api/signals")
@@ -2909,10 +2919,13 @@ function createChart(sym) {
   const container = document.getElementById(`container-${sym}`);
   if (!container) return;
   
-  container.innerHTML = '<canvas id="canvas-' + sym + '"></canvas>';
+  container.innerHTML = '<canvas id="canvas-' + sym + '" style="width:100%; height:100%;"></canvas>';
   const canvas = document.getElementById('canvas-' + sym);
-  const ctx = canvas.getContext('2d');
-  charts[sym] = { ctx, canvas };
+  if (canvas) {
+    canvas.width = container.clientWidth;
+    canvas.height = container.clientHeight;
+  }
+  charts[sym] = canvas;
   
   updateChart(sym);
 }
@@ -2927,16 +2940,17 @@ async function updateChart(sym) {
     
     const dirClass = pairData.direction === 'BUY' ? 'signal-buy' : pairData.direction === 'SELL' ? 'signal-sell' : 'signal-hold';
     document.getElementById(`info-signal-${sym}`).className = `signal-badge ${dirClass}`;
-    document.getElementById(`info-signal-${sym}`).textContent = `${pairData.direction} ${pairData.confidence || 0}%`;
+    document.getElementById(`info-signal-${sym}`).textContent = `${pairData.direction} ${(pairData.confidence * 100).toFixed(0)}%`;
     document.getElementById(`info-price-${sym}`).textContent = (pairData.price || 0).toFixed(sym.includes('JPY') ? 2 : 5);
     document.getElementById(`info-trend-${sym}`).textContent = pairData.h4_trend || '—';
     document.getElementById(`info-regime-${sym}`).textContent = pairData.regime || '—';
     document.getElementById(`info-sl-${sym}`).textContent = pairData.sl || '—';
     document.getElementById(`info-tp-${sym}`).textContent = pairData.tp || '—';
-    document.getElementById(`info-conf-${sym}`).textContent = (pairData.confidence || 0) + '%';
+    document.getElementById(`info-conf-${sym}`).textContent = (pairData.confidence * 100).toFixed(0) + '%';
     
+    // Draw candlesticks if bars available
     if (pairData.bars_h1 && pairData.bars_h1.length > 0 && charts[sym]) {
-      drawCandlesticks(charts[sym].canvas, pairData.bars_h1, sym);
+      drawCandlesticks(charts[sym], pairData.bars_h1, sym);
     }
   } catch (e) {
     console.error('Chart error:', e);
@@ -2951,17 +2965,27 @@ function drawCandlesticks(canvas, bars, sym) {
   canvas.width = width;
   canvas.height = height;
   
-  const closes = bars.map(b => b[4] || b.close || 0);
-  const highs = bars.map(b => b[1] || b.high || 0);
-  const lows = bars.map(b => b[2] || b.low || 0);
+  if (!bars || bars.length === 0) {
+    ctx.fillStyle = document.body.classList.contains('dark') ? '#0b0b22' : '#ffffff';
+    ctx.fillRect(0, 0, width, height);
+    return;
+  }
+  
+  // Extract OHLCV
+  const closes = bars.map(b => (Array.isArray(b) ? b[3] : b.close) || 0);
+  const highs = bars.map(b => (Array.isArray(b) ? b[1] : b.high) || 0);
+  const lows = bars.map(b => (Array.isArray(b) ? b[2] : b.low) || 0);
+  const opens = bars.map(b => (Array.isArray(b) ? b[0] : b.open) || 0);
   
   const maxPrice = Math.max(...highs);
   const minPrice = Math.min(...lows);
   const priceRange = maxPrice - minPrice || 1;
   
+  // Background
   ctx.fillStyle = document.body.classList.contains('dark') ? '#0b0b22' : '#ffffff';
   ctx.fillRect(0, 0, width, height);
   
+  // Grid
   ctx.strokeStyle = document.body.classList.contains('dark') ? '#1e1e4e' : '#ddd';
   ctx.lineWidth = 0.5;
   for (let i = 0; i < 5; i++) {
@@ -2972,14 +2996,15 @@ function drawCandlesticks(canvas, bars, sym) {
     ctx.stroke();
   }
   
+  // Candlesticks
   const barWidth = Math.max(2, width / (bars.length * 1.5));
   const padding = 20;
   
   bars.forEach((bar, i) => {
-    const open = bar[0] || 0;
-    const high = bar[1] || 0;
-    const low = bar[2] || 0;
-    const close = bar[4] || 0;
+    const open = Array.isArray(bar) ? bar[0] : bar.open || 0;
+    const high = Array.isArray(bar) ? bar[1] : bar.high || 0;
+    const low = Array.isArray(bar) ? bar[2] : bar.low || 0;
+    const close = Array.isArray(bar) ? bar[3] : bar.close || 0;
     
     const x = padding + (i * barWidth);
     const yHigh = height - ((high - minPrice) / priceRange) * (height - 40);
@@ -2989,6 +3014,7 @@ function drawCandlesticks(canvas, bars, sym) {
     
     const isUp = close >= open;
     
+    // Wick
     ctx.strokeStyle = isUp ? '#00ff88' : '#ff3355';
     ctx.lineWidth = 1;
     ctx.beginPath();
@@ -2996,13 +3022,16 @@ function drawCandlesticks(canvas, bars, sym) {
     ctx.lineTo(x + barWidth/2, yLow);
     ctx.stroke();
     
+    // Body
     ctx.fillStyle = isUp ? '#00ff88' : '#ff3355';
-    ctx.fillRect(x, Math.min(yOpen, yClose), barWidth, Math.abs(yClose - yOpen) || 1);
+    const bodyHeight = Math.abs(yClose - yOpen) || 1;
+    ctx.fillRect(x, Math.min(yOpen, yClose), barWidth, bodyHeight);
   });
   
+  // Price label
   const lastPrice = closes[closes.length - 1];
   ctx.fillStyle = document.body.classList.contains('dark') ? '#00ff88' : '#00aa00';
-  ctx.font = 'bold 12px monospace';
+  ctx.font = 'bold 14px monospace';
   ctx.fillText(lastPrice.toFixed(sym.includes('JPY') ? 2 : 5), 5, 20);
 }
 
