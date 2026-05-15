@@ -2132,8 +2132,30 @@ def webhook_test():
 def api_status():
     global orch
     if not orch:
-        return jsonify({"status": "starting"})
+        return jsonify({"status": "starting", "cycle": 0, "pairs": {}})
+    
+    # Build pairs data with chart bars
+    pairs_data = {}
+    if orch.results:
+        for pair_name, pair_info in orch.results.items():
+            pairs_data[pair_name] = {
+                'pair': pair_name,
+                'price': pair_info.get('price', 0),
+                'direction': pair_info.get('direction', 'HOLD'),
+                'confidence': pair_info.get('confidence', 0),
+                'buy_votes': pair_info.get('buy_votes', 0),
+                'sell_votes': pair_info.get('sell_votes', 0),
+                'sl': pair_info.get('sl', '—'),
+                'tp': pair_info.get('tp', '—'),
+                'h4_trend': pair_info.get('h4_trend', '—'),
+                'regime': pair_info.get('regime', '—'),
+                'bars_h1': pair_info.get('bars_h1', [])[-50:],  # Last 50 bars for chart
+            }
+    
     return jsonify({
+        "cycle": orch.cycle,
+        "pairs": pairs_data,
+        "futures": orch.futures or {},
         "system": "V13 Production",
         "running": orch.running,
         "memory": {
@@ -2142,28 +2164,11 @@ def api_status():
             "wins": orch.mem.wins,
             "losses": orch.mem.losses,
         },
+        "pnl_usd": orch.mem.total_pnl if hasattr(orch.mem, 'total_pnl') else 0,
+        "max_drawdown": orch.mem.max_dd if hasattr(orch.mem, 'max_dd') else 0,
         "rl": {"episodes": orch.rl.episodes, "epsilon": round(orch.rl.eps, 4),
                "states": len(orch.rl.q), "reward": round(orch.rl.reward_total, 2)},
-        "tradingview": {
-            "total_received": orch.tv.total_received,
-            "total_matched": orch.tv.total_matched,
-            "pending": len(orch.tv.pending_signals),
-        },
-        "stats": orch.stats,
-        "agents": len(orch.agents),
-        "balance": orch.risk.balance,
-        "pair_performance": orch.mem.pair_perf,
-        "regime_performance": orch.mem.regime_perf,
-        "agent_weights": orch.weights.w,
         "recent_signals": [asdict(r) for r in orch.records[-5:]],
-        "evolution_log": orch.mem.evolution_log[-10:],
-        "intelligence": {
-            "forex_factory": orch.ff_cal.summary(),
-            "news_articles": orch.news.total_articles,
-            "cot_status": orch.cot.status,
-            "correlations_status": orch.corr.status,
-            "fred_status": orch.fred.status,
-        }
     })
 
 @app.route("/api/signals")
@@ -2197,7 +2202,7 @@ def dashboard():
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>⚡ Project Chakra V15 — Professional Trading Platform</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/lightweight-charts/4.1.3/lightweight-charts.min.js"></script>
+
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 html, body { height:100%; width:100%; }
@@ -2904,21 +2909,101 @@ function createChart(sym) {
   const container = document.getElementById(`container-${sym}`);
   if (!container) return;
   
-  const chart = LightweightCharts.createChart(container, {
-    layout: { background: { color: getThemeColor() }, textColor: '#aab8ff' },
-    grid: { vertLines: { color: '#1e1e4e' }, horzLines: { color: '#1e1e4e' } },
-    timeScale: { timeVisible: true, secondsVisible: false },
-  });
+  container.innerHTML = '<canvas id="canvas-' + sym + '"></canvas>';
+  const canvas = document.getElementById('canvas-' + sym);
+  const ctx = canvas.getContext('2d');
+  charts[sym] = { ctx, canvas };
   
-  const candleSeries = chart.addCandlestickSeries({
-    upColor: '#00ff88', downColor: '#ff3355',
-    borderUpColor: '#00ff88', borderDownColor: '#ff3355',
-    wickUpColor: '#00ff88', wickDownColor: '#ff3355',
-  });
-  
-  charts[sym] = { chart, candleSeries };
   updateChart(sym);
-  chart.timeScale().fitContent();
+}
+
+async function updateChart(sym) {
+  try {
+    const resp = await fetch('/api/status');
+    const data = resp.ok ? await resp.json() : {};
+    const pairData = data.pairs && data.pairs[sym];
+    
+    if (!pairData) return;
+    
+    const dirClass = pairData.direction === 'BUY' ? 'signal-buy' : pairData.direction === 'SELL' ? 'signal-sell' : 'signal-hold';
+    document.getElementById(`info-signal-${sym}`).className = `signal-badge ${dirClass}`;
+    document.getElementById(`info-signal-${sym}`).textContent = `${pairData.direction} ${pairData.confidence || 0}%`;
+    document.getElementById(`info-price-${sym}`).textContent = (pairData.price || 0).toFixed(sym.includes('JPY') ? 2 : 5);
+    document.getElementById(`info-trend-${sym}`).textContent = pairData.h4_trend || '—';
+    document.getElementById(`info-regime-${sym}`).textContent = pairData.regime || '—';
+    document.getElementById(`info-sl-${sym}`).textContent = pairData.sl || '—';
+    document.getElementById(`info-tp-${sym}`).textContent = pairData.tp || '—';
+    document.getElementById(`info-conf-${sym}`).textContent = (pairData.confidence || 0) + '%';
+    
+    if (pairData.bars_h1 && pairData.bars_h1.length > 0 && charts[sym]) {
+      drawCandlesticks(charts[sym].canvas, pairData.bars_h1, sym);
+    }
+  } catch (e) {
+    console.error('Chart error:', e);
+  }
+}
+
+function drawCandlesticks(canvas, bars, sym) {
+  const ctx = canvas.getContext('2d');
+  const width = canvas.clientWidth;
+  const height = canvas.clientHeight;
+  
+  canvas.width = width;
+  canvas.height = height;
+  
+  const closes = bars.map(b => b[4] || b.close || 0);
+  const highs = bars.map(b => b[1] || b.high || 0);
+  const lows = bars.map(b => b[2] || b.low || 0);
+  
+  const maxPrice = Math.max(...highs);
+  const minPrice = Math.min(...lows);
+  const priceRange = maxPrice - minPrice || 1;
+  
+  ctx.fillStyle = document.body.classList.contains('dark') ? '#0b0b22' : '#ffffff';
+  ctx.fillRect(0, 0, width, height);
+  
+  ctx.strokeStyle = document.body.classList.contains('dark') ? '#1e1e4e' : '#ddd';
+  ctx.lineWidth = 0.5;
+  for (let i = 0; i < 5; i++) {
+    const y = (height / 5) * i;
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(width, y);
+    ctx.stroke();
+  }
+  
+  const barWidth = Math.max(2, width / (bars.length * 1.5));
+  const padding = 20;
+  
+  bars.forEach((bar, i) => {
+    const open = bar[0] || 0;
+    const high = bar[1] || 0;
+    const low = bar[2] || 0;
+    const close = bar[4] || 0;
+    
+    const x = padding + (i * barWidth);
+    const yHigh = height - ((high - minPrice) / priceRange) * (height - 40);
+    const yLow = height - ((low - minPrice) / priceRange) * (height - 40);
+    const yOpen = height - ((open - minPrice) / priceRange) * (height - 40);
+    const yClose = height - ((close - minPrice) / priceRange) * (height - 40);
+    
+    const isUp = close >= open;
+    
+    ctx.strokeStyle = isUp ? '#00ff88' : '#ff3355';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x + barWidth/2, yHigh);
+    ctx.lineTo(x + barWidth/2, yLow);
+    ctx.stroke();
+    
+    ctx.fillStyle = isUp ? '#00ff88' : '#ff3355';
+    ctx.fillRect(x, Math.min(yOpen, yClose), barWidth, Math.abs(yClose - yOpen) || 1);
+  });
+  
+  const lastPrice = closes[closes.length - 1];
+  ctx.fillStyle = document.body.classList.contains('dark') ? '#00ff88' : '#00aa00';
+  ctx.font = 'bold 12px monospace';
+  ctx.fillText(lastPrice.toFixed(sym.includes('JPY') ? 2 : 5), 5, 20);
 }
 
 async function updateChart(sym) {
