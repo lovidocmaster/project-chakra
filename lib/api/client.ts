@@ -3,7 +3,7 @@
  * Connects to Railway-deployed Flask backend
  */
 
-const API_BASE_URL = "https://project-chakra-production.up.railway.app";
+const API_BASE_URL = "https://project-chakra.onrender.com";
 
 // Types
 export interface AccountMetrics {
