@@ -1,1 +1,1 @@
-web: python v15_chakra.py
+web: gunicorn app:app
