@@ -103,6 +103,28 @@ MEM_FILE  = "v13_memory.json"
 WTS_FILE  = "v13_weights.json"
 RL_FILE   = "v13_rl.json"
 LOG_FILE  = "v13_system.log"
+# ═══════════════════════════════════════════════════════════════════════════════
+# BACKEND INTEGRATION
+# ═══════════════════════════════════════════════════════════════════════════════
+
+BACKEND_URL = "https://project-chakra.onrender.com"
+
+def post_trade_to_backend(trade_data):
+    try:
+        response = requests.post(f"{BACKEND_URL}/api/trades/create", json=trade_data, timeout=5)
+        if response.status_code == 200:
+            print(f"✅ Trade posted to backend: {trade_data.get('pair')} {trade_data.get('direction')}")
+            return True
+    except Exception as e:
+        print(f"⚠️ Backend offline: {e}")
+        return False
+
+def check_backend():
+    try:
+        r = requests.get(f"{BACKEND_URL}/api/system/status", timeout=5)
+        return r.status_code == 200
+    except:
+        return False
 
 # ══════════════════════════════════════════════════════════════════════════════
 # LOGGING
