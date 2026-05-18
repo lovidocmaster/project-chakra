@@ -1,32 +1,24 @@
 ﻿#!/usr/bin/env python3
-from flask import Flask, jsonify
-from datetime import datetime
-import os
+from flask import Flask
+from flask_cors import CORS
+import requests
 
 app = Flask(__name__)
+CORS(app)
 
 @app.route('/')
 def home():
-    try:
-        with open('dashboard_live.html', 'r') as f:
-            return f.read()
-    except:
-        return "Dashboard file not found", 404
+    with open('dashboard_live.html', 'r', encoding='utf-8') as f:
+        return f.read()
 
-@app.route('/dashboard')
-def dashboard():
+@app.route('/api/status')
+def api_status():
     try:
-        with open('dashboard_live.html', 'r') as f:
-            return f.read()
+        r = requests.get('http://localhost:5000/api/status', timeout=2)
+        return r.json()
     except:
-        return "Dashboard file not found", 404
-
-@app.route('/api/metrics')
-def metrics():
-    return jsonify({"balance": 120000, "open_trades": 2, "total_signals": 247, "win_rate": 65, "agents_active": 36, "mode": "LIVE"})
+        return {'error': 'offline'}, 500
 
 if __name__ == '__main__':
-    print("\n" + "="*70)
-    print("DASHBOARD SERVER RUNNING ON http://localhost:5001")
-    print("="*70 + "\n")
+    print("\nDASHBOARD: http://localhost:5001\n")
     app.run(host='0.0.0.0', port=5001, debug=False)

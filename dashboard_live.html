@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -7,238 +7,213 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background: #0f172a; color: #e2e8f0; font-family: 'Courier New', monospace; }
-        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        body { background: #0f172a; color: #e2e8f0; font-family: 'Courier New', monospace; padding: 20px; }
+        .container { max-width: 1400px; margin: 0 auto; }
         .header { border-bottom: 2px solid #0ea5e9; padding-bottom: 20px; margin-bottom: 20px; }
-        .header h1 { color: #06b6d4; font-size: 2.5em; margin-bottom: 5px; }
-        .header p { color: #64748b; }
-        .status-bar { display: flex; gap: 15px; margin-top: 15px; flex-wrap: wrap; }
-        .badge { background: rgba(6, 182, 212, 0.1); border: 1px solid #0ea5e9; padding: 8px 12px; border-radius: 4px; font-size: 0.9em; }
-        .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
-        .metric-card { background: #1e293b; border: 1px solid #334155; padding: 15px; border-radius: 6px; }
-        .metric-card .label { color: #94a3b8; font-size: 0.85em; margin-bottom: 5px; }
-        .metric-card .value { font-size: 1.8em; font-weight: bold; color: #10b981; }
-        .pairs-section { background: #1e293b; border: 1px solid #334155; padding: 15px; border-radius: 6px; margin-bottom: 20px; }
+        .header h1 { color: #06b6d4; font-size: 2.5em; }
+        .header p { color: #64748b; font-size: 0.9em; }
+        .badges { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+        .badge { background: rgba(6, 182, 212, 0.1); border: 1px solid #0ea5e9; padding: 6px 10px; border-radius: 4px; font-size: 0.9em; }
+        .metrics { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; margin-bottom: 20px; }
+        .metric { background: #1e293b; border: 1px solid #334155; padding: 12px; border-radius: 6px; text-align: center; }
+        .metric .label { color: #94a3b8; font-size: 0.85em; }
+        .metric .value { font-size: 2em; font-weight: bold; color: #10b981; margin-top: 8px; }
+        .pairs { background: #1e293b; border: 1px solid #334155; padding: 12px; border-radius: 6px; margin-bottom: 20px; }
         .pairs-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-top: 10px; }
-        .pair-btn { padding: 10px; background: #0f172a; border: 1px solid #334155; color: #94a3b8; cursor: pointer; border-radius: 4px; font-weight: bold; transition: all 0.3s; }
-        .pair-btn:hover { border-color: #0ea5e9; }
-        .pair-btn.active { background: #0ea5e9; color: #0f172a; border-color: #0ea5e9; }
-        .charts-section { display: grid; grid-template-columns: 2fr 1fr; gap: 15px; margin-bottom: 20px; }
-        .chart-card { background: #1e293b; border: 1px solid #334155; padding: 15px; border-radius: 6px; }
-        .chart-card h3 { color: #0ea5e9; margin-bottom: 10px; font-size: 0.95em; }
-        .agents-section { background: #1e293b; border: 1px solid #334155; padding: 15px; border-radius: 6px; max-height: 400px; overflow-y: auto; }
-        .agents-section h3 { color: #0ea5e9; margin-bottom: 10px; }
-        .agent-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #334155; font-size: 0.9em; }
-        .agent-item:last-child { border-bottom: none; }
-        .agent-dot { width: 8px; height: 8px; background: #10b981; border-radius: 50%; margin-right: 8px; }
-        .agent-name { flex: 1; }
-        .agent-score { color: #a78bfa; font-weight: bold; }
-        .signal-log { background: #1e293b; border: 1px solid #334155; padding: 15px; border-radius: 6px; max-height: 200px; overflow-y: auto; }
-        .signal-log h3 { color: #0ea5e9; margin-bottom: 10px; }
-        .log-entry { padding: 8px 0; border-bottom: 1px solid #334155; font-size: 0.85em; color: #cbd5e1; }
-        .log-entry:last-child { border-bottom: none; }
-        .log-buy { color: #10b981; }
-        .log-sell { color: #ef4444; }
+        .pair-btn { padding: 8px; background: #0f172a; border: 1px solid #334155; color: #94a3b8; cursor: pointer; border-radius: 4px; font-weight: bold; }
+        .pair-btn.active { background: #0ea5e9; color: #0f172a; }
+        .content { display: grid; grid-template-columns: 2fr 1fr; gap: 15px; }
+        .chart-box { background: #1e293b; border: 1px solid #334155; padding: 12px; border-radius: 6px; }
+        .chart-box h3 { color: #0ea5e9; margin-bottom: 10px; font-size: 0.95em; }
+        canvas { max-height: 300px; }
+        .info-box { background: #1e293b; border: 1px solid #334155; padding: 12px; border-radius: 6px; margin-bottom: 15px; }
+        .info-box h3 { color: #0ea5e9; margin-bottom: 8px; }
+        .info-item { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #334155; font-size: 0.9em; }
+        .info-item:last-child { border-bottom: none; }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
             <h1>PROJECT CHAKRA</h1>
-            <p>Multi-Agent AI Forex Trading System - V15 Complete - 36 Agents</p>
-            <div class="status-bar">
+            <p>Multi-Agent AI Forex Trading System - V15 Live</p>
+            <div class="badges">
                 <div class="badge">● LIVE</div>
-                <div class="badge" id="time">14:51:46 UTC</div>
-                <div class="badge">NY/LONDON</div>
+                <div class="badge" id="time">Loading...</div>
+                <div class="badge" id="wr">WR: Loading...</div>
             </div>
         </div>
 
         <div class="metrics">
-            <div class="metric-card">
-                <div class="label">BALANCE</div>
-                <div class="value">$120,000</div>
+            <div class="metric">
+                <div class="label">TOTAL TRADES</div>
+                <div class="value" id="trades">0</div>
             </div>
-            <div class="metric-card">
-                <div class="label">OPEN TRADES</div>
-                <div class="value" id="open-trades">2</div>
-            </div>
-            <div class="metric-card">
-                <div class="label">TOTAL SIGNALS</div>
-                <div class="value">247</div>
-            </div>
-            <div class="metric-card">
+            <div class="metric">
                 <div class="label">WIN RATE</div>
-                <div class="value">65%</div>
+                <div class="value" id="wr-val">0%</div>
             </div>
-            <div class="metric-card">
-                <div class="label">AGENTS ACTIVE</div>
-                <div class="value">36</div>
+            <div class="metric">
+                <div class="label">WINS</div>
+                <div class="value" id="wins">0</div>
             </div>
-            <div class="metric-card">
-                <div class="label">MODE</div>
-                <div class="value" style="color: #ef4444;">LIVE</div>
+            <div class="metric">
+                <div class="label">LOSSES</div>
+                <div class="value" id="losses">0</div>
+            </div>
+            <div class="metric">
+                <div class="label">CYCLE</div>
+                <div class="value" id="cycle">0</div>
+            </div>
+            <div class="metric">
+                <div class="label">STATUS</div>
+                <div class="value" style="color: #10b981; font-size: 1.2em;">LIVE</div>
             </div>
         </div>
 
-        <div class="pairs-section">
-            <strong>TRADING PAIRS</strong>
+        <div class="pairs">
+            <strong>SELECT PAIR</strong>
             <div class="pairs-grid">
-                <button class="pair-btn active" onclick="selectPair(this, 'EUR_USD')">EUR_USD</button>
-                <button class="pair-btn" onclick="selectPair(this, 'GBP_USD')">GBP_USD</button>
-                <button class="pair-btn" onclick="selectPair(this, 'USD_JPY')">USD_JPY</button>
-                <button class="pair-btn" onclick="selectPair(this, 'AUD_USD')">AUD_USD</button>
-                <button class="pair-btn" onclick="selectPair(this, 'USD_CAD')">USD_CAD</button>
-                <button class="pair-btn" onclick="selectPair(this, 'XAU_USD')">XAU_USD</button>
-                <button class="pair-btn" onclick="selectPair(this, 'GBP_JPY')">GBP_JPY</button>
+                <button class="pair-btn active" onclick="selectPair('EUR_USD')">EUR_USD</button>
+                <button class="pair-btn" onclick="selectPair('GBP_USD')">GBP_USD</button>
+                <button class="pair-btn" onclick="selectPair('USD_JPY')">USD_JPY</button>
+                <button class="pair-btn" onclick="selectPair('AUD_USD')">AUD_USD</button>
+                <button class="pair-btn" onclick="selectPair('USD_CAD')">USD_CAD</button>
+                <button class="pair-btn" onclick="selectPair('XAU_USD')">XAU_USD</button>
+                <button class="pair-btn" onclick="selectPair('GBP_JPY')">GBP_JPY</button>
             </div>
         </div>
 
-        <div class="charts-section">
+        <div class="content">
             <div>
-                <div class="chart-card">
-                    <h3 id="chart-title">EUR_USD - 5MIN CANDLESTICKS</h3>
-                    <canvas id="priceChart"></canvas>
-                </div>
-                <div class="chart-card">
-                    <h3>VOLUME</h3>
-                    <canvas id="volumeChart"></canvas>
+                <div class="chart-box">
+                    <h3 id="chart-title">EUR_USD - H1 CHART</h3>
+                    <canvas id="chart"></canvas>
                 </div>
             </div>
-            <div class="agents-section">
-                <h3>AGENT STATUS</h3>
-                <div class="agent-item">
-                    <span><span class="agent-dot"></span><span class="agent-name">Master Orchestrator</span></span>
-                    <span class="agent-score">94%</span>
+            <div>
+                <div class="info-box">
+                    <h3>PAIR INFO</h3>
+                    <div class="info-item">
+                        <span>Current Price</span>
+                        <span id="price" style="color: #10b981;">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span>High (H1)</span>
+                        <span id="high">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span>Low (H1)</span>
+                        <span id="low">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span>Close (H1)</span>
+                        <span id="close">-</span>
+                    </div>
                 </div>
-                <div class="agent-item">
-                    <span><span class="agent-dot"></span><span class="agent-name">Claude LLM Reasoning</span></span>
-                    <span class="agent-score">89%</span>
-                </div>
-                <div class="agent-item">
-                    <span><span class="agent-dot"></span><span class="agent-name">Event-Driven LSTM</span></span>
-                    <span class="agent-score">87%</span>
-                </div>
-                <div class="agent-item">
-                    <span><span class="agent-dot"></span><span class="agent-name">Blvellid Optimizer</span></span>
-                    <span class="agent-score">92%</span>
-                </div>
-                <div class="agent-item">
-                    <span><span class="agent-dot"></span><span class="agent-name">RL Agent</span></span>
-                    <span class="agent-score">85%</span>
-                </div>
-                <div class="agent-item">
-                    <span><span class="agent-dot"></span><span class="agent-name">HIDARTS TF Allocator</span></span>
-                    <span class="agent-score">91%</span>
-                </div>
-                <div class="agent-item">
-                    <span><span class="agent-dot"></span><span class="agent-name">FinnMem Memory</span></span>
-                    <span class="agent-score">88%</span>
-                </div>
-                <div class="agent-item">
-                    <span><span class="agent-dot"></span><span class="agent-name">Trend Agent</span></span>
-                    <span class="agent-score">86%</span>
+                <div class="info-box">
+                    <h3>SYSTEM</h3>
+                    <div class="info-item">
+                        <span>API Status</span>
+                        <span id="api-status" style="color: #ef4444;">Connecting...</span>
+                    </div>
+                    <div class="info-item">
+                        <span>Last Update</span>
+                        <span id="last-update">-</span>
+                    </div>
                 </div>
             </div>
-        </div>
-
-        <div class="signal-log">
-            <h3>SIGNAL LOG</h3>
-            <div class="log-entry log-sell">[14:51] EUR_USD SELL @ 1.0845 - Confidence: 90% - 6 agents</div>
-            <div class="log-entry log-sell">[14:50] AUD_USD SELL @ 0.6825 - Confidence: 85% - 5 agents</div>
-            <div class="log-entry">[14:49] GBP_USD HOLD - Confidence: 60%</div>
-            <div class="log-entry">[14:48] System analyzing 7 pairs...</div>
-            <div class="log-entry">[14:47] Agents voting on signals...</div>
         </div>
     </div>
 
     <script>
-        const chartData = [
-            { time: '10:00', price: 1.0820, volume: 450 },
-            { time: '10:15', price: 1.0835, volume: 520 },
-            { time: '10:30', price: 1.0828, volume: 380 },
-            { time: '10:45', price: 1.0845, volume: 610 },
-            { time: '11:00', price: 1.0852, volume: 490 },
-            { time: '11:15', price: 1.0840, volume: 540 },
-            { time: '11:30', price: 1.0858, volume: 620 },
-            { time: '11:45', price: 1.0865, volume: 580 },
-            { time: '12:00', price: 1.0875, volume: 700 },
-            { time: '12:15', price: 1.0880, volume: 650 }
-        ];
+        const API_URL = 'http://localhost:5001';
+        let currentPair = 'EUR_USD';
+        let chartInstance = null;
 
-        const priceCtx = document.getElementById('priceChart').getContext('2d');
-        const priceChart = new Chart(priceCtx, {
-            type: 'line',
-            data: {
-                labels: chartData.map(d => d.time),
-                datasets: [{
-                    label: 'Price',
-                    data: chartData.map(d => d.price),
-                    borderColor: '#06b6d4',
-                    backgroundColor: 'rgba(6, 182, 212, 0.05)',
-                    borderWidth: 2,
-                    fill: true,
-                    tension: 0.3,
-                    pointRadius: 0
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: true,
-                plugins: { legend: { display: false } },
-                scales: {
-                    y: {
-                        grid: { color: 'rgba(148, 163, 184, 0.1)' },
-                        ticks: { color: '#94a3b8' }
-                    },
-                    x: {
-                        grid: { display: false },
-                        ticks: { color: '#94a3b8' }
+        async function loadData() {
+            try {
+                const response = await fetch(API_URL + '/api/status');
+                const data = await response.json();
+                
+                // Update metrics
+                document.getElementById('trades').textContent = data.memory.total_trades;
+                document.getElementById('wr-val').textContent = (data.memory.win_rate * 100).toFixed(0) + '%';
+                document.getElementById('wins').textContent = data.memory.wins;
+                document.getElementById('losses').textContent = data.memory.losses;
+                document.getElementById('cycle').textContent = data.cycle;
+                document.getElementById('api-status').textContent = '✓ Connected';
+                document.getElementById('api-status').style.color = '#10b981';
+                document.getElementById('last-update').textContent = new Date().toLocaleTimeString();
+                
+                // Update chart with current pair data
+                if (data.pairs && data.pairs[currentPair]) {
+                    const bars = data.pairs[currentPair].bars_h1 || [];
+                    updateChart(bars);
+                    
+                    if (bars.length > 0) {
+                        const lastBar = bars[bars.length - 1];
+                        document.getElementById('price').textContent = lastBar[4].toFixed(5);
+                        document.getElementById('high').textContent = lastBar[1].toFixed(5);
+                        document.getElementById('low').textContent = lastBar[2].toFixed(5);
+                        document.getElementById('close').textContent = lastBar[4].toFixed(5);
                     }
                 }
+            } catch (e) {
+                document.getElementById('api-status').textContent = '✗ Offline';
+                document.getElementById('api-status').style.color = '#ef4444';
             }
-        });
+        }
 
-        const volumeCtx = document.getElementById('volumeChart').getContext('2d');
-        const volumeChart = new Chart(volumeCtx, {
-            type: 'bar',
-            data: {
-                labels: chartData.map(d => d.time),
-                datasets: [{
-                    label: 'Volume',
-                    data: chartData.map(d => d.volume),
-                    backgroundColor: '#8b5cf6',
-                    borderColor: '#8b5cf6',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: true,
-                plugins: { legend: { display: false } },
-                scales: {
-                    y: {
-                        grid: { color: 'rgba(148, 163, 184, 0.1)' },
-                        ticks: { color: '#94a3b8' }
-                    },
-                    x: {
-                        grid: { display: false },
-                        ticks: { color: '#94a3b8' }
+        function updateChart(bars) {
+            const labels = bars.map((_, i) => i.toString());
+            const closes = bars.map(b => b[4]);
+            
+            if (chartInstance) chartInstance.destroy();
+            
+            const ctx = document.getElementById('chart').getContext('2d');
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: currentPair,
+                        data: closes,
+                        borderColor: '#06b6d4',
+                        backgroundColor: 'rgba(6, 182, 212, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.3,
+                        pointRadius: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { grid: { color: 'rgba(148, 163, 184, 0.1)' }, ticks: { color: '#94a3b8' } },
+                        x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
                     }
                 }
-            }
-        });
+            });
+        }
 
-        function selectPair(btn, pair) {
+        function selectPair(pair) {
+            currentPair = pair;
             document.querySelectorAll('.pair-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            document.getElementById('chart-title').textContent = pair + ' - 5MIN CANDLESTICKS';
+            event.target.classList.add('active');
+            document.getElementById('chart-title').textContent = pair + ' - H1 CHART';
+            loadData();
         }
 
         // Update time
         setInterval(() => {
-            const now = new Date();
-            document.getElementById('time').textContent = now.toUTCString().slice(17, 25) + ' UTC';
+            document.getElementById('time').textContent = new Date().toLocaleTimeString('en-US', {hour12: false});
         }, 1000);
+
+        // Load data every 5 seconds
+        loadData();
+        setInterval(loadData, 5000);
     </script>
 </body>
 </html>
