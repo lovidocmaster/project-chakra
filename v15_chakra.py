@@ -2096,6 +2096,21 @@ class V13Orchestrator:
                     f"Trades:{self.mem.total} | WR:{self.mem.win_rate:.1%} | "
                     f"RL:{self.rl.episodes} | TV:{self.stats['tv_signals']} | Open:{len(self.open_pos)}"
                 )
+                # Post data to Railway backend
+                try:
+                    import requests as _req
+                    _req.post("https://project-chakra-production.up.railway.app/api/signal/add", json={
+                        "pair": "SYSTEM",
+                        "direction": "UPDATE",
+                        "confidence": self.mem.win_rate,
+                        "cycle": self.stats["cycles"],
+                        "total_trades": self.mem.total,
+                        "wins": self.mem.wins,
+                        "losses": self.mem.losses,
+                        "open_trades": len(self.open_pos)
+                    }, timeout=3)
+                except:
+                    pass
                 # Daily report at 22:00 UTC
                 now = datetime.utcnow()
                 today_str = now.strftime("%Y-%m-%d")
@@ -3208,3 +3223,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
