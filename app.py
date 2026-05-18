@@ -105,6 +105,22 @@ def system_status():
 def health():
     return jsonify({"status": "ok"}), 200
 
+
+@app.route('/api/chat', methods=['POST'])
+def ai_chat():
+    try:
+        import anthropic
+        data = request.get_json()
+        client = anthropic.Anthropic(api_key=os.environ.get('ANTHROPIC_API_KEY'))
+        message = client.messages.create(
+            model="claude-sonnet-4-20250514",
+            max_tokens=1000,
+            system=f"""You are the AI assistant for Project Chakra, a 36-agent AI forex trading system built by Lovinder. Win Rate: {system_data['metrics']['win_rate']*100:.1f}%, Total Trades: {system_data['metrics']['total_trades']}, Cycle: #{system_data['metrics']['cycle']}. Be concise and specific.""",
+            messages=data.get('messages', [])
+        )
+        return jsonify({"reply": message.content[0].text}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 @app.errorhandler(404)
 def not_found(error):
     return jsonify({"error": "Endpoint not found"}), 404
@@ -116,3 +132,4 @@ def internal_error(error):
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
+
