@@ -1,1 +1,1 @@
-﻿web: gunicorn v15_chakra:app
+﻿web: gunicorn app:app
