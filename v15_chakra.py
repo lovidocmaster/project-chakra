@@ -2099,7 +2099,7 @@ class V13Orchestrator:
                 # Post data to Railway backend
                 try:
                     import requests as _req
-                    _req.post("https://project-chakra-production.up.railway.app/api/signal/add", json={
+                    _req.post("https://project-chakra-production.up.railway.app/api/update", json={
                         "pair": "SYSTEM",
                         "direction": "UPDATE",
                         "confidence": self.mem.win_rate,
@@ -3223,4 +3223,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
