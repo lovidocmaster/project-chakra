@@ -668,7 +668,7 @@ async function sendMsg() {
   chatHistory.push({role:'user', content: q});
 
   try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    const response = await fetch(API + '/api/chat', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({
@@ -694,7 +694,7 @@ Be concise, professional, and give specific actionable answers about the trading
     });
 
     const data = await response.json();
-    const reply = data.content?.[0]?.text || 'I apologize, I could not process that request. Please try again.';
+    const reply = data.reply || data.error || 'I apologize, I could not process that request.';
 
     chatHistory.push({role:'assistant', content: reply});
     if(chatHistory.length > 20) chatHistory = chatHistory.slice(-20);
@@ -789,3 +789,5 @@ setInterval(() => {
 </script>
 </body>
 </html>
+
+
