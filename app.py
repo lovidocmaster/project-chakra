@@ -263,7 +263,7 @@ def get_risk_config():
 
 @app.route('/')
 def dashboard():
-    with open('chakra_dashboard.html', 'r', encoding='utf-8') as f:
+    with open('chakra/chakra_dashboard.html', 'r', encoding='utf-8') as f:
         return f.read()
 # ============================================================================
 # ERROR HANDLERS
@@ -286,4 +286,5 @@ if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5002))
     debug = os.environ.get('FLASK_ENV') == 'development'
     app.run(host='0.0.0.0', port=port, debug=debug)
+
 
