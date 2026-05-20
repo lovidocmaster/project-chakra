@@ -1308,7 +1308,7 @@ class RiskManager:
         risk_mult = {"TRENDING":1.0,"RANGING":0.0,"VOLATILE":0.0}.get(regime, 1.0)
 
         # SL/TP based on ATR
-        sl_dist = atr * 1.0 * risk_mult
+        sl_dist = atr * 0.8 * risk_mult
         tp_dist = atr * 2.4 * risk_mult  # 1.5:1 RR minimum
 
         if direction == "BUY":
