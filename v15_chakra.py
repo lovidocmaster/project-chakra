@@ -94,9 +94,9 @@ SUPABASE_URL   = os.getenv("SUPABASE_URL", "")
 SUPABASE_KEY   = os.getenv("SUPABASE_KEY", "")
 TV_SECRET      = os.getenv("TV_WEBHOOK_SECRET", "lovinder_forex_v13")
 
-PAIRS = ["EUR_USD", "GBP_USD", "USD_JPY", "AUD_USD", "USD_CAD"]
+PAIRS = ["EUR_USD", "GBP_USD", "USD_JPY", "AUD_USD", "USD_CAD", "XAU_USD", "GBP_JPY"]
 RISK_PCT = 0.005        # 0.5% risk per trade
-MAX_DD   = 0.02         # 2% max drawdown
+MAX_DD   = 0.05         # 2% max drawdown
 AUTO_EXECUTE = True     # OANDA practice account — paper trades execute as real orders on demo
 
 MEM_FILE  = "v13_memory.json"
@@ -245,7 +245,7 @@ def _pair_currencies(pair: str) -> Tuple[str, str]:
 
 def _simulated_bars(pair: str, count: int = 100) -> List[BarData]:
     base = {"EUR_USD":1.08,"GBP_USD":1.26,"USD_JPY":148.0,
-            "AUD_USD":0.65,"USD_CAD":1.37}.get(pair, 1.10)
+            "AUD_USD":0.70,"USD_CAD":1.37}.get(pair, 1.10)
     bars = []
     p = base
     for _ in range(count):
@@ -1030,13 +1030,13 @@ class RegimeDetector:
             "TRENDING": {"min_conf":0.60,"risk_mult":1.2,
                          "desc":"Trend following. Larger positions.",
                          "agents":["EMA","MACD","BOS","CHOCH"]},
-            "RANGING":  {"min_conf":0.65,"risk_mult":0.8,
+            "RANGING":  {"min_conf":0.70,"risk_mult":0.8,
                          "desc":"Reversal at boundaries. Smaller positions.",
                          "agents":["RSI","OrderBlock","FVG","OTE"]},
             "VOLATILE": {"min_conf":0.75,"risk_mult":0.5,
                          "desc":"Only highest confidence. Very small.",
                          "agents":["LiquiditySweep","SilverBullet"]},
-        }.get(regime, {"min_conf":0.65,"risk_mult":1.0,"desc":"","agents":[]})
+        }.get(regime, {"min_conf":0.70,"risk_mult":1.0,"desc":"","agents":[]})
 
 # ══════════════════════════════════════════════════════════════════════════════
 # SELF-LEARNING LAYER 5: HIVEMIND
@@ -1308,7 +1308,7 @@ class RiskManager:
         risk_mult = {"TRENDING":1.2,"RANGING":0.8,"VOLATILE":0.5}.get(regime, 1.0)
 
         # SL/TP based on ATR
-        sl_dist = atr * 2.0 * risk_mult
+        sl_dist = atr * 1.0 * risk_mult
         tp_dist = atr * 3.0 * risk_mult  # 1.5:1 RR minimum
 
         if direction == "BUY":
@@ -3223,5 +3223,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
