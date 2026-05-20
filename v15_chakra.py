@@ -1046,11 +1046,11 @@ class HiveMind:
 
     def __init__(self, mem: FinMem, ws: AgentWeights):
         self.mem = mem; self.ws = ws
-        self.last = datetime.now() - timedelta(days=6)
+        self.last = datetime.now() - timedelta(days=4)
         self.cycles = 0
 
     def should_run(self) -> bool:
-        return (datetime.now() - self.last).days >= 5
+        return (datetime.now() - self.last).days >= 3
 
     def run(self):
         if not self.should_run(): return
@@ -1062,7 +1062,7 @@ class HiveMind:
         self.mem.log_evo(msg)
         self.cycles += 1
         self.last = datetime.now()
-        _telegram(f"🧠 <b>HiveMind #{self.cycles}</b>\nSystem evolved\n{len(worst)} agents recalibrated\nNext cycle in 5 days")
+        _telegram(f"🧠 <b>HiveMind #{self.cycles}</b>\nSystem evolved\n{len(worst)} agents recalibrated\nNext cycle in 3 days")
         log.info(msg)
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -1309,7 +1309,7 @@ class RiskManager:
 
         # SL/TP based on ATR
         sl_dist = atr * 1.0 * risk_mult
-        tp_dist = atr * 3.0 * risk_mult  # 1.5:1 RR minimum
+        tp_dist = atr * 2.4 * risk_mult  # 1.5:1 RR minimum
 
         if direction == "BUY":
             sl = price - sl_dist
@@ -1322,7 +1322,7 @@ class RiskManager:
         risk_usd = self.balance * RISK_PCT * confidence
         pip_val  = 10.0 if "JPY" not in pair else 0.1
         units    = int(risk_usd / (sl_dist * pip_val))
-        units    = max(1000, min(units, 100000))  # 1K to 100K units
+        units    = max(1000, min(units, 15000))  # 1K to 100K units
 
         return {
             "entry": round(price, 5),
@@ -3223,6 +3223,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
