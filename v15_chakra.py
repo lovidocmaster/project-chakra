@@ -94,7 +94,7 @@ SUPABASE_URL   = os.getenv("SUPABASE_URL", "")
 SUPABASE_KEY   = os.getenv("SUPABASE_KEY", "")
 TV_SECRET      = os.getenv("TV_WEBHOOK_SECRET", "lovinder_forex_v13")
 
-PAIRS = ["EUR_USD", "GBP_USD", "USD_JPY", "AUD_USD", "USD_CAD", "XAU_USD", "GBP_JPY"]
+PAIRS = ["EUR_USD", "GBP_USD", "USD_JPY", "AUD_USD", "USD_CAD", "XAU_USD", "GBP_JPY", "SPX500_USD", "NAS100_USD", "US30_USD", "UK100_GBP", "BCO_USD"]
 RISK_PCT = 0.005        # 0.5% risk per trade
 MAX_DD   = 0.05         # 2% max drawdown
 AUTO_EXECUTE = True     # OANDA practice account — paper trades execute as real orders on demo
@@ -1286,7 +1286,7 @@ class RiskManager:
         self.balance = 100000.0
         self.open_trades = 0
         self.daily_pnl = 0.0
-        self.max_open = 3
+        self.max_open = 7
 
     def update_balance(self):
         self.balance = _get_account_balance()
@@ -2215,9 +2215,10 @@ class V13Orchestrator:
     def _is_good_session(self) -> bool:
         """Only trade during London (7-16 UTC) and New York (12-21 UTC) sessions"""
         hour = datetime.utcnow().hour
+        tokyo = 0 <= hour < 9
         london = 7 <= hour < 16
         new_york = 12 <= hour < 21
-        return london or new_york
+        return tokyo or london or new_york
 
     def _monitor_open_trades(self):
         """Background thread: polls OANDA every 5 min for real trade outcomes"""
