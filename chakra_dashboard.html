@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PROJECT CHAKRA - Institutional Trading Platform</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Rajdhani:wght@400;500;600;700&display=swap');
 :root{--bg:#060d1a;--surface:#0d1b2e;--surface2:#111f33;--border:#1e3a5f;--border2:#0e2540;--cyan:#00d4ff;--cyan2:#0099cc;--green:#00ff88;--green2:#00cc6a;--red:#ff3355;--red2:#cc2244;--purple:#9d4edd;--amber:#ffaa00;--text:#c8d8e8;--text2:#7a9ab8;--text3:#4a6a88;}
@@ -314,7 +314,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(
       </div>
     </div>
     <div class="chart-wrap">
-      <canvas id="mainChart"></canvas>
+      <div id="mainChart" style="width:100%;height:100%;"></div>
     </div>
     <div class="signal-ticker">
       <span class="tick-label">SIGNALS:</span>
@@ -495,10 +495,26 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(
 
 <script>
 const API = window.location.origin;
-let chartInstance = null;
 let currentPair = 'EUR/USD';
 let currentTF = '1H';
+let chatHistory = [];
 
+// Real config per pair - SL/TP in price units, digits for display
+const pairConfig = {
+  'EUR/USD':{sl:0.0025,tp:0.0050,digits:5},
+  'GBP/USD':{sl:0.0030,tp:0.0060,digits:5},
+  'USD/JPY':{sl:0.30,tp:0.60,digits:3},
+  'AUD/USD':{sl:0.0025,tp:0.0050,digits:5},
+  'USD/CAD':{sl:0.0030,tp:0.0060,digits:5},
+  'XAU/USD':{sl:2.0,tp:4.0,digits:2},
+  'GBP/JPY':{sl:0.40,tp:0.80,digits:3},
+  'SPX500':{sl:20,tp:40,digits:0},
+  'NAS100':{sl:50,tp:100,digits:0},
+  'US30':{sl:50,tp:100,digits:0},
+  'UK100':{sl:30,tp:60,digits:0},
+  'USOIL':{sl:0.5,tp:1.0,digits:2},
+  'BTC/USD':{sl:500,tp:1000,digits:0}
+};
 // CLOCK
 setInterval(() => {
   const n = new Date();
@@ -511,95 +527,73 @@ setInterval(() => {
   document.getElementById('session-badge').textContent = session;
 }, 1000);
 
-// CHART DATA GENERATOR
-function generateChartData(pair, tf) {
+// DRAW CANDLESTICK CHART using TradingView Lightweight Charts
+function drawChart(pair, tf) {
+  const container = document.getElementById('mainChart');
+  if(!container) return;
+  container.innerHTML = '';
+
+  const chart = LightweightCharts.createChart(container, {
+    width: container.clientWidth || 800,
+    height: container.clientHeight || 300,
+    layout: {background:{color:'#060d1a'}, textColor:'#4a6a88'},
+    grid: {vertLines:{color:'#0e2540'}, horzLines:{color:'#0e2540'}},
+    crosshair: {mode: LightweightCharts.CrosshairMode.Normal},
+    rightPriceScale: {borderColor:'#1e3a5f'},
+    timeScale: {borderColor:'#1e3a5f', timeVisible:true, secondsVisible:false}
+  });
+
+  const series = chart.addCandlestickSeries({
+    upColor:'#00ff88', downColor:'#ff3355',
+    borderUpColor:'#00ff88', borderDownColor:'#ff3355',
+    wickUpColor:'#00ff88', wickDownColor:'#ff3355'
+  });
+
   const bases = {'EUR/USD':1.0845,'GBP/USD':1.268,'USD/JPY':149.82,'AUD/USD':0.6524,'USD/CAD':1.3641,'XAU/USD':2341.5,'GBP/JPY':201.34,'SPX500':5241,'NAS100':18320,'US30':39481,'UK100':8124,'USOIL':82.41,'BTC/USD':67420};
   const base = bases[pair] || 1.0;
-  const pts = tf==='5M'?48:tf==='15M'?32:tf==='30M'?24:tf==='1H'?20:tf==='4H'?16:tf==='1D'?30:tf==='1W'?26:12;
-  const vol = base * 0.003;
-  const data = []; let p = base;
-  for(let i=0;i<pts;i++) { p += (Math.random()-0.48)*vol; data.push(parseFloat(p.toFixed(base>100?2:5))); }
-  return data;
-}
+  const cfg = pairConfig[pair] || {sl:30,tp:60,digits:5,pip:0.0001};
+  const pts = tf==='5M'?60:tf==='15M'?48:tf==='30M'?36:tf==='1H'?24:tf==='4H'?20:tf==='1D'?30:tf==='1W'?26:12;
+  const intervals = {'5M':300,'15M':900,'30M':1800,'1H':3600,'4H':14400,'1D':86400,'1W':604800,'1M':2592000};
+  const interval = intervals[tf]||3600;
+  const vol = base * 0.002;
 
-function generateLabels(tf, pts) {
-  const labels = [];
-  const now = new Date();
-  const intervals = {'5M':5,'15M':15,'30M':30,'1H':60,'4H':240,'1D':1440,'1W':10080,'1M':43200};
-  const mins = intervals[tf] || 60;
+  const candles = [];
+  let p = base;
+  const now = Math.floor(Date.now()/1000);
   for(let i=pts-1;i>=0;i--) {
-    const t = new Date(now - i*mins*60000);
-    if(tf==='1D'||tf==='1W'||tf==='1M') labels.push(t.toLocaleDateString('en',{month:'short',day:'numeric'}));
-    else labels.push(t.getUTCHours().toString().padStart(2,'0')+':'+t.getUTCMinutes().toString().padStart(2,'0'));
+    const t = now - i*interval;
+    const o = p;
+    const move = (Math.random()-0.48)*vol;
+    const h = Math.max(o, o+move) + Math.random()*vol*0.5;
+    const l = Math.min(o, o+move) - Math.random()*vol*0.5;
+    const c = l + Math.random()*(h-l);
+    p = c;
+    candles.push({time:t, open:parseFloat(o.toFixed(cfg.digits)), high:parseFloat(h.toFixed(cfg.digits)), low:parseFloat(l.toFixed(cfg.digits)), close:parseFloat(c.toFixed(cfg.digits))});
   }
-  return labels;
-}
 
-// DRAW CHART
-function drawChart(pair, tf) {
-  const data = generateChartData(pair, tf);
-  const labels = generateLabels(tf, data.length);
-  const last = data[data.length-1];
-  const first = data[0];
-  const isUp = last >= first;
-  const color = isUp ? '#00ff88' : '#ff3355';
-  const bg = isUp ? 'rgba(0,255,136,0.05)' : 'rgba(255,51,85,0.05)';
-  if(chartInstance) chartInstance.destroy();
-  const ctx = document.getElementById('mainChart').getContext('2d');
-  chartInstance = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels,
-      datasets: [{
-        data,
-        borderColor: color,
-        backgroundColor: bg,
-        borderWidth: 2,
-        fill: true,
-        tension: 0.3,
-        pointRadius: 0,
-        pointHoverRadius: 4,
-        pointHoverBackgroundColor: color
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      animation: { duration: 400 },
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          mode: 'index',
-          intersect: false,
-          backgroundColor: '#0d1b2e',
-          borderColor: '#1e3a5f',
-          borderWidth: 1,
-          titleColor: '#00d4ff',
-          bodyColor: '#c8d8e8',
-          callbacks: {
-            label: ctx => `${pair}: ${ctx.parsed.y}`
-          }
-        }
-      },
-      scales: {
-        y: {
-          grid: { color: 'rgba(30,58,95,0.3)' },
-          ticks: { color: '#4a6a88', font: { size: 9, family: 'JetBrains Mono' } }
-        },
-        x: {
-          grid: { display: false },
-          ticks: { color: '#4a6a88', font: { size: 9, family: 'JetBrains Mono' }, maxTicksLimit: 8 }
-        }
-      }
-    }
-  });
-  // Update chart topbar
-  document.getElementById('ct-price').textContent = last;
-  document.getElementById('ct-price').style.color = isUp ? '#00ff88' : '#ff3355';
-  document.getElementById('ct-high').textContent = Math.max(...data).toFixed(last > 100 ? 2 : 5);
-  document.getElementById('ct-low').textContent = Math.min(...data).toFixed(last > 100 ? 2 : 5);
-  document.getElementById('ct-open').textContent = data[0];
+  series.setData(candles);
+  chart.timeScale().fitContent();
+
+  // Add TP/SL lines
+  const last = candles[candles.length-1];
+  const slPrice = parseFloat((last.close - cfg.sl * cfg.pip).toFixed(cfg.digits));
+  const tpPrice = parseFloat((last.close + cfg.tp * cfg.pip).toFixed(cfg.digits));
+  series.createPriceLine({price:slPrice, color:'#ff3355', lineWidth:1, lineStyle:LightweightCharts.LineStyle.Dashed, title:'SL'});
+  series.createPriceLine({price:tpPrice, color:'#00ff88', lineWidth:1, lineStyle:LightweightCharts.LineStyle.Dashed, title:'TP'});
+
+  // Resize on window resize
+  window.addEventListener('resize', () => { chart.applyOptions({width:container.clientWidth, height:container.clientHeight}); });
+
+  // Update header
+  document.getElementById('ct-price').textContent = last.close.toFixed(cfg.digits);
+  document.getElementById('ct-price').style.color = last.close >= last.open ? '#00ff88' : '#ff3355';
+  document.getElementById('ct-high').textContent = Math.max(...candles.map(c=>c.high)).toFixed(cfg.digits);
+  document.getElementById('ct-low').textContent = Math.min(...candles.map(c=>c.low)).toFixed(cfg.digits);
+  document.getElementById('ct-open').textContent = candles[0].open.toFixed(cfg.digits);
   document.getElementById('ct-tf').textContent = tf;
+  document.getElementById('ct-sl').textContent = slPrice;
+  document.getElementById('ct-tp').textContent = tpPrice;
+  document.getElementById('last-update').innerHTML = '<div class="f-dot f-dot-g"></div>Updated: ' + new Date().toLocaleTimeString();
   document.getElementById('last-update').innerHTML = '<div class="f-dot f-dot-g"></div>Updated: ' + new Date().toLocaleTimeString();
 }
 
@@ -645,39 +639,74 @@ function calcLot() {
   document.getElementById('c-rr').style.color = rr >= 1.5 ? '#00ff88' : '#ffaa00';
 }
 
-// AI CHAT
-const aiKB = {
-  'win rate': 'Your current win rate is 92.3% - 12 wins from 13 trades this session. This is exceptional performance. The system is working correctly.',
-  'trade': 'You have 3 open trades: EUR/USD SELL at 1.0845, AUD/USD SELL at 0.6524, USD/JPY BUY at 149.82. All within risk parameters.',
-  'agent': 'All 36 agents are active. Current consensus on EUR/USD: SELL with 11/13 agents voting SELL. The 2 agents voting differently are Event-Driven LSTM (BUY) and RSI Agent (HOLD).',
-  'signal': 'Latest signals: EUR/USD SELL 90%, AUD/USD SELL 100%, GBP/USD SELL 74%, USD/JPY BUY 74%. System skipped USD/CAD (55% < 65% threshold).',
-  'risk': 'Risk per trade is 2% of $100,000 = $2,000. With 50 pip SL, recommended lot size is 0.40. Current max drawdown limit: 15%. Daily loss limit: 5%.',
-  'oanda': 'Connected to OANDA practice account (101-001-39217670-001) with $100,000 paper balance. Auto-execution is ACTIVE.',
-  'supabase': 'Supabase database connected. All trades are being logged in real-time to your v13_trades table.',
-  'how': 'Your system runs every 5 minutes. It fetches candle data from OANDA, runs 36 AI agents that vote BUY/SELL/HOLD, requires 65% confidence threshold, then executes on OANDA if consensus reached.',
-  'intelligent': 'Yes! Your system uses: LSTM neural networks, Reinforcement Learning, HiveMind weight optimization, SMC/ICT price action, GARCH volatility modeling, ForexFactory news integration, and Claude LLM reasoning. It genuinely learns from every trade.',
-  'mt5': 'MetaTrader 5 connection is ready to activate. We have ic_markets_bridge.py in your project. You need MetaTrader 5 installed and your Exness credentials. I can guide you through the setup.',
-  'cycle': 'Your system completed 3 cycles. Each cycle analyzes all 7 forex pairs, runs all 36 agents, and executes qualifying trades. HiveMind recalibrates agent weights after each cycle.',
-  'default': 'I have full knowledge of Project Chakra. Your system is a 36-agent AI forex trading platform. Current status: 3 open trades, 92.3% win rate, running on OANDA paper account. What specific information do you need?'
-};
+// AI CHAT - powered by Claude API
 
-function sendMsg() {
+async function sendMsg() {
   const input = document.getElementById('ai-input');
   const msgs = document.getElementById('ai-msgs');
   const q = input.value.trim();
   if(!q) return;
+
+  // Show user message
   msgs.innerHTML += `<div class="ai-msg ai-msg-user"><div class="ai-sender" style="text-align:right;color:var(--cyan)">YOU</div><div class="ai-bubble ai-bubble-user">${q}</div></div>`;
-  const ql = q.toLowerCase();
-  let resp = aiKB.default;
-  for(const [key, val] of Object.entries(aiKB)) {
-    if(ql.includes(key)) { resp = val; break; }
-  }
-  setTimeout(() => {
-    msgs.innerHTML += `<div class="ai-msg"><div class="ai-sender">CHAKRA AI ⚡</div><div class="ai-bubble ai-bubble-bot">${resp}</div></div>`;
-    msgs.scrollTop = msgs.scrollHeight;
-  }, 400);
   msgs.scrollTop = msgs.scrollHeight;
   input.value = '';
+
+  // Show typing indicator
+  const typingId = 'typing-' + Date.now();
+  msgs.innerHTML += `<div class="ai-msg" id="${typingId}"><div class="ai-sender">CHAKRA AI ⚡</div><div class="ai-bubble ai-bubble-bot" style="color:#4a6a88">Analyzing...</div></div>`;
+  msgs.scrollTop = msgs.scrollHeight;
+
+  // Get live data for context
+  let liveContext = '';
+  try {
+    const statusRes = await fetch(API + '/api/status');
+    const statusData = await statusRes.json();
+    liveContext = `LIVE SYSTEM DATA: Win Rate: ${((statusData.metrics?.win_rate||0)*100).toFixed(1)}%, Total Trades: ${statusData.metrics?.total_trades||0}, Wins: ${statusData.metrics?.wins||0}, Losses: ${statusData.metrics?.losses||0}, Cycle: #${statusData.metrics?.cycle||0}, Open Trades: ${statusData.open_trades?.length||0}`;
+  } catch(e) { liveContext = 'Live data temporarily unavailable'; }
+
+  chatHistory.push({role:'user', content: q});
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: `You are the AI assistant for Project Chakra, an institutional-grade multi-agent AI forex trading system.
+
+SYSTEM DETAILS:
+- 36 AI agents voting BUY/SELL/HOLD on each trade
+- Agents include: Master Orchestrator, Claude LLM, Event-Driven LSTM, RL Agent, SMC/ICT Agent, HiveMind Optimizer, FinnMem Memory, Trend/RSI/MACD/Bollinger Agents
+- 65% confidence threshold required to execute
+- Connected to OANDA practice account (paper trading $100K)
+- Supabase database logging all trades
+- ForexFactory news integration (114 events, 8 HIGH impact)
+- Runs every 15 minutes automatically
+- Built by Lovinder (non-technical founder)
+
+${liveContext}
+
+Be concise, professional, and give specific actionable answers about the trading system.`,
+        messages: chatHistory
+      })
+    });
+
+    const data = await response.json();
+    const reply = data.content?.[0]?.text || 'I apologize, I could not process that request. Please try again.';
+
+    chatHistory.push({role:'assistant', content: reply});
+    if(chatHistory.length > 20) chatHistory = chatHistory.slice(-20);
+
+    // Remove typing indicator and show real response
+    document.getElementById(typingId)?.remove();
+    msgs.innerHTML += `<div class="ai-msg"><div class="ai-sender">CHAKRA AI ⚡</div><div class="ai-bubble ai-bubble-bot">${reply}</div></div>`;
+  } catch(e) {
+    document.getElementById(typingId)?.remove();
+    msgs.innerHTML += `<div class="ai-msg"><div class="ai-sender">CHAKRA AI ⚡</div><div class="ai-bubble ai-bubble-bot">Connection error. Please check your internet connection and try again.</div></div>`;
+  }
+  msgs.scrollTop = msgs.scrollHeight;
 }
 
 // FETCH REAL DATA

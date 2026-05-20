@@ -1323,7 +1323,7 @@ class RiskManager:
 
         # Position size (risk 0.5% of balance)
         risk_usd = self.balance * RISK_PCT * confidence
-        pip_val  = 10.0 if "JPY" not in pair else 0.1
+        pip_val  = 0.1 if "XAU" in pair else (0.01 if "JPY" in pair else 1.0)
         units    = int(risk_usd / (sl_dist * pip_val))
         units    = max(1000, min(units, 15000))  # 1K to 100K units
 
@@ -2146,6 +2146,79 @@ class V13Orchestrator:
     # ─────────────────────────────────────────────────────────────────────────
     # REAL TRADE MONITORING
     # ─────────────────────────────────────────────────────────────────────────
+    
+    def _sync_real_winrate(self):
+        """Sync real win/loss from OANDA closed trades"""
+        if not OANDA_OK or not OANDA_TOKEN:
+            return
+        try:
+            from oandapyV20 import API as _A
+            from oandapyV20.endpoints.trades import TradesList
+            api = _A(access_token=OANDA_TOKEN, environment=OANDA_ENV)
+            r = TradesList(OANDA_ACCOUNT, params={"state": "CLOSED", "count": 50})
+            api.request(r)
+            trades = r.response.get("trades", [])
+            real_wins = sum(1 for t in trades if float(t.get("realizedPL", 0)) > 0)
+            real_losses = sum(1 for t in trades if float(t.get("realizedPL", 0)) < 0)
+            real_total = real_wins + real_losses
+            if real_total > 0:
+                self.mem.wins = real_wins
+                self.mem.losses = real_losses
+                self.mem.total = real_total
+                self.mem.save()
+                log.info(f"OANDA Real WR: {real_wins}/{real_total} = {real_wins/real_total:.1%}")
+        except Exception as e:
+            log.warning(f"WR sync error: {e}")
+
+    
+
+
+    def _passes_correlation_check(self, pair: str, direction: str) -> bool:
+        """Avoid trading highly correlated pairs in same direction"""
+        correlations = {
+            "EUR_USD": ["GBP_USD"],  # EUR and GBP highly correlated
+            "GBP_USD": ["EUR_USD"],
+            "AUD_USD": ["XAU_USD"],  # Gold and AUD correlated
+            "XAU_USD": ["AUD_USD"],
+        }
+        related = correlations.get(pair, [])
+        for related_pair in related:
+            if related_pair in self.open_pos:
+                existing = self.open_pos[related_pair]
+                if existing.direction == direction:
+                    log.info(f"{pair}: Correlation block - {related_pair} already {direction}")
+                    return False
+        return True
+
+    def _is_news_safe(self, pair: str) -> bool:
+        """Skip trading 30 mins before/after HIGH impact news"""
+        try:
+            now = datetime.utcnow()
+            currencies = pair.replace("_", "/").split("/")
+            for event in getattr(self, 'forex_events', []):
+                try:
+                    if event.get('impact') != 'HIGH':
+                        continue
+                    if not any(c in event.get('currency', '') for c in currencies):
+                        continue
+                    event_time = datetime.strptime(event.get('time', ''), '%Y-%m-%d %H:%M')
+                    diff = abs((event_time - now).total_seconds() / 60)
+                    if diff < 30:
+                        log.info(f"{pair}: Skipping - HIGH impact news in {diff:.0f} mins")
+                        return False
+                except:
+                    continue
+        except Exception as e:
+            pass
+        return True
+
+    def _is_good_session(self) -> bool:
+        """Only trade during London (7-16 UTC) and New York (12-21 UTC) sessions"""
+        hour = datetime.utcnow().hour
+        london = 7 <= hour < 16
+        new_york = 12 <= hour < 21
+        return london or new_york
+
     def _monitor_open_trades(self):
         """Background thread: polls OANDA every 5 min for real trade outcomes"""
         while self.running:
@@ -2344,7 +2417,9 @@ class V13Orchestrator:
                     f"Trades:{self.mem.total} | WR:{self.mem.win_rate:.1%} | "
                     f"RL:{self.rl.episodes} | TV:{self.stats['tv_signals']} | Open:{len(self.open_pos)}"
                 )
-                # Post data to Railway backend
+                # Sync real win rate from OANDA every cycle
+                self._sync_real_winrate()
+                                # Post data to Railway backend
                 try:
                     import requests as _req
                     _req.post("https://project-chakra-production.up.railway.app/api/update", json={
