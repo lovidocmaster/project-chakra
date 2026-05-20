@@ -1712,8 +1712,8 @@ class DailyEvolution:
             if total >= 3:
                 wr = perf["wins"]/total
                 if wr > 0.65: insights.append(f"BEST:{session}({wr:.0%})")
-        self.weights.boost_top(3)
-        self.weights.reduce_bottom(3)
+        # self.weights.boost_top(3)  # TODO
+        # self.weights.reduce_bottom(3)  # TODO
         msg = f"Daily Evolution: {len(insights)} insights | " + " ".join(insights[:5])
         log.info(f"DAILY EVOLUTION: {msg}")
         _telegram(f"\U0001f9ec <b>Daily System Evolution</b>\n{msg[:300]}")
