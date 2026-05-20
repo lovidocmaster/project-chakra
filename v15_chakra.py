@@ -1307,8 +1307,11 @@ class RiskManager:
         atr    = np.mean([b.high-b.low for b in bars[-14:]]) if len(bars)>=14 else price*0.001
         risk_mult = {"TRENDING":1.0,"RANGING":0.0,"VOLATILE":0.0}.get(regime, 1.0)
 
+        # Skip RANGING/VOLATILE markets
+        if risk_mult == 0.0:
+            return {"entry":price,"sl":price*0.99,"tp":price*1.01,"units":1000,"risk_usd":0,"sl_pips":0,"tp_pips":0}
         # SL/TP based on ATR
-        sl_dist = atr * 0.8 * risk_mult
+        sl_dist = max(atr * 0.8 * risk_mult, 0.0001)
         tp_dist = atr * 2.4 * risk_mult  # 1.5:1 RR minimum
 
         if direction == "BUY":
