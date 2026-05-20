@@ -1305,7 +1305,7 @@ class RiskManager:
         self.update_balance()
         price  = bars[-1].close
         atr    = np.mean([b.high-b.low for b in bars[-14:]]) if len(bars)>=14 else price*0.001
-        risk_mult = {"TRENDING":1.2,"RANGING":0.8,"VOLATILE":0.5}.get(regime, 1.0)
+        risk_mult = {"TRENDING":1.0,"RANGING":0.0,"VOLATILE":0.0}.get(regime, 1.0)
 
         # SL/TP based on ATR
         sl_dist = atr * 1.0 * risk_mult
