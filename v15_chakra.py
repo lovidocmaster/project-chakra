@@ -1805,6 +1805,10 @@ class V13Orchestrator:
             f"<b>MEMORY:</b> {mem_ctx[:80]}"
         )
 
+        # Skip RANGING/VOLATILE - only trade TRENDING markets
+        if curr_regime in ["RANGING", "VOLATILE"]:
+            log.info(f"{pair}: SKIP - regime={curr_regime} not TRENDING")
+            return None
         log.info(f"SIGNAL: {pair} {direction} {final_conf:.1%} | "
                  f"Regime:{curr_regime} | News:{news_sent} | COT:{cot_bias} | "
                  f"TV:{tv_confirmed} | Agents:{len(agreed)}{h4_boost}")
