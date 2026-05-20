@@ -2006,7 +2006,7 @@ class V13Orchestrator:
             size_mult = route.get("size_multiplier", 1.0)
             risk["units"] = max(1000, min(int(risk.get("units", 1000) * size_mult), 15000))
         log.info(f"{pair}: Strategy={route['strategy']} Reason={route.get('reason','')}")
-                log.info(f"SIGNAL: {pair} {direction} {final_conf:.1%} | "
+        log.info(f"SIGNAL: {pair} {direction} {final_conf:.1%} | "
                  f"Regime:{curr_regime} | News:{news_sent} | COT:{cot_bias} | "
                  f"TV:{tv_confirmed} | Agents:{len(agreed)}{h4_boost}")
 
