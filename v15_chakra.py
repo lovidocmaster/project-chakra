@@ -2023,6 +2023,28 @@ class V13Orchestrator:
         # ── Primary: OANDA ────────────────────────────────────────────────────
         oanda_ok = False
         # FIFO VIOLATION FIX - Check existing position direction
+        # FIFO VIOLATION FIX - Check existing position direction
+        try:
+            from oandapyV20 import API as _OandaAPI
+            from oandapyV20.endpoints.trades import OpenTrades as _OpenTrades
+            _api = _OandaAPI(access_token=OANDA_TOKEN, environment=OANDA_ENV)
+            _r = _OpenTrades(OANDA_ACCOUNT)
+            _api.request(_r)
+            _open = _r.response.get("trades", [])
+            _pair_norm = rec.pair.replace("/", "_")
+            for _t in _open:
+                if _t.get("instrument", "").replace("/", "_") == _pair_norm:
+                    _existing_units = float(_t.get("currentUnits", 0))
+                    _existing_dir = "BUY" if _existing_units > 0 else "SELL"
+                    if _existing_dir != rec.direction:
+                        log.warning(f"FIFO BLOCK: {rec.pair} existing {_existing_dir}, new {rec.direction} - closing old trade first")
+                        from oandapyV20.endpoints.trades import TradeClose as _TradeClose
+                        _api.request(_TradeClose(OANDA_ACCOUNT, tradeID=_t["id"]))
+                        log.info(f"Closed existing {rec.pair} {_existing_dir} trade to avoid FIFO violation")
+                        import time; time.sleep(1)
+        except Exception as _e:
+            log.warning(f"FIFO check error: {_e}")
+
         try:
             from oandapyV20 import API as _OandaAPI
             from oandapyV20.endpoints.trades import OpenTrades as _OpenTrades
