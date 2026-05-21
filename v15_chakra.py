@@ -94,7 +94,14 @@ SUPABASE_URL   = os.getenv("SUPABASE_URL", "")
 SUPABASE_KEY   = os.getenv("SUPABASE_KEY", "")
 TV_SECRET      = os.getenv("TV_WEBHOOK_SECRET", "lovinder_forex_v13")
 
-PAIRS = ["EUR_USD", "GBP_USD", "USD_JPY", "AUD_USD", "USD_CAD", "XAU_USD", "GBP_JPY", "SPX500_USD", "NAS100_USD", "US30_USD", "UK100_GBP", "BCO_USD"]
+PAIRS = [
+    # Major forex pairs
+    "EUR_USD", "GBP_USD", "USD_JPY", "AUD_USD", "USD_CAD",
+    # Cross pairs (high volume)
+    "GBP_JPY", "EUR_JPY", "AUD_JPY", "EUR_GBP",
+    # Commodity currencies
+    "NZD_USD", "USD_CHF", "USD_SGD",
+]
 RISK_PCT = 0.005        # 0.5% risk per trade
 MAX_DD   = 0.05         # 2% max drawdown
 AUTO_EXECUTE = True     # OANDA practice account — paper trades execute as real orders on demo
@@ -1325,7 +1332,7 @@ class RiskManager:
         risk_usd = self.balance * RISK_PCT * confidence
         pip_val  = 0.1 if "XAU" in pair else (0.01 if "JPY" in pair else 1.0)
         units    = int(risk_usd / (sl_dist * pip_val))
-        units    = max(1000, min(units, 15000))  # 1K to 100K units
+        units    = max(10000, min(units, 15000))  # 1K to 100K units
 
         return {
             "entry": round(price, 5),
@@ -2013,6 +2020,15 @@ class V13Orchestrator:
         # ── Execute trade ─────────────────────────────────────────────────────
         if AUTO_EXECUTE and OANDA_OK and OANDA_TOKEN:
             self._execute_trade(rec, risk)
+        # Send Telegram alert for executed trade
+        _telegram(
+            f"{'🟢' if rec.direction=='BUY' else '🔴'} <b>TRADE EXECUTED</b>\n"
+            f"Pair: {rec.pair} | {rec.direction}\n"
+            f"Entry: {rec.where_entry} | SL: {rec.where_sl} | TP: {rec.where_tp}\n"
+            f"Confidence: {rec.confidence:.0%} | Strategy: {rec.regime}\n"
+            f"Cycle: #{self.stats['cycles']}"
+        )
+
 
         # ── Schedule learning ─────────────────────────────────────────────────
         threading.Timer(300.0, self._learn_from_trade, args=[rec]).start()
@@ -2423,16 +2439,31 @@ class V13Orchestrator:
                                 # Post data to Railway backend
                 try:
                     import requests as _req
+                    _open_trades_list = []
+                    for _pair, _rec in self.open_pos.items():
+                        _open_trades_list.append({
+                            "pair": _pair,
+                            "direction": _rec.direction,
+                            "entry": _rec.where_entry,
+                            "sl": _rec.where_sl,
+                            "tp": _rec.where_tp,
+                            "confidence": _rec.confidence,
+                            "strategy": _rec.regime,
+                            "opened_at": _rec.when_timestamp,
+                        })
                     _req.post("https://project-chakra-production.up.railway.app/api/update", json={
                         "pair": "SYSTEM",
                         "direction": "UPDATE",
                         "confidence": self.mem.win_rate,
+                        "win_rate": self.mem.win_rate,
                         "cycle": self.stats["cycles"],
                         "total_trades": self.mem.total,
                         "wins": self.mem.wins,
                         "losses": self.mem.losses,
-                        "open_trades": len(self.open_pos)
-                    }, timeout=3)
+                        "open_trades": len(self.open_pos),
+                        "balance": _get_account_balance(),
+                        "trades": _open_trades_list,
+                    }, timeout=5)
                 except:
                     pass
                 # Daily evolution
