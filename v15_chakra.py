@@ -1030,13 +1030,13 @@ class RegimeDetector:
             "TRENDING": {"min_conf":0.60,"risk_mult":1.2,
                          "desc":"Trend following. Larger positions.",
                          "agents":["EMA","MACD","BOS","CHOCH"]},
-            "RANGING":  {"min_conf":0.70,"risk_mult":0.8,
+            "RANGING":  {"min_conf":0.60,"risk_mult":0.8,
                          "desc":"Reversal at boundaries. Smaller positions.",
                          "agents":["RSI","OrderBlock","FVG","OTE"]},
-            "VOLATILE": {"min_conf":0.75,"risk_mult":0.5,
+            "VOLATILE": {"min_conf":0.65,"risk_mult":0.5,
                          "desc":"Only highest confidence. Very small.",
                          "agents":["LiquiditySweep","SilverBullet"]},
-        }.get(regime, {"min_conf":0.70,"risk_mult":1.0,"desc":"","agents":[]})
+        }.get(regime, {"min_conf":0.60,"risk_mult":1.0,"desc":"","agents":[]})
 
 # ══════════════════════════════════════════════════════════════════════════════
 # SELF-LEARNING LAYER 5: HIVEMIND
