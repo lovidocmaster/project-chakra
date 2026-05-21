@@ -1727,6 +1727,228 @@ class DailyEvolution:
         self.last_run = datetime.now()
 
 
+
+# ============================================================================
+# INTELLIGENT POSITION SIZING (Kelly Criterion + Signal Strength)
+# From: Lopez de Prado, Be Water paper, New Market Wizards, ATLAS paper
+# ============================================================================
+
+import math
+
+class IntelligentPositionSizer:
+    """
+    Dynamic position sizing based on research papers.
+    
+    Key principles:
+    1. Kelly Criterion: size based on edge (win_rate, avg_win/loss ratio)
+    2. Signal scaling: stronger signal = larger position
+    3. Volatility adjustment: higher ATR = smaller position
+    4. Drawdown protection: reduce size during losing streaks
+    5. Half-Kelly: use 50% of Kelly for safety and smoother growth
+    """
+    
+    def __init__(self, mem, balance_fn):
+        self.mem = mem
+        self.get_balance = balance_fn
+        self.recent_trades = []  # Track recent outcomes
+        self.max_risk_pct = 0.02  # 2% max risk per trade (New Market Wizards)
+        self.half_kelly_factor = 0.5  # Half-Kelly for safety
+        self.min_units = 1000
+        self.max_units = 50000
+    
+    def _kelly_fraction(self) -> float:
+        """
+        Kelly Criterion: f = p - q/b
+        p = win probability
+        q = loss probability (1-p)
+        b = win/loss ratio
+        
+        Returns fraction of capital to risk
+        From: Lopez de Prado Chapter 10, Be Water paper
+        """
+        # Get real performance data from memory
+        total = self.mem.wins + self.mem.losses
+        
+        if total < 5:
+            # Not enough data - use conservative default
+            return 0.01  # 1% until we have real data
+        
+        win_rate = self.mem.wins / total
+        
+        # Calculate average win/loss ratio from pair performance
+        avg_win = 0
+        avg_loss = 0
+        win_count = 0
+        loss_count = 0
+        
+        for pair, perf in self.mem.pair_perf.items():
+            if perf.get("wins", 0) > 0:
+                avg_win += perf.get("pnl", 0) / max(perf["wins"], 1)
+                win_count += 1
+            if perf.get("losses", 0) > 0:
+                avg_loss += abs(perf.get("pnl", 0)) / max(perf["losses"], 1)
+                loss_count += 1
+        
+        if win_count > 0:
+            avg_win = avg_win / win_count
+        else:
+            avg_win = 50  # Default $50 avg win
+            
+        if loss_count > 0:
+            avg_loss = avg_loss / loss_count
+        else:
+            avg_loss = 30  # Default $30 avg loss
+        
+        if avg_loss == 0:
+            return 0.01
+        
+        # Kelly formula
+        b = avg_win / avg_loss  # Win/loss ratio
+        p = win_rate
+        q = 1 - p
+        
+        kelly = p - (q / b)
+        
+        # Apply half-Kelly for safety (reduces variance significantly)
+        half_kelly = kelly * self.half_kelly_factor
+        
+        # Clamp between 0.5% and 3%
+        return max(0.005, min(half_kelly, 0.03))
+    
+    def _confidence_multiplier(self, confidence: float) -> float:
+        """
+        Scale position size by signal strength.
+        From: ATLAS paper - "Position size must scale with conviction"
+        From: Lopez de Prado - sigmoid function for bet sizing
+        
+        Sigmoid scaling:
+        60% confidence → 0.6x multiplier (smaller)
+        75% confidence → 1.0x multiplier (base)
+        90% confidence → 1.5x multiplier (larger)
+        """
+        # Sigmoid-based scaling centered at 75% confidence
+        x = (confidence - 0.75) * 10
+        sigmoid = 1 / (1 + math.exp(-x))
+        # Scale from 0.5x to 1.5x
+        return 0.5 + sigmoid
+    
+    def _volatility_adjustment(self, atr: float, price: float) -> float:
+        """
+        Reduce position size in high volatility.
+        From: Be Water paper - GARCH volatility adjustment
+        From: ATLAS paper - "Reduce size when uncertainty is elevated"
+        """
+        if price == 0:
+            return 1.0
+        vol_pct = atr / price
+        if vol_pct > 0.01:  # Very high volatility
+            return 0.5
+        elif vol_pct > 0.005:  # High volatility
+            return 0.75
+        else:  # Normal volatility
+            return 1.0
+    
+    def _drawdown_adjustment(self) -> float:
+        """
+        Reduce size during losing streaks.
+        From: New Market Wizards - protect capital during drawdowns
+        """
+        # Check recent 5 trades
+        total = self.mem.wins + self.mem.losses
+        if total < 5:
+            return 1.0
+        
+        # If winning rate recently dropped, reduce size
+        wr = self.mem.wins / total
+        if wr < 0.30:  # Below 30% win rate - reduce significantly
+            return 0.5
+        elif wr < 0.40:  # Below 40% - reduce somewhat
+            return 0.75
+        else:
+            return 1.0
+    
+    def calculate(self, pair: str, direction: str, confidence: float,
+                  atr: float, regime: str) -> dict:
+        """
+        Calculate intelligent position size.
+        
+        Returns units to trade based on:
+        - Kelly Criterion (edge-based sizing)
+        - Signal confidence (stronger = larger)
+        - Market volatility (higher = smaller)
+        - Recent performance (losing streak = smaller)
+        - Max 2% risk per trade
+        """
+        balance = self.get_balance()
+        
+        # 1. Kelly fraction (base risk %)
+        kelly_pct = self._kelly_fraction()
+        
+        # 2. Scale by confidence
+        conf_mult = self._confidence_multiplier(confidence)
+        
+        # 3. Volatility adjustment
+        price = 1.0  # Placeholder - will be overridden
+        vol_adj = self._volatility_adjustment(atr, max(atr * 100, 1))
+        
+        # 4. Drawdown protection
+        dd_adj = self._drawdown_adjustment()
+        
+        # 5. Regime adjustment (from FinEvo paper - trend following dominates)
+        regime_mult = {
+            "TRENDING": 1.2,   # Larger in trends (more reliable)
+            "RANGING":  0.8,   # Smaller in ranging (less reliable)
+            "VOLATILE": 0.5,   # Much smaller in volatile
+        }.get(regime, 1.0)
+        
+        # 6. Final risk percentage
+        final_risk_pct = kelly_pct * conf_mult * vol_adj * dd_adj * regime_mult
+        
+        # 7. Cap at 2% max (New Market Wizards rule)
+        final_risk_pct = min(final_risk_pct, self.max_risk_pct)
+        
+        # 8. Calculate risk in dollars
+        risk_usd = balance * final_risk_pct
+        
+        # 9. Calculate units based on SL distance
+        # pip_value per unit
+        if "JPY" in pair:
+            pip_val = 0.01
+        elif "XAU" in pair:
+            pip_val = 0.1
+        else:
+            pip_val = 0.0001
+        
+        sl_pips = max(atr / pip_val, 10)  # Minimum 10 pips SL
+        pip_value_per_unit = pip_val  # Simplified - OANDA provides exact
+        
+        # Units = Risk $ / (SL pips × pip value per unit)
+        units = int(risk_usd / max(sl_pips * pip_value_per_unit, 0.001))
+        
+        # 10. Apply bounds
+        units = max(self.min_units, min(units, self.max_units))
+        
+        return {
+            "units": units,
+            "risk_usd": round(risk_usd, 2),
+            "risk_pct": round(final_risk_pct * 100, 2),
+            "kelly_pct": round(kelly_pct * 100, 2),
+            "conf_mult": round(conf_mult, 2),
+            "vol_adj": round(vol_adj, 2),
+            "dd_adj": round(dd_adj, 2),
+            "regime_mult": regime_mult,
+            "sizing_reason": (
+                f"Kelly:{kelly_pct*100:.1f}% × "
+                f"Conf:{conf_mult:.1f}x × "
+                f"Vol:{vol_adj:.1f}x × "
+                f"DD:{dd_adj:.1f}x × "
+                f"Regime:{regime_mult}x = "
+                f"{final_risk_pct*100:.2f}% = "
+                f"{units:,} units"
+            )
+        }
+
+
 class V13Orchestrator:
 
     def __init__(self):
@@ -1759,6 +1981,7 @@ class V13Orchestrator:
         self.regime  = RegimeDetector()
         self.hive    = HiveMind(self.mem, self.weights)
         self.router  = RegimeRouter(self.mem)
+        self.sizer   = IntelligentPositionSizer(self.mem, _get_account_balance)
         self.evolver = DailyEvolution(self.mem, self.weights)
 
         # Risk & logging
@@ -1917,6 +2140,12 @@ class V13Orchestrator:
             return None
 
         risk = self.risk.calculate(pair, direction, final_conf, bars, curr_regime)
+        # Override with intelligent position sizing (Kelly + Confidence + Volatility)
+        atr = sum(b.high - b.low for b in bars[-14:]) / 14 if len(bars) >= 14 else 0.001
+        sizing = self.sizer.calculate(pair, direction, final_conf, atr, curr_regime)
+        risk["units"] = sizing["units"]
+        risk["risk_usd"] = sizing["risk_usd"]
+        log.info(f"{pair}: {sizing['sizing_reason']}")
 
         # ── WHERE (Key levels) ────────────────────────────────────────────────
         support    = min(b.low  for b in bars[-20:])
