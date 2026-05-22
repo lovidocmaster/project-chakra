@@ -2658,12 +2658,11 @@ class V13Orchestrator:
 
 
         # ── Schedule learning ─────────────────────────────────────────────────
-                # Update hierarchical memory with outcome
-                if hasattr(self, 'hmem'):
-                self.hmem.record_outcome(rec.pair, rec.direction, rec.outcome)
-                # Update CVaR with trade result
-                if hasattr(self, 'cvar'):
-                self.cvar.update(rec.pair, rec.pnl_usd, rec.where_entry)
+        # Update hierarchical memory with outcome
+        if hasattr(self, "hmem"):
+            self.hmem.record_outcome(rec.pair, rec.direction, rec.outcome)
+        if hasattr(self, "cvar"):
+            self.cvar.update(rec.pair, rec.pnl_usd, rec.where_entry)
         threading.Timer(300.0, self._learn_from_trade, args=[rec]).start()
         return rec
 
