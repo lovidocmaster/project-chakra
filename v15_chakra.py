@@ -1933,6 +1933,426 @@ Respond in JSON only:
         return {"approved": True, "insight": "FIP unavailable", "boost": 0, "risk": "MEDIUM"}
 
 
+
+# ============================================================================
+# ATLAS ADAPTIVE-OPRO
+# From: ATLAS paper (Papadakis et al., National Technical University of Athens)
+# Key result: Adaptive-OPRO achieves 65.28% win rate vs 40.47% static
+# 
+# Mechanism: Every 5 trading days, Claude automatically rewrites its own
+# trading instructions based on what worked and what didn't
+# ============================================================================
+
+class AdaptiveOPRO:
+    """
+    Adaptive prompt optimization for the Master Orchestrator.
+    Claude optimizes its own trading instructions every 5 days.
+    
+    From ATLAS paper Section 4:
+    s = clip[0,100](50 + 250 * ROI)
+    Score -20% ROI -> 0, 0% ROI -> 50, +20% ROI -> 100
+    """
+    
+    def __init__(self):
+        self.prompt_history = []
+        self.current_prompt = self._default_prompt()
+        self.window_trades = []
+        self.last_optimization = datetime.now() - timedelta(days=6)
+        self.optimization_window = 5  # Days per window (ATLAS paper)
+        self.api_key = os.getenv("ANTHROPIC_API_KEY", "")
+        self.scores = []
+    
+    def _default_prompt(self) -> str:
+        return """You are the Master Orchestrator for Project Chakra, a 36-agent AI forex trading system.
+
+CORE RULES:
+- Only trade when 60%+ confidence AND momentum confirms direction
+- Use Mean Reversion in RANGING markets (RSI extremes + Bollinger Bands)
+- Use Trend Following in TRENDING markets (EMA crossover + MACD)
+- Reduce position size 50% in VOLATILE markets
+- Apply Kelly Criterion: size proportional to edge and confidence
+- Never risk more than 2% per trade
+- Prioritize pairs with proven track record (USD_JPY > EUR_USD)
+- Skip when RSI is in neutral zone (40-60) without momentum confirmation"""
+    
+    def record_trade(self, pair: str, direction: str, pnl: float, 
+                     confidence: float, regime: str):
+        """Record trade for window performance tracking"""
+        self.window_trades.append({
+            "pair": pair,
+            "direction": direction,
+            "pnl": pnl,
+            "confidence": confidence,
+            "regime": regime,
+            "timestamp": datetime.now().isoformat()
+        })
+    
+    def _compute_score(self, trades: list, balance: float = 100000) -> float:
+        """
+        ATLAS scoring function (equation 1):
+        s = clip[0,100](50 + 250 * ROI)
+        """
+        if not trades or balance == 0:
+            return 50.0
+        
+        total_pnl = sum(t.get("pnl", 0) for t in trades)
+        roi = total_pnl / balance
+        score = max(0, min(100, 50 + 250 * roi))
+        return round(score, 2)
+    
+    def should_optimize(self) -> bool:
+        """Optimize every 5 trading days"""
+        days_elapsed = (datetime.now() - self.last_optimization).days
+        return days_elapsed >= self.optimization_window and bool(self.api_key)
+    
+    def optimize(self, mem, balance: float) -> str:
+        """
+        Run Adaptive-OPRO: Claude rewrites its own trading prompt.
+        From ATLAS paper: optimizer diagnoses failure modes and proposes revision.
+        """
+        if not self.should_optimize():
+            return self.current_prompt
+        
+        try:
+            import requests as _r
+            import json as _json
+            
+            # Calculate window performance
+            score = self._compute_score(self.window_trades, balance)
+            wins = sum(1 for t in self.window_trades if t.get("pnl", 0) > 0)
+            losses = sum(1 for t in self.window_trades if t.get("pnl", 0) < 0)
+            total_pnl = sum(t.get("pnl", 0) for t in self.window_trades)
+            
+            # Pair performance
+            pair_pnl = {}
+            for t in self.window_trades:
+                p = t["pair"]
+                pair_pnl[p] = pair_pnl.get(p, 0) + t.get("pnl", 0)
+            
+            best_pairs = sorted(pair_pnl.items(), key=lambda x: x[1], reverse=True)[:3]
+            worst_pairs = sorted(pair_pnl.items(), key=lambda x: x[1])[:3]
+            
+            # Regime performance
+            regime_pnl = {}
+            for t in self.window_trades:
+                r = t.get("regime", "UNKNOWN")
+                regime_pnl[r] = regime_pnl.get(r, 0) + t.get("pnl", 0)
+            
+            optimization_prompt = f"""You are an expert prompt optimizer for an AI forex trading system.
+
+CURRENT TRADING PROMPT:
+{self.current_prompt}
+
+WINDOW PERFORMANCE ({self.optimization_window} days):
+- Score: {score:.1f}/100 (50=breakeven, 100=+20% ROI)
+- Trades: {len(self.window_trades)} | Wins: {wins} | Losses: {losses}
+- Total P/L: ${total_pnl:.2f}
+- Best pairs: {best_pairs}
+- Worst pairs: {worst_pairs}
+- By regime: {regime_pnl}
+
+PREVIOUS PROMPT HISTORY (last 3):
+{[p["prompt"][:100] for p in self.prompt_history[-3:]]}
+
+YOUR TASK (from ATLAS Adaptive-OPRO):
+1. Diagnose the likely failure modes of the current prompt
+2. Identify what rules are causing losses vs wins
+3. Propose a REVISED instruction prompt that addresses these issues
+4. The revised prompt must preserve all template placeholders
+5. Make specific changes based on what the data shows
+
+CRITICAL CONSTRAINTS:
+- Must keep Kelly Criterion and 2% max risk rules
+- Must keep regime-based strategy selection
+- Can adjust confidence thresholds, pair preferences, regime rules
+- Can add new rules based on observed patterns
+- Response must be the complete new prompt text ONLY, nothing else"""
+
+            response = _r.post(
+                "https://api.anthropic.com/v1/messages",
+                headers={"Content-Type": "application/json",
+                         "x-api-key": self.api_key,
+                         "anthropic-version": "2023-06-01"},
+                json={"model": "claude-haiku-4-5-20251001",
+                      "max_tokens": 500,
+                      "messages": [{"role": "user", "content": optimization_prompt}]},
+                timeout=15
+            )
+            
+            if response.status_code == 200:
+                new_prompt = response.json()["content"][0]["text"].strip()
+                
+                # Save to history
+                self.prompt_history.append({
+                    "prompt": self.current_prompt,
+                    "score": score,
+                    "trades": len(self.window_trades),
+                    "pnl": total_pnl,
+                    "optimized_at": datetime.now().isoformat()
+                })
+                
+                # Update prompt
+                self.current_prompt = new_prompt
+                self.scores.append(score)
+                self.window_trades = []  # Reset window
+                self.last_optimization = datetime.now()
+                
+                log.info(f"ATLAS OPRO: Prompt optimized! Score was {score:.1f}/100")
+                log.info(f"ATLAS OPRO: New prompt: {new_prompt[:100]}...")
+                _telegram(f"🧠 <b>ATLAS Adaptive-OPRO</b>\n"
+                         f"Score: {score:.1f}/100\n"
+                         f"Trades: {len(self.window_trades)} | P/L: ${total_pnl:.2f}\n"
+                         f"Prompt updated for next {self.optimization_window} days")
+                
+                return new_prompt
+        except Exception as e:
+            log.warning(f"ATLAS OPRO optimization failed: {e}")
+        
+        return self.current_prompt
+    
+    def get_prompt(self) -> str:
+        return self.current_prompt
+
+
+# ============================================================================
+# SMC/ICT AGENT - Smart Money Concepts
+# From: Fractal Nature and SMC Trading Concepts (your project file)
+# Key concepts: Order blocks, Fair Value Gaps, Liquidity sweeps, BOS/CHOCH
+# ============================================================================
+
+class SMCAgent:
+    """
+    Smart Money Concepts agent.
+    Identifies institutional order flow patterns.
+    
+    Concepts from your SMC file:
+    - Order Blocks: Last bullish/bearish candle before major move
+    - Fair Value Gaps: Imbalance areas price returns to fill
+    - Break of Structure (BOS): Trend confirmation
+    - Change of Character (CHOCH): Trend reversal
+    - Liquidity Sweeps: Stop hunting by institutions
+    """
+    
+    def __init__(self):
+        self.name = "SMC_ICT_Agent"
+    
+    def analyze(self, bars: list) -> dict:
+        """Analyze price action using SMC concepts"""
+        if len(bars) < 20:
+            return {"direction": "HOLD", "confidence": 0.5, "reason": "Insufficient data"}
+        
+        # Get recent candles
+        closes = [b.close for b in bars]
+        highs  = [b.high  for b in bars]
+        lows   = [b.low   for b in bars]
+        
+        signals = []
+        
+        # 1. Break of Structure (BOS) detection
+        bos_signal = self._detect_bos(highs, lows, closes)
+        if bos_signal:
+            signals.append(bos_signal)
+        
+        # 2. Fair Value Gap detection
+        fvg_signal = self._detect_fvg(bars)
+        if fvg_signal:
+            signals.append(fvg_signal)
+        
+        # 3. Order Block detection
+        ob_signal = self._detect_order_block(bars)
+        if ob_signal:
+            signals.append(ob_signal)
+        
+        # 4. Liquidity Sweep detection
+        liq_signal = self._detect_liquidity_sweep(highs, lows, closes)
+        if liq_signal:
+            signals.append(liq_signal)
+        
+        if not signals:
+            return {"direction": "HOLD", "confidence": 0.5, "reason": "No SMC pattern"}
+        
+        # Count bullish vs bearish signals
+        bullish = sum(1 for s in signals if s["direction"] == "BUY")
+        bearish = sum(1 for s in signals if s["direction"] == "SELL")
+        
+        if bullish > bearish:
+            direction = "BUY"
+            confidence = 0.55 + bullish * 0.05
+        elif bearish > bullish:
+            direction = "SELL"
+            confidence = 0.55 + bearish * 0.05
+        else:
+            direction = "HOLD"
+            confidence = 0.5
+        
+        reasons = [s["reason"] for s in signals]
+        
+        return {
+            "direction": direction,
+            "confidence": min(confidence, 0.85),
+            "reason": " | ".join(reasons),
+            "signals": len(signals)
+        }
+    
+    def _detect_bos(self, highs, lows, closes) -> dict:
+        """Break of Structure - trend confirmation"""
+        # Look at last 10 candles for structure
+        recent_highs = highs[-10:]
+        recent_lows  = lows[-10:]
+        
+        prev_high = max(recent_highs[:-3])
+        prev_low  = min(recent_lows[:-3])
+        current   = closes[-1]
+        
+        if current > prev_high * 1.001:  # Broke above structure
+            return {"direction": "BUY", "reason": "BOS Bullish"}
+        elif current < prev_low * 0.999:  # Broke below structure
+            return {"direction": "SELL", "reason": "BOS Bearish"}
+        return None
+    
+    def _detect_fvg(self, bars) -> dict:
+        """Fair Value Gap - imbalance area"""
+        if len(bars) < 3:
+            return None
+        
+        # FVG: candle[i-2].high < candle[i].low (bullish gap)
+        # or:  candle[i-2].low > candle[i].high (bearish gap)
+        for i in range(len(bars)-1, max(len(bars)-10, 2), -1):
+            if bars[i-2].high < bars[i].low:  # Bullish FVG
+                # Price returning to fill the gap
+                if bars[-1].close <= bars[i].low:
+                    return {"direction": "BUY", "reason": "FVG Fill Bullish"}
+            elif bars[i-2].low > bars[i].high:  # Bearish FVG
+                if bars[-1].close >= bars[i].high:
+                    return {"direction": "SELL", "reason": "FVG Fill Bearish"}
+        return None
+    
+    def _detect_order_block(self, bars) -> dict:
+        """Order Block - last opposite candle before major move"""
+        if len(bars) < 5:
+            return None
+        
+        # Find last bearish candle before bullish move
+        for i in range(len(bars)-2, max(len(bars)-15, 1), -1):
+            candle = bars[i]
+            if candle.close < candle.open:  # Bearish candle
+                # Check if followed by strong bullish move
+                subsequent_high = max(b.high for b in bars[i+1:])
+                if subsequent_high > candle.high * 1.002:
+                    # Price returning to order block
+                    if bars[-1].close <= candle.high and bars[-1].close >= candle.low:
+                        return {"direction": "BUY", "reason": "Bullish Order Block"}
+            elif candle.close > candle.open:  # Bullish candle
+                subsequent_low = min(b.low for b in bars[i+1:])
+                if subsequent_low < candle.low * 0.998:
+                    if bars[-1].close >= candle.low and bars[-1].close <= candle.high:
+                        return {"direction": "SELL", "reason": "Bearish Order Block"}
+        return None
+    
+    def _detect_liquidity_sweep(self, highs, lows, closes) -> dict:
+        """Liquidity Sweep - stop hunting by institutions"""
+        if len(highs) < 10:
+            return None
+        
+        # Recent high/low as liquidity pools
+        recent_high = max(highs[-10:-1])
+        recent_low  = min(lows[-10:-1])
+        current     = closes[-1]
+        prev        = closes[-2]
+        
+        # Swept above recent high then rejected (bearish)
+        if highs[-1] > recent_high and current < recent_high:
+            return {"direction": "SELL", "reason": "Liquidity Sweep High (Short)"}
+        
+        # Swept below recent low then rejected (bullish)
+        if lows[-1] < recent_low and current > recent_low:
+            return {"direction": "BUY", "reason": "Liquidity Sweep Low (Long)"}
+        
+        return None
+
+
+# ============================================================================
+# TIME SERIES MOMENTUM
+# From: "Time Series Momentum" paper in your project
+# Uses 12-month lookback across pairs to rank and trade best momentum
+# ============================================================================
+
+class TimeSeriesMomentum:
+    """
+    Cross-asset momentum from Time Series Momentum paper.
+    Ranks all pairs by 12-month momentum and trades strongest.
+    
+    From paper: "We find that time series momentum profits are positive
+    and statistically significant for every instrument class"
+    """
+    
+    def __init__(self):
+        self.pair_returns = {}  # pair -> list of monthly returns
+        self.momentum_scores = {}
+    
+    def update(self, pair: str, current_price: float):
+        """Update price history for momentum calculation"""
+        if pair not in self.pair_returns:
+            self.pair_returns[pair] = []
+        self.pair_returns[pair].append(current_price)
+        if len(self.pair_returns[pair]) > 300:
+            self.pair_returns[pair] = self.pair_returns[pair][-300:]
+    
+    def get_momentum_signal(self, pair: str) -> dict:
+        """
+        12-month momentum signal.
+        Positive momentum -> BUY, Negative -> SELL
+        """
+        prices = self.pair_returns.get(pair, [])
+        
+        if len(prices) < 50:
+            return {"signal": "NEUTRAL", "score": 0.0, "confidence_boost": 0}
+        
+        current = prices[-1]
+        
+        # 1-month momentum (20 trading periods)
+        mom_1m = (current / prices[-20] - 1) if len(prices) >= 20 else 0
+        
+        # 3-month momentum (60 periods)
+        mom_3m = (current / prices[-60] - 1) if len(prices) >= 60 else 0
+        
+        # 12-month momentum (240 periods)
+        mom_12m = (current / prices[-240] - 1) if len(prices) >= 240 else mom_3m
+        
+        # Combined momentum score (paper uses 12-month primarily)
+        score = mom_1m * 0.3 + mom_3m * 0.3 + mom_12m * 0.4
+        
+        # Update scores
+        self.momentum_scores[pair] = score
+        
+        if score > 0.005:
+            signal = "BULLISH"
+            boost = min(0.05, abs(score) * 2)
+        elif score < -0.005:
+            signal = "BEARISH"
+            boost = min(0.05, abs(score) * 2)
+        else:
+            signal = "NEUTRAL"
+            boost = 0
+        
+        return {
+            "signal": signal,
+            "score": round(score, 6),
+            "mom_1m": round(mom_1m * 100, 3),
+            "mom_3m": round(mom_3m * 100, 3),
+            "mom_12m": round(mom_12m * 100, 3),
+            "confidence_boost": boost
+        }
+    
+    def get_top_pairs(self, n: int = 3) -> list:
+        """Get top N pairs by momentum score (long strongest, short weakest)"""
+        if not self.momentum_scores:
+            return []
+        sorted_pairs = sorted(self.momentum_scores.items(), 
+                              key=lambda x: abs(x[1]), reverse=True)
+        return sorted_pairs[:n]
+
+
 class RegimeRouter:
     """Routes strategy based on market regime - works in ALL conditions"""
 
@@ -2365,6 +2785,9 @@ class V13Orchestrator:
         self.router  = RegimeRouter(self.mem)
         self.sizer   = IntelligentPositionSizer(self.mem, _get_account_balance)
         self.momentum = MultiTimescaleMomentum()
+        self.opro     = AdaptiveOPRO()
+        self.smc      = SMCAgent()
+        self.tsm      = TimeSeriesMomentum()
         self.cvar     = CVaRRiskManager(confidence_level=0.95)
         self.hmem     = HierarchicalMemory()
         self.fip      = FinancialInsightAgent()
@@ -3097,6 +3520,10 @@ class V13Orchestrator:
                     }, timeout=5)
                 except:
                     pass
+                # ATLAS Adaptive-OPRO: Rewrite trading prompt every 5 days
+                if hasattr(self, 'opro') and self.opro.should_optimize():
+                    new_prompt = self.opro.optimize(self.mem, _get_account_balance())
+                    log.info(f"ATLAS OPRO: System prompt updated for next cycle")
                 # Daily evolution
                 if self.evolver.should_run():
                     self.evolver.run()
