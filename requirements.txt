@@ -11,12 +11,9 @@ oandapyV20
 supabase
 pandas-ta
 scikit-learn
-tensorflow
 beautifulsoup4
-pytrends
 schedule
 pytz
 aiohttp
-asyncio
 ta
 yfinance
