@@ -1551,6 +1551,388 @@ class PortfolioTracker:
 # REGIME ROUTER - All-Weather Trading System
 # ============================================================================
 
+
+# ============================================================================
+# FINRS - Risk-Sensitive Trading Framework
+# Based on: FINRS paper (Bijia Liu, Alibaba DAMO Academy, 2025)
+# Key results: 54.99% CR, 0.67 Sharpe Ratio, 42.34% MDD
+# ============================================================================
+
+class MultiTimescaleMomentum:
+    """
+    FINRS Section 3.3: Multi-Scale Reward Reflection
+    Computes price trends across 1-day, 7-day, 30-day horizons
+    
+    Mt = Ms_t + Mm_t + Ml_t
+    where:
+    Ms_t = price[t+1] - price[t]  (1-day short term)
+    Mm_t = price[t+7] - price[t]  (7-day mid term)  
+    Ml_t = price[t+30] - price[t] (30-day long term)
+    
+    This prevents myopic responses and enhances sensitivity to volatility
+    """
+    
+    def __init__(self):
+        self.price_history = {}  # pair -> list of prices
+        self.max_history = 200
+    
+    def update(self, pair: str, price: float):
+        """Add new price to history"""
+        if pair not in self.price_history:
+            self.price_history[pair] = []
+        self.price_history[pair].append(price)
+        if len(self.price_history[pair]) > self.max_history:
+            self.price_history[pair] = self.price_history[pair][-self.max_history:]
+    
+    def get_momentum_score(self, pair: str) -> dict:
+        """
+        Calculate multi-timescale momentum score.
+        Returns score and signal direction.
+        """
+        prices = self.price_history.get(pair, [])
+        
+        if len(prices) < 30:
+            return {
+                "score": 0.0,
+                "direction": "NEUTRAL",
+                "short_trend": 0.0,
+                "mid_trend": 0.0,
+                "long_trend": 0.0,
+                "confidence_boost": 0.0
+            }
+        
+        current = prices[-1]
+        
+        # Short-term: 1-day trend (last vs 1 period ago)
+        short_trend = prices[-1] - prices[-2] if len(prices) >= 2 else 0
+        
+        # Mid-term: 7-day trend (last vs 7 periods ago)
+        mid_trend = prices[-1] - prices[-8] if len(prices) >= 8 else 0
+        
+        # Long-term: 30-day trend (last vs 30 periods ago)
+        long_trend = prices[-1] - prices[-31] if len(prices) >= 31 else 0
+        
+        # Normalize by current price
+        if current > 0:
+            short_norm = short_trend / current
+            mid_norm = mid_trend / current
+            long_norm = long_trend / current
+        else:
+            short_norm = mid_norm = long_norm = 0
+        
+        # Multi-timescale momentum score (FinRS equation 1)
+        Mt = short_norm + mid_norm + long_norm
+        
+        # Determine direction consensus
+        bullish = sum(1 for t in [short_norm, mid_norm, long_norm] if t > 0)
+        bearish = sum(1 for t in [short_norm, mid_norm, long_norm] if t < 0)
+        
+        if bullish >= 2:
+            direction = "BULLISH"
+            confidence_boost = 0.05 * bullish
+        elif bearish >= 2:
+            direction = "BEARISH"
+            confidence_boost = 0.05 * bearish
+        else:
+            direction = "NEUTRAL"
+            confidence_boost = 0.0
+        
+        return {
+            "score": round(Mt * 1000, 4),  # Scaled for readability
+            "direction": direction,
+            "short_trend": round(short_norm * 100, 4),
+            "mid_trend": round(mid_norm * 100, 4),
+            "long_trend": round(long_norm * 100, 4),
+            "confidence_boost": confidence_boost,
+            "bullish_timeframes": bullish,
+            "bearish_timeframes": bearish
+        }
+    
+    def get_reward(self, pair: str, direction: str, prev_direction: str) -> float:
+        """
+        FinRS Reward function (equation 2):
+        Reward = -(Mt)^2 if position unchanged
+        Reward = position * Mt if position changed
+        
+        Penalizes inertia during high volatility
+        """
+        momentum = self.get_momentum_score(pair)
+        Mt = momentum["score"]
+        
+        position = 1 if direction == "BUY" else -1
+        prev_position = 1 if prev_direction == "BUY" else (-1 if prev_direction == "SELL" else 0)
+        
+        if position == prev_position:
+            # Penalty for inertia (quadratic penalty)
+            reward = -(Mt ** 2)
+        else:
+            # Reward for action aligned with momentum
+            reward = position * Mt
+        
+        return round(reward, 4)
+
+
+class CVaRRiskManager:
+    """
+    Conditional Value at Risk (CVaR) implementation
+    From: FINRS paper - "scaled Kelly Criterion and CVaR estimates"
+    
+    CVaR measures expected loss in worst X% of scenarios
+    Used to limit downside exposure in volatile markets
+    """
+    
+    def __init__(self, confidence_level: float = 0.95):
+        self.confidence_level = confidence_level  # 95% CVaR
+        self.returns_history = {}  # pair -> list of returns
+        self.max_history = 100
+    
+    def update(self, pair: str, pnl: float, position_size: float):
+        """Record trade return for CVaR calculation"""
+        if position_size > 0:
+            ret = pnl / position_size
+            if pair not in self.returns_history:
+                self.returns_history[pair] = []
+            self.returns_history[pair].append(ret)
+            if len(self.returns_history[pair]) > self.max_history:
+                self.returns_history[pair] = self.returns_history[pair][-self.max_history:]
+    
+    def get_cvar(self, pair: str) -> float:
+        """
+        Calculate CVaR (Expected Shortfall) for a pair.
+        Returns negative value representing expected loss in worst scenarios.
+        """
+        returns = self.returns_history.get(pair, [])
+        
+        if len(returns) < 10:
+            return -0.02  # Default 2% CVaR when insufficient data
+        
+        sorted_returns = sorted(returns)
+        cutoff_idx = int(len(sorted_returns) * (1 - self.confidence_level))
+        
+        if cutoff_idx == 0:
+            return sorted_returns[0]
+        
+        cvar = sum(sorted_returns[:cutoff_idx]) / cutoff_idx
+        return round(cvar, 6)
+    
+    def get_position_limit(self, pair: str, balance: float) -> float:
+        """
+        Calculate maximum position size based on CVaR.
+        Limits loss to 2% of balance in worst case.
+        """
+        cvar = self.get_cvar(pair)
+        
+        if cvar >= 0:
+            return balance * 0.02  # Default 2% if CVaR is positive
+        
+        # Max position = 2% of balance / CVaR
+        max_risk = balance * 0.02
+        max_position = max_risk / abs(cvar)
+        return min(max_position, balance * 0.1)  # Cap at 10% of balance
+    
+    def should_reduce_exposure(self, pair: str) -> bool:
+        """Return True if CVaR suggests reducing exposure"""
+        cvar = self.get_cvar(pair)
+        return cvar < -0.05  # Reduce if expected loss > 5% in worst case
+
+
+class HierarchicalMemory:
+    """
+    Three-layer memory system from FINRS + EvoAgent papers:
+    - Surface Memory: Recent market signals (volatile, short-lived)
+    - Intermediate Memory: Pattern library (medium-term)
+    - Deep Memory: Stable market knowledge (long-term)
+    
+    Signals are promoted deeper when proven profitable
+    Misleading signals are weakened or discarded
+    """
+    
+    def __init__(self):
+        self.surface = []    # Recent signals (last 20)
+        self.intermediate = {}  # Pattern → performance (last 100)
+        self.deep = {}       # Stable knowledge (permanent)
+        self.promotion_threshold = 3  # Wins needed to promote to intermediate
+        self.deep_threshold = 7  # Wins needed to promote to deep
+    
+    def add_signal(self, pair: str, direction: str, confidence: float,
+                   regime: str, momentum: dict):
+        """Add new signal to surface memory"""
+        signal = {
+            "pair": pair,
+            "direction": direction,
+            "confidence": confidence,
+            "regime": regime,
+            "momentum": momentum.get("direction", "NEUTRAL"),
+            "momentum_score": momentum.get("score", 0),
+            "timestamp": datetime.now().isoformat(),
+            "wins": 0,
+            "losses": 0
+        }
+        self.surface.append(signal)
+        if len(self.surface) > 20:
+            self.surface = self.surface[-20:]
+    
+    def record_outcome(self, pair: str, direction: str, outcome: str):
+        """Update signal performance and promote if successful"""
+        key = f"{pair}_{direction}"
+        
+        # Update intermediate memory
+        if key not in self.intermediate:
+            self.intermediate[key] = {"wins": 0, "losses": 0, "promoted": False}
+        
+        if outcome == "WIN":
+            self.intermediate[key]["wins"] += 1
+        else:
+            self.intermediate[key]["losses"] += 1
+        
+        # Promote to deep memory if consistent winner
+        wins = self.intermediate[key]["wins"]
+        losses = self.intermediate[key]["losses"]
+        total = wins + losses
+        
+        if total >= self.deep_threshold and wins / total >= 0.6:
+            self.deep[key] = {
+                "pair": pair,
+                "direction": direction,
+                "win_rate": wins / total,
+                "total_trades": total,
+                "promoted_at": datetime.now().isoformat()
+            }
+            log.info(f"DEEP MEMORY: {key} promoted (WR:{wins/total:.0%})")
+        
+        # Discard losing patterns
+        if total >= 5 and wins / total < 0.3:
+            if key in self.intermediate:
+                del self.intermediate[key]
+            if key in self.deep:
+                del self.deep[key]
+            log.info(f"MEMORY PRUNED: {key} removed (WR:{wins/total:.0%})")
+    
+    def get_context(self, pair: str, direction: str) -> dict:
+        """Get memory context for a trade decision"""
+        key = f"{pair}_{direction}"
+        
+        deep_context = self.deep.get(key, {})
+        inter_context = self.intermediate.get(key, {})
+        
+        # Recent surface signals for this pair
+        recent = [s for s in self.surface[-5:]
+                  if s["pair"] == pair and s["direction"] == direction]
+        
+        return {
+            "deep_memory": deep_context,
+            "intermediate": inter_context,
+            "recent_signals": len(recent),
+            "has_deep_knowledge": bool(deep_context),
+            "confidence_boost": 0.05 if deep_context else 0.0
+        }
+    
+    def get_best_patterns(self) -> list:
+        """Return top performing patterns from deep memory"""
+        patterns = list(self.deep.values())
+        return sorted(patterns, key=lambda x: x.get("win_rate", 0), reverse=True)[:5]
+
+
+class FinancialInsightAgent:
+    """
+    Financial Insight Prompting (FIP) from FINRS paper.
+    Uses Claude API to reason about trades with causal chain analysis.
+    
+    Without FIP: CR drops 13.4 points (from 54.99% to 41.57%)
+    Key features:
+    - Causal chain reasoning
+    - Momentum analysis
+    - Probabilistic reasoning
+    - Risk-aware prompting
+    """
+    
+    def __init__(self):
+        self.last_analysis = {}
+        self.analysis_interval = 4  # Analyze every 4 cycles
+        self.cycle_count = 0
+        self.api_key = os.getenv("ANTHROPIC_API_KEY", "")
+    
+    def should_analyze(self) -> bool:
+        self.cycle_count += 1
+        return self.cycle_count % self.analysis_interval == 0 and bool(self.api_key)
+    
+    def analyze(self, pair: str, direction: str, confidence: float,
+                momentum: dict, regime: str, bars: list) -> dict:
+        """
+        Financial Insight Prompting - Claude analyzes trade with causal reasoning
+        """
+        if not self.api_key:
+            return {"approved": True, "insight": "API key not configured", "boost": 0}
+        
+        try:
+            import requests as _r
+            
+            # Build financial context
+            if bars:
+                recent_prices = [b.close for b in bars[-10:]]
+                price_change_1d = (bars[-1].close - bars[-2].close) / bars[-2].close * 100 if len(bars) >= 2 else 0
+                price_change_7d = (bars[-1].close - bars[-8].close) / bars[-8].close * 100 if len(bars) >= 8 else 0
+                atr = sum(b.high - b.low for b in bars[-14:]) / 14 if len(bars) >= 14 else 0
+            else:
+                price_change_1d = price_change_7d = atr = 0
+            
+            prompt = f"""You are a professional forex risk analyst using Financial Insight Prompting (FIP).
+            
+Analyze this trade signal with causal chain reasoning:
+
+TRADE SIGNAL:
+- Pair: {pair}
+- Direction: {direction}
+- Confidence: {confidence:.0%}
+- Market Regime: {regime}
+- Multi-timescale Momentum: {momentum.get('direction', 'NEUTRAL')} (Score: {momentum.get('score', 0):.4f})
+  * Short-term (1-day): {momentum.get('short_trend', 0):.4f}%
+  * Mid-term (7-day): {momentum.get('mid_trend', 0):.4f}%
+  * Long-term (30-day): {momentum.get('long_trend', 0):.4f}%
+- Price change 1D: {price_change_1d:.3f}%
+- Price change 7D: {price_change_7d:.3f}%
+- ATR: {atr:.5f}
+
+Using causal chain analysis, momentum reasoning, and probabilistic thinking:
+1. Does momentum CONFIRM or CONTRADICT this {direction} signal?
+2. What is the causal reason for this price movement?
+3. What is the risk level? (LOW/MEDIUM/HIGH)
+4. Should we APPROVE or REJECT this trade?
+
+Respond in JSON only:
+{{"approve": true/false, "risk": "LOW/MEDIUM/HIGH", "confidence_adjustment": -0.10 to +0.10, "reason": "brief causal explanation"}}"""
+
+            response = _r.post(
+                "https://api.anthropic.com/v1/messages",
+                headers={"Content-Type": "application/json",
+                         "x-api-key": self.api_key,
+                         "anthropic-version": "2023-06-01"},
+                json={"model": "claude-haiku-4-5-20251001",
+                      "max_tokens": 200,
+                      "messages": [{"role": "user", "content": prompt}]},
+                timeout=8
+            )
+            
+            if response.status_code == 200:
+                text = response.json()["content"][0]["text"]
+                import json as _json
+                # Extract JSON
+                import re as _re
+                json_match = _re.search(r'\{.*\}', text, _re.DOTALL)
+                if json_match:
+                    result = _json.loads(json_match.group())
+                    return {
+                        "approved": result.get("approve", True),
+                        "risk": result.get("risk", "MEDIUM"),
+                        "boost": result.get("confidence_adjustment", 0),
+                        "insight": result.get("reason", "")
+                    }
+        except Exception as e:
+            log.debug(f"FIP analysis skipped: {e}")
+        
+        return {"approved": True, "insight": "FIP unavailable", "boost": 0, "risk": "MEDIUM"}
+
+
 class RegimeRouter:
     """Routes strategy based on market regime - works in ALL conditions"""
 
@@ -1982,6 +2364,10 @@ class V13Orchestrator:
         self.hive    = HiveMind(self.mem, self.weights)
         self.router  = RegimeRouter(self.mem)
         self.sizer   = IntelligentPositionSizer(self.mem, _get_account_balance)
+        self.momentum = MultiTimescaleMomentum()
+        self.cvar     = CVaRRiskManager(confidence_level=0.95)
+        self.hmem     = HierarchicalMemory()
+        self.fip      = FinancialInsightAgent()
         self.evolver = DailyEvolution(self.mem, self.weights)
 
         # Risk & logging
@@ -2247,6 +2633,18 @@ class V13Orchestrator:
                  f"TV:{tv_confirmed} | Agents:{len(agreed)}{h4_boost}")
 
         # ── Execute trade ─────────────────────────────────────────────────────
+        # CVaR Risk Check (FinRS)
+        if self.cvar.should_reduce_exposure(pair):
+            log.info(f"{pair}: CVaR suggests reducing exposure - reducing size 50%")
+            risk["units"] = max(1000, risk["units"] // 2)
+        
+        # Hierarchical Memory context
+        mem_ctx = self.hmem.get_context(pair, direction)
+        if mem_ctx["has_deep_knowledge"]:
+            final_conf = min(final_conf + mem_ctx["confidence_boost"], 0.99)
+            log.info(f"{pair}: Deep memory boost applied (+{mem_ctx['confidence_boost']:.0%})")
+        self.hmem.add_signal(pair, direction, final_conf, curr_regime, 
+                             self.momentum.get_momentum_score(pair))
         if AUTO_EXECUTE and OANDA_OK and OANDA_TOKEN:
             self._execute_trade(rec, risk)
         # Send Telegram alert for executed trade
@@ -2260,6 +2658,12 @@ class V13Orchestrator:
 
 
         # ── Schedule learning ─────────────────────────────────────────────────
+                # Update hierarchical memory with outcome
+                if hasattr(self, 'hmem'):
+                    self.hmem.record_outcome(rec.pair, rec.direction, rec.outcome)
+                # Update CVaR with trade result
+                if hasattr(self, 'cvar'):
+                    self.cvar.update(rec.pair, rec.pnl_usd, rec.where_entry)
         threading.Timer(300.0, self._learn_from_trade, args=[rec]).start()
         return rec
 
