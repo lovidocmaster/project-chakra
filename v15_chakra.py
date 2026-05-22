@@ -2663,7 +2663,6 @@ class V13Orchestrator:
             self.hmem.record_outcome(rec.pair, rec.direction, rec.outcome)
         if hasattr(self, "cvar"):
             self.cvar.update(rec.pair, rec.pnl_usd, rec.where_entry)
-        threading.Timer(300.0, self._learn_from_trade, args=[rec]).start()
         return rec
 
     def _execute_trade(self, rec: TradeRecord, risk: Dict):
