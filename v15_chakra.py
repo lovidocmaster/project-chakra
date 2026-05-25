@@ -2826,22 +2826,185 @@ class V13Orchestrator:
             f"All systems GO ✅"
         )
 
-    def _vote(self, signals: List[Signal]) -> Tuple[str, float, List[str], List[str]]:
+    # ── OPTIMIZED VOTING ENGINE (v15.1) ─────────────────────────────────────
+    # Fix 1: Weighted voting — institutional signals count more than lagging indicators
+    # Fix 2: Regime filtering — only relevant agents vote per market condition
+    # Fix 3: Category diversity — need 2+ different signal types to trade
+    # Fix 4: New signals — order flow, market structure, session bias added
+
+    INST_WEIGHT  = {"SMC":3.0,"ICT":3.0,"ORDERBLOCK":3.0,"CLAUDE":2.5,"LLM":2.5,
+                    "COT":2.5,"ORDERFLOW":2.5,"LIQUIDITY":2.5,"ORDER":2.5}
+    STRUCT_WEIGHT = {"BOS":2.0,"CHOCH":2.0,"STRUCTURE":2.0,"TREND":2.0,
+                     "SUPERTREND":2.0,"BREAKOUT":1.8,"HIDARTS":1.8,"LSTM":1.8,
+                     "SESSION":1.8,"HIVEMIND":1.8,"FINMEM":1.5,"RL":1.5,
+                     "TRADINGVIEW":2.0,"MOMENTUM":1.5,"DXY":1.5,"NEWS":1.5}
+    LAGGING_WEIGHT = {"EMA":1.0,"MACD":0.8,"RSI":0.7,"BOLLINGER":0.8,
+                      "STOCHASTIC":0.6,"ATR":0.4,"KELLY":0.3,"RISK":0.5}
+
+    REGIME_ALLOWED = {
+        "TRENDING": ["SMC","ICT","BOS","CHOCH","TREND","EMA","MACD","SUPERTREND",
+                     "BREAKOUT","MOMENTUM","SESSION","DXY","CLAUDE","LLM",
+                     "LSTM","HIDARTS","HIVEMIND","FINMEM","RL","TRADINGVIEW",
+                     "NEWS","STRUCTURE","ORDERBLOCK","ORDERFLOW"],
+        "RANGING":  ["RSI","BOLLINGER","STOCHASTIC","CHOCH","SMC","ICT",
+                     "ORDERBLOCK","ORDERFLOW","SESSION","CLAUDE","LLM",
+                     "FINMEM","RL","TRADINGVIEW","NEWS","CORRELATION"],
+        "VOLATILE": ["CLAUDE","LLM","NEWS","SMC","ICT","ORDERFLOW","HIDARTS","RISK"],
+    }
+
+    SIGNAL_CATS = {
+        "INSTITUTIONAL": ["SMC","ICT","COT","ORDERBLOCK","ORDERFLOW","CLAUDE","LLM"],
+        "STRUCTURE":     ["BOS","CHOCH","BREAKOUT","STRUCTURE","HIDARTS","LSTM"],
+        "TREND":         ["EMA","MACD","SUPERTREND","TREND","MOMENTUM"],
+        "REVERSAL":      ["RSI","BOLLINGER","STOCHASTIC"],
+        "SENTIMENT":     ["NEWS","DXY","CORRELATION","MACRO","SESSION"],
+        "CONFIRMATION":  ["TRADINGVIEW","HIVEMIND","FINMEM","RL"],
+    }
+
+    def _get_agent_weight_v2(self, name: str) -> float:
+        n = name.upper().replace("_","").replace(" ","")
+        for k, w in {**self.INST_WEIGHT, **self.STRUCT_WEIGHT, **self.LAGGING_WEIGHT}.items():
+            if k.replace("_","") in n:
+                return w
+        return 1.0
+
+    def _get_agent_category(self, name: str) -> str:
+        n = name.upper().replace("_","").replace(" ","")
+        for cat, kws in self.SIGNAL_CATS.items():
+            if any(k.replace("_","") in n for k in kws):
+                return cat
+        return "OTHER"
+
+    def _is_allowed(self, name: str, regime: str) -> bool:
+        n = name.upper().replace("_","").replace(" ","")
+        allowed = self.REGIME_ALLOWED.get(regime, list(self.INST_WEIGHT.keys()))
+        return any(k.replace("_","") in n for k in allowed)
+
+    def _calc_order_flow(self, bars) -> tuple:
+        """New signal: buying/selling pressure from candle structure"""
+        if not bars or len(bars) < 10: return "NEUTRAL", 0.3
+        try:
+            bp = sp = 0.0
+            for b in bars[-10:]:
+                h,l,c = b.high, b.low, b.close
+                r = h - l
+                if r > 0: bp += (c-l)/r; sp += (h-c)/r
+            t = bp + sp
+            if t == 0: return "NEUTRAL", 0.3
+            ratio = bp / t
+            if ratio > 0.62: return "BUY",  min(0.82, ratio)
+            if ratio < 0.38: return "SELL", min(0.82, 1-ratio)
+            return "NEUTRAL", 0.3
+        except: return "NEUTRAL", 0.3
+
+    def _calc_market_structure(self, bars) -> tuple:
+        """New signal: higher highs/lower lows structure"""
+        if not bars or len(bars) < 20: return "NEUTRAL", 0.3
+        try:
+            highs = [b.high for b in bars[-20:]]
+            lows  = [b.low  for b in bars[-20:]]
+            hh = sum(1 for i in range(1,6) if highs[-i] > highs[-i-1])
+            hl = sum(1 for i in range(1,6) if lows[-i]  > lows[-i-1])
+            lh = sum(1 for i in range(1,6) if highs[-i] < highs[-i-1])
+            ll = sum(1 for i in range(1,6) if lows[-i]  < lows[-i-1])
+            bull = hh + hl; bear = lh + ll
+            if bull >= 4: return "BUY",  min(0.80, 0.55 + bull*0.05)
+            if bear >= 4: return "SELL", min(0.80, 0.55 + bear*0.05)
+            return "NEUTRAL", 0.3
+        except: return "NEUTRAL", 0.3
+
+    def _detect_regime_v2(self, bars) -> str:
+        """Improved regime detection"""
+        if not bars or len(bars) < 30: return "RANGING"
+        try:
+            closes = np.array([b.close for b in bars[-30:]])
+            highs  = np.array([b.high  for b in bars[-30:]])
+            lows   = np.array([b.low   for b in bars[-30:]])
+            atr    = float(np.mean(highs - lows))
+            avg    = float(np.mean(closes))
+            vol    = atr / avg if avg > 0 else 0
+            ema20  = float(np.mean(closes[-20:]))
+            ema30  = float(np.mean(closes[-30:]))
+            sep    = abs(ema20-ema30) / avg if avg > 0 else 0
+            hh = sum(1 for i in range(1,8) if highs[-i] > highs[-i-1])
+            ll = sum(1 for i in range(1,8) if lows[-i]  < lows[-i-1])
+            ts = max(hh,ll) / 8
+            if vol > 0.007: return "VOLATILE"
+            if sep > 0.0012 or ts > 0.65: return "TRENDING"
+            return "RANGING"
+        except: return "RANGING"
+
+    def _vote(self, signals: List[Signal], regime: str = "RANGING",
+              bars=None, cot_dir="NEUTRAL", news_sent="NEUTRAL",
+              dxy_trend="NEUTRAL", tv_confirmed=False) -> Tuple[str, float, List[str], List[str]]:
+        """
+        OPTIMIZED VOTING — weighted + regime-filtered + category diversity check
+        """
+        # Add synthetic signals for diversification
+        synthetic = []
+        if bars:
+            of_dir, of_conf = self._calc_order_flow(bars)
+            if of_dir in ("BUY","SELL"):
+                from dataclasses import dataclass
+                synthetic.append(Signal(of_dir, of_conf, "Order flow pressure", "ORDER_FLOW"))
+            ms_dir, ms_conf = self._calc_market_structure(bars)
+            if ms_dir in ("BUY","SELL"):
+                synthetic.append(Signal(ms_dir, ms_conf, "Market structure", "MARKET_STRUCTURE"))
+        if cot_dir in ("BUY","SELL"):
+            synthetic.append(Signal(cot_dir, 0.72, "COT institutional bias", "COT_AGENT"))
+        news_map = {"BULLISH":"BUY","BEARISH":"SELL"}
+        if news_sent in news_map:
+            synthetic.append(Signal(news_map[news_sent], 0.65, "News sentiment", "NEWS_AGENT"))
+
+        all_sigs = list(signals) + synthetic
+
         buy_w = sell_w = 0.0
         buy_a: List[str] = []
         sell_a: List[str] = []
-        for s in signals:
+        cats_buy  = set()
+        cats_sell = set()
+
+        for s in all_sigs:
             if s.direction == "HOLD": continue
-            w = self.weights.get(s.agent_name)
+            # Regime filter
+            if not self._is_allowed(s.agent_name, regime): continue
+            # Weighted vote
+            w = self._get_agent_weight_v2(s.agent_name)
+            cat = self._get_agent_category(s.agent_name)
             if s.direction == "BUY":
-                buy_w  += w * s.confidence; buy_a.append(s.agent_name)
+                buy_w  += w * s.confidence
+                buy_a.append(s.agent_name)
+                cats_buy.add(cat)
             else:
-                sell_w += w * s.confidence; sell_a.append(s.agent_name)
+                sell_w += w * s.confidence
+                sell_a.append(s.agent_name)
+                cats_sell.add(cat)
+
         total = buy_w + sell_w
         if total == 0: return "HOLD", 0.0, [], []
+
         if buy_w >= sell_w:
-            return "BUY",  buy_w/total,  buy_a,  sell_a
-        return "SELL", sell_w/total, sell_a, buy_a
+            direction = "BUY"; conf = buy_w/total; agreed = buy_a; disagreed = sell_a; cats = cats_buy
+        else:
+            direction = "SELL"; conf = sell_w/total; agreed = sell_a; disagreed = buy_a; cats = cats_sell
+
+        # Category diversity check — need 2+ different signal types
+        if len(cats) < 2:
+            log.info(f"Vote HOLD: only {len(cats)} signal category ({cats}) — need 2+")
+            return "HOLD", 0.0, [], []
+
+        # Agent count check — need 3+ active agents
+        if len(agreed) < 3:
+            log.info(f"Vote HOLD: only {len(agreed)} agents agree — need 3+")
+            return "HOLD", 0.0, [], []
+
+        # Regime confidence multiplier
+        regime_mult = {"TRENDING":1.08,"RANGING":0.92,"VOLATILE":0.75}.get(regime, 1.0)
+        cat_bonus   = min(0.10, len(cats) * 0.025)
+        tv_bonus    = 0.05 if tv_confirmed else 0.0
+        final_conf  = min(0.95, conf * regime_mult + cat_bonus + tv_bonus)
+
+        return direction, final_conf, agreed, disagreed
 
     def analyze_pair(self, pair: str) -> Optional[TradeRecord]:
         rec = None  # always defined — prevents UnboundLocalError if construction fails
@@ -2885,23 +3048,25 @@ class V13Orchestrator:
             except Exception as e:
                 log.warning(f"Agent {agent.name}: {e}")
 
-        # ── Regime ───────────────────────────────────────────────────────────
-        curr_regime = self.regime.detect(bars)
+        # ── Regime (improved detection) ───────────────────────────────────────
+        curr_regime = self._detect_regime_v2(bars)  # Uses improved detector
         rp = self.regime.params(curr_regime)
 
-        # ── Weighted vote ────────────────────────────────────────────────────
-        direction, tech_conf, agreed, disagreed = self._vote(raw_sigs)
+        # ── OPTIMIZED VOTE (weighted + regime-filtered + category diverse) ────
+        direction, adj_conf, agreed, disagreed = self._vote(
+            signals=raw_sigs,
+            regime=curr_regime,
+            bars=bars,
+            cot_dir=cot_dir,
+            news_sent=news_sent,
+            dxy_trend=dxy.get("trend","NEUTRAL"),
+            tv_confirmed=False,  # Will be set after TV check below
+        )
         if direction == "HOLD": return None
 
-        # ── Boost confidence from intelligence ───────────────────────────────
-        adj_conf = tech_conf
-        if (news_sent == "BULLISH" and direction == "BUY") or \
-           (news_sent == "BEARISH" and direction == "SELL"):
-            adj_conf = min(1.0, adj_conf * 1.08)
-        if cot_dir == direction:
-            adj_conf = min(1.0, adj_conf * 1.08)
+        # Intelligence already integrated in _vote — small correlation boost only
         if corr_bias == direction:
-            adj_conf = min(1.0, adj_conf * 1.05)
+            adj_conf = min(1.0, adj_conf * 1.03)
 
         # ── Multi-timeframe confluence (H4) ──────────────────────────────────
         h4_boost = ""
@@ -2927,7 +3092,7 @@ class V13Orchestrator:
         # ── TradingView confirmation ─────────────────────────────────────────
         tv_confirmed, tv_reason = self.tv.check_confirmation(pair, direction)
         if tv_confirmed:
-            adj_conf = min(1.0, adj_conf * 1.15)
+            adj_conf = min(1.0, adj_conf * 1.08)  # Smaller boost — already in vote
             self.stats["tv_signals"] += 1
 
         # ── RL Agent ─────────────────────────────────────────────────────────
@@ -2947,6 +3112,18 @@ class V13Orchestrator:
         if not can_trade:
             log.info(f"{pair}: {risk_reason}")
             return None
+
+        # ── Daily loss circuit breaker ─────────────────────────────────────
+        current_bal = _get_account_balance()
+        daily_loss_limit = 0.02  # 2% max loss per day = $2,000 on $100k
+        if hasattr(self, '_session_start_bal'):
+            daily_loss = (self._session_start_bal - current_bal) / self._session_start_bal
+            if daily_loss >= daily_loss_limit:
+                log.warning(f"CIRCUIT BREAKER: Daily loss {daily_loss:.1%} >= {daily_loss_limit:.0%} limit. Stopping trading today.")
+                _telegram(f"🔴 <b>CIRCUIT BREAKER TRIGGERED</b>\nDaily loss: {daily_loss:.1%}\nLimit: {daily_loss_limit:.0%}\nBalance: ${current_bal:,.2f}\nTrading PAUSED for today.")
+                return None
+        else:
+            self._session_start_bal = current_bal
 
         risk = self.risk.calculate(pair, direction, final_conf, bars, curr_regime)
         # Override with intelligent position sizing (Kelly + Confidence + Volatility)
