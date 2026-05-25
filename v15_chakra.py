@@ -3021,6 +3021,14 @@ class V13Orchestrator:
         if avoid:
             log.info(f"{pair}: Skip - {av_reason}")
             return None
+
+        # TIME FILTER: Skip Asian session (low win rate) and NY close (low liquidity)
+        if 0 <= hour < 6:
+            log.info(f"{pair}: Skip - Asian session low probability (hour={hour})")
+            return None
+        if 20 <= hour < 22:
+            log.info(f"{pair}: Skip - NY close low liquidity (hour={hour})")
+            return None
         next_ev, next_ev_impact = self.ff_cal.get_next_event()
 
         # ── WHO ───────────────────────────────────────────────────────────────
@@ -3082,8 +3090,11 @@ class V13Orchestrator:
                         pass
                 h4_dir, h4_conf, _, _ = self._vote(h4_sigs)
                 if h4_dir == direction and h4_dir != "HOLD":
-                    adj_conf = min(1.0, adj_conf * 1.12)
+                    adj_conf = min(1.0, adj_conf * 1.15)
                     h4_boost = f" | H4 CONFIRMS {direction} ({h4_conf:.0%})"
+                elif h4_dir != "HOLD" and h4_dir != direction:
+                    log.info(f"{pair}: Skip - H4 contradicts H1 (H1={direction} H4={h4_dir})")
+                    return None
                 else:
                     h4_boost = f" | H4 neutral ({h4_dir})"
         except Exception:
@@ -3128,6 +3139,13 @@ class V13Orchestrator:
         risk = self.risk.calculate(pair, direction, final_conf, bars, curr_regime)
         # Override with intelligent position sizing (Kelly + Confidence + Volatility)
         atr = sum(b.high - b.low for b in bars[-14:]) / 14 if len(bars) >= 14 else 0.001
+
+        # VOLATILITY FILTER: Skip when market is too quiet
+        if len(bars) >= 20:
+            atr_20 = sum(b.high - b.low for b in bars[-20:]) / 20
+            if atr < atr_20 * 0.7:
+                log.info(f"{pair}: Skip - Low volatility ATR={atr:.5f} below 70% of avg")
+                return None
         sizing = self.sizer.calculate(pair, direction, final_conf, atr, curr_regime)
         risk["units"] = sizing["units"]
         risk["risk_usd"] = sizing["risk_usd"]
