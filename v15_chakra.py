@@ -104,7 +104,8 @@ PAIRS = [
 ]
 RISK_PCT = 0.005        # 0.5% risk per trade
 MAX_DD   = 0.05         # 2% max drawdown
-AUTO_EXECUTE = True     # OANDA practice account — paper trades execute as real orders on demo
+AUTO_EXECUTE = True     # OANDA practice account
+MT5_BRIDGE_URL = os.getenv("MT5_BRIDGE_URL", "")  # Set to http://YOUR_PC_IP:6001 to enable MT5 — paper trades execute as real orders on demo
 
 MEM_FILE  = "v13_memory.json"
 WTS_FILE  = "v13_weights.json"
