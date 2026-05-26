@@ -14,3 +14,6 @@ schedule==1.2.1
 pytz==2024.1
 yfinance==0.2.36
 ta==0.11.0
+newsapi-python==0.2.7
+pandas-ta==0.3.14b0
+fredapi==0.5.2
