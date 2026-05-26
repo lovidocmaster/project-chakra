@@ -320,6 +320,54 @@ def health():
         "uptime": "running"
     })
 
+# ============================================================================
+# AUTO SCHEDULER — Runs deep backtest every Sunday 2am UTC automatically
+# No manual trigger needed
+# ============================================================================
+
+import threading
+import time as _time
+
+def _auto_backtest_scheduler():
+    """Run deep backtest automatically every Sunday"""
+    while True:
+        try:
+            now = __import__('datetime').datetime.utcnow()
+            # Sunday = weekday 6, at 2am UTC
+            if now.weekday() == 6 and now.hour == 2 and now.minute < 5:
+                if not backtest_status["running"]:
+                    logger.info("AUTO SCHEDULER: Starting weekly deep backtest...")
+                    backtest_status["running"] = True
+                    backtest_status["started_at"] = now.isoformat()
+                    backtest_status["progress"] = "Auto-scheduled weekly backtest starting..."
+                    try:
+                        import subprocess, sys
+                        result = subprocess.run(
+                            [sys.executable, "deep_backtest.py"],
+                            capture_output=True, text=True, timeout=7200
+                        )
+                        backtest_status["progress"] = "Weekly backtest complete"
+                        try:
+                            with open("deep_backtest_results.json") as f:
+                                backtest_results.update(json.load(f))
+                            logger.info("AUTO SCHEDULER: Weekly backtest results saved")
+                        except Exception as e:
+                            logger.warning(f"Results read error: {e}")
+                    except Exception as e:
+                        backtest_status["progress"] = f"Error: {e}"
+                        logger.error(f"AUTO SCHEDULER error: {e}")
+                    finally:
+                        backtest_status["running"] = False
+            _time.sleep(60)  # Check every minute
+        except Exception as e:
+            logger.error(f"Scheduler error: {e}")
+            _time.sleep(300)
+
+# Start scheduler in background when app starts
+_scheduler_thread = threading.Thread(target=_auto_backtest_scheduler, daemon=True)
+_scheduler_thread.start()
+logger.info("Auto backtest scheduler started — runs every Sunday 2am UTC")
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
