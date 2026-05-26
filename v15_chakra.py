@@ -3883,6 +3883,13 @@ Final 1/3 running FREE with trailing stop")
 
     def run_cycle(self):
         self.stats["cycles"] += 1
+
+        # SCALE-OUT IN THIRDS — check open positions every cycle (Trading in the Zone)
+        try:
+            self._scale_out_positions()
+        except Exception as _soe:
+            log.warning(f"Scale-out check error: {_soe}")
+
         # Layer 5: HiveMind check
         if self.hive.should_run():
             self.hive.run()
