@@ -3173,6 +3173,7 @@ class V13Orchestrator:
 
         # ── Regime (improved detection) ───────────────────────────────────────
         curr_regime = self._detect_regime_v2(bars)  # Uses improved detector
+        self._last_regime = curr_regime  # Store for dashboard
         rp = self.regime.params(curr_regime)
 
         # ── MULTI-TIMESCALE MOMENTUM SCORE (FINRS paper: +54% return) ────────────
@@ -4017,36 +4018,53 @@ Final 1/3 running FREE with trailing stop")
                 )
                 # Sync real win rate from OANDA every cycle
                 self._sync_real_winrate()
-                                # Post data to Railway backend
+                # POST LIVE DATA TO RAILWAY DASHBOARD — every cycle
                 try:
                     import requests as _req
+                    _bal = _get_account_balance()
                     _open_trades_list = []
                     for _pair, _rec in self.open_pos.items():
                         _open_trades_list.append({
                             "pair": _pair,
                             "direction": _rec.direction,
-                            "entry": _rec.where_entry,
-                            "sl": _rec.where_sl,
-                            "tp": _rec.where_tp,
-                            "confidence": _rec.confidence,
+                            "entry": round(float(_rec.where_entry), 5),
+                            "sl": round(float(_rec.where_sl), 5),
+                            "tp": round(float(_rec.where_tp), 5),
+                            "confidence": round(float(_rec.confidence), 3),
                             "strategy": _rec.regime,
-                            "opened_at": _rec.when_timestamp,
+                            "opened_at": str(_rec.when_timestamp),
                         })
-                    _req.post("https://project-chakra-production.up.railway.app/api/update", json={
-                        "pair": "SYSTEM",
-                        "direction": "UPDATE",
-                        "confidence": self.mem.win_rate,
-                        "win_rate": self.mem.win_rate,
-                        "cycle": self.stats["cycles"],
-                        "total_trades": self.mem.total,
-                        "wins": self.mem.wins,
-                        "losses": self.mem.losses,
-                        "open_trades": len(self.open_pos),
-                        "balance": _get_account_balance(),
-                        "trades": _open_trades_list,
-                    }, timeout=5)
-                except:
-                    pass
+                    # Calculate real win rate from closed trades
+                    _total = self.mem.wins + self.mem.losses
+                    _wr = round(self.mem.wins / _total * 100, 1) if _total > 0 else 0.0
+                    _resp = _req.post(
+                        "https://project-chakra-production.up.railway.app/api/update",
+                        json={
+                            "pair": "SYSTEM",
+                            "direction": "UPDATE",
+                            "confidence": _wr,
+                            "win_rate": _wr,
+                            "cycle": self.stats["cycles"],
+                            "total_trades": _total,
+                            "wins": self.mem.wins,
+                            "losses": self.mem.losses,
+                            "open_trades": len(self.open_pos),
+                            "balance": round(_bal, 2),
+                            "nav": round(_bal, 2),
+                            "pnl": round(_bal - 100000.0, 2),
+                            "trades": _open_trades_list,
+                            "regime": getattr(self, "_last_regime", "UNKNOWN"),
+                            "pairs_scanned": len(PAIRS),
+                            "last_updated": datetime.utcnow().isoformat(),
+                        },
+                        timeout=5
+                    )
+                    if _resp.status_code == 200:
+                        log.info(f"Dashboard updated: bal=${_bal:,.0f} WR={_wr}% trades={_total}")
+                    else:
+                        log.warning(f"Dashboard update failed: {_resp.status_code}")
+                except Exception as _de:
+                    log.debug(f"Dashboard post failed: {_de}")
                 # ATLAS Adaptive-OPRO: Rewrite trading prompt every 5 days
                 if hasattr(self, 'opro') and self.opro.should_optimize():
                     new_prompt = self.opro.optimize(self.mem, _get_account_balance())
