@@ -321,14 +321,18 @@ def fetch_pair(pair, years=24):
         except Exception as e:
             log.warning(f"  Chunk failed {cur.date()} to {nxt.date()}: {e}")
         cur = nxt
-        time.sleep(0.25)
+        time.sleep(0.15)
+        # Safety: stop if we have more than 1M candles (something wrong)
+        if len(all_candles) > 1_000_000:
+            log.warning(f"  {pair}: Safety limit hit at {len(all_candles):,} candles")
+            break
 
     seen = set(); unique = []
     for c in all_candles:
         t = c.get("time","")
         if t not in seen: seen.add(t); unique.append(c)
     result = sorted(unique, key=lambda x: x.get("time",""))
-    log.info(f"  {pair}: {len(result):,} candles fetched")
+    log.info(f"  {pair}: {len(result):,} candles fetched ({GRAN})")
     return result
 
 # ─── BACKTEST ENGINE ──────────────────────────────────────────────────────────
