@@ -311,41 +311,41 @@ backtest_status = {"running": False, "progress": "", "started_at": None}
 @app.route('/api/backtest/status')
 def backtest_status_endpoint():
     return jsonify({
-        "running": backtest_status["running"],
-        "progress": backtest_status["progress"],
-        "started_at": backtest_status["started_at"],
-        "results_available": len(backtest_results) > 0
+        "running": _backtest_running,
+        "progress": _backtest_progress,
+        "started_at": _backtest_started,
+        "results_available": len(_backtest_results) > 0
     })
 
 @app.route('/api/backtest/results')
 def backtest_results_endpoint():
-    return jsonify(backtest_results)
+    return jsonify(_backtest_results)
 
 @app.route('/api/backtest/run', methods=['POST'])
 def run_backtest():
     """Trigger backtest from dashboard — runs in background thread"""
     import threading
-    if backtest_status["running"]:
+    global _backtest_running, _backtest_progress, _backtest_results, _backtest_started
+    if _backtest_running:
         return jsonify({"error": "Backtest already running"}), 400
     def _run():
-        backtest_status["running"] = True
-        backtest_status["started_at"] = datetime.now().isoformat()
+        global _backtest_running, _backtest_progress, _backtest_results, _backtest_started
+        import subprocess, sys, json as _j
+        _backtest_running  = True
+        _backtest_started  = datetime.now().isoformat()
+        _backtest_progress = "Starting deep backtest..."
         try:
-            import subprocess, sys
-            backtest_status["progress"] = "Starting deep backtest..."
-            result = subprocess.run(
-                [sys.executable, "deep_backtest.py"],
-                capture_output=True, text=True, timeout=3600
-            )
-            backtest_status["progress"] = "Complete"
+            subprocess.run([sys.executable, "deep_backtest.py"],
+                          capture_output=True, text=True, timeout=3600)
+            _backtest_progress = "Complete"
             try:
                 with open("deep_backtest_results.json") as f:
-                    backtest_results.update(json.load(f))
+                    _backtest_results = _j.load(f)
             except: pass
         except Exception as e:
-            backtest_status["progress"] = f"Error: {e}"
+            _backtest_progress = f"Error: {e}"
         finally:
-            backtest_status["running"] = False
+            _backtest_running = False
     threading.Thread(target=_run, daemon=True).start()
     return jsonify({"started": True, "message": "Backtest running in background"})
 
@@ -365,51 +365,61 @@ def health():
 
 # ============================================================================
 # AUTO SCHEDULER — Runs deep backtest every Sunday 2am UTC automatically
-# No manual trigger needed
 # ============================================================================
 
 import threading
 import time as _time
+import subprocess
+import sys
+import json as _json_module
+
+# Module-level state — must be here so scheduler can access them
+_backtest_running   = False
+_backtest_progress  = "Not started"
+_backtest_results   = {}
+_backtest_started   = None
 
 def _auto_backtest_scheduler():
-    """Run deep backtest automatically every Sunday"""
+    """Run deep backtest automatically every Sunday 2am UTC"""
+    global _backtest_running, _backtest_progress, _backtest_results, _backtest_started
     while True:
         try:
-            now = __import__('datetime').datetime.utcnow()
-            # Sunday = weekday 6, at 2am UTC
+            now = datetime.utcnow()
             if now.weekday() == 6 and now.hour == 2 and now.minute < 5:
-                if not backtest_status["running"]:
+                if not _backtest_running:
                     logger.info("AUTO SCHEDULER: Starting weekly deep backtest...")
-                    backtest_status["running"] = True
-                    backtest_status["started_at"] = now.isoformat()
-                    backtest_status["progress"] = "Auto-scheduled weekly backtest starting..."
+                    _backtest_running  = True
+                    _backtest_started  = now.isoformat()
+                    _backtest_progress = "Running weekly backtest..."
                     try:
-                        import subprocess, sys
                         result = subprocess.run(
                             [sys.executable, "deep_backtest.py"],
                             capture_output=True, text=True, timeout=7200
                         )
-                        backtest_status["progress"] = "Weekly backtest complete"
+                        _backtest_progress = "Complete"
                         try:
                             with open("deep_backtest_results.json") as f:
-                                backtest_results.update(json.load(f))
-                            logger.info("AUTO SCHEDULER: Weekly backtest results saved")
+                                _backtest_results = _json_module.load(f)
+                            logger.info("AUTO SCHEDULER: Backtest results saved")
                         except Exception as e:
-                            logger.warning(f"Results read error: {e}")
+                            logger.warning(f"Results read: {e}")
                     except Exception as e:
-                        backtest_status["progress"] = f"Error: {e}"
-                        logger.error(f"AUTO SCHEDULER error: {e}")
+                        _backtest_progress = f"Error: {e}"
+                        logger.error(f"Scheduler error: {e}")
                     finally:
-                        backtest_status["running"] = False
-            _time.sleep(60)  # Check every minute
+                        _backtest_running = False
+            _time.sleep(60)
         except Exception as e:
-            logger.error(f"Scheduler error: {e}")
+            logger.error(f"Scheduler loop error: {e}")
             _time.sleep(300)
 
-# Start scheduler in background when app starts
-_scheduler_thread = threading.Thread(target=_auto_backtest_scheduler, daemon=True)
-_scheduler_thread.start()
-logger.info("Auto backtest scheduler started — runs every Sunday 2am UTC")
+# Start scheduler thread
+try:
+    _scheduler_thread = threading.Thread(target=_auto_backtest_scheduler, daemon=True)
+    _scheduler_thread.start()
+    logger.info("Auto backtest scheduler started")
+except Exception as e:
+    logger.warning(f"Scheduler start failed: {e}")
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
