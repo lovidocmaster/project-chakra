@@ -1212,10 +1212,10 @@ class RegimeDetector:
 
     def params(self, regime: str) -> Dict:
         return {
-            "TRENDING": {"min_conf":0.60,"risk_mult":1.2,
+            "TRENDING": {"min_conf":0.55,"risk_mult":1.2,
                          "desc":"Trend following. Larger positions.",
                          "agents":["EMA","MACD","BOS","CHOCH"]},
-            "RANGING":  {"min_conf":0.60,"risk_mult":0.8,
+            "RANGING":  {"min_conf":0.58,"risk_mult":0.8,
                          "desc":"Reversal at boundaries. Smaller positions.",
                          "agents":["RSI","OrderBlock","FVG","OTE"]},
             "VOLATILE": {"min_conf":0.65,"risk_mult":0.5,
@@ -4099,7 +4099,7 @@ class V13Orchestrator:
         if 0 <= hour < 6:
             log.info(f"{pair}: Skip - Asian session low probability (hour={hour})")
             return None
-        if 20 <= hour < 22:
+        if 21 <= hour < 23:
             log.info(f"{pair}: Skip - NY close low liquidity (hour={hour})")
             return None
 
@@ -4315,7 +4315,7 @@ class V13Orchestrator:
                         if s: h4_sigs.append(s)
                     except Exception:
                         pass
-                h4_dir, h4_conf, _, _ = self._vote(h4_sigs)
+                h4_dir, h4_conf, _, _ = self._vote(h4_sigs, regime=curr_regime, bars=bars_h4)
                 if h4_dir == direction and h4_dir != "HOLD":
                     adj_conf = min(1.0, adj_conf * 1.15)
                     h4_boost = f" | H4 CONFIRMS {direction} ({h4_conf:.0%})"
@@ -4994,12 +4994,13 @@ Final 1/3 running FREE with trailing stop")
             self.hive.run()
             self.stats["hive_cycles"] += 1
         # PARALLEL PROCESSING: all 12 pairs simultaneously
-        # Before: 12 × 3sec = 36sec sequential
-        # After:  all 12 at once = ~5sec total (6x faster)
         from concurrent.futures import ThreadPoolExecutor, as_completed
+        _cycle_signals = []
         def _safe_analyze(pair):
             try:
-                self.analyze_pair(pair)
+                result = self.analyze_pair(pair)
+                if result:
+                    _cycle_signals.append(pair)
                 return pair, None
             except Exception as e:
                 return pair, str(e)
@@ -5009,6 +5010,10 @@ Final 1/3 running FREE with trailing stop")
                 p, err = fut.result()
                 if err:
                     log.error(f"Pair {p}: {err}")
+        # Diagnostic: log why no signals if all pairs skipped
+        if not _cycle_signals:
+            hour = datetime.utcnow().hour
+            log.info(f"Cycle {self.stats['cycles']}: No signals. Hour={hour} UTC. All pairs filtered.")
 
     def run(self):
         self.running = True
