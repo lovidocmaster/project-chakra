@@ -23,20 +23,27 @@ logger = logging.getLogger(__name__)
 # Live data store - updated by v15_chakra.py every cycle
 system_data = {
     "metrics": {
-        "win_rate": 0.0,
-        "total_trades": 0,
-        "wins": 0,
-        "losses": 0,
-        "cycle": 0,
-        "balance": 100000,
-        "open_trades": 0,
+        "win_rate":      0.0,
+        "total_trades":  0,
+        "wins":          0,
+        "losses":        0,
+        "cycle":         0,
+        "balance":       100000,
+        "nav":           100000,
+        "pnl":           0.0,
+        "open_trades":   0,
+        "regime":        "UNKNOWN",
+        "last_updated":  "",
+        "pairs_scanned": 12,
     },
-    "open_trades": [],
+    "open_trades":  [],
     "closed_trades": [],
-    "signals": [],
-    "agents": [],
-    "news": [],
-    "last_update": None
+    "signals":       [],
+    "agents":        [],
+    "news":          [],
+    "alt_data":      {},
+    "pair_signals":  {},
+    "last_update":   None
 }
 
 # ============================================================================
@@ -45,11 +52,30 @@ system_data = {
 
 @app.route('/')
 def dashboard():
-    try:
-        with open('chakra/chakra_dashboard.html', 'r', encoding='utf-8') as f:
-            return f.read()
-    except Exception as e:
-        return f"<h1>PROJECT CHAKRA</h1><p>API Running. Dashboard file error: {e}</p>"
+    # Try multiple paths — Railway deploys from repo root
+    for path in ['chakra_dashboard.html', 'chakra/chakra_dashboard.html',
+                 'dashboard_live.html', 'index.html']:
+        try:
+            with open(path, 'r', encoding='utf-8') as f:
+                return f.read()
+        except:
+            continue
+    # Fallback — serve live data as HTML if no file found
+    m = system_data["metrics"]
+    return f"""<!DOCTYPE html><html><head>
+    <title>Project Chakra</title>
+    <meta http-equiv="refresh" content="30">
+    <style>body{{background:#050A0F;color:#E8F4F8;font-family:monospace;padding:40px}}
+    .g{{color:#06D6A0}}.r{{color:#EF476F}}.gold{{color:#F0A500}}
+    h1{{color:#06D6A0;margin-bottom:20px}}</style></head><body>
+    <h1>⚡ PROJECT CHAKRA — LIVE</h1>
+    <p>Balance: <span class="g">${m.get('balance',100000):,.0f}</span></p>
+    <p>Win Rate: <span class="g">{m.get('win_rate',0)*100:.1f}%</span></p>
+    <p>Trades: <span class="gold">{m.get('total_trades',0)}</span></p>
+    <p>Cycle: #{m.get('cycle',0)}</p>
+    <p>Regime: <span class="gold">{m.get('regime','UNKNOWN')}</span></p>
+    <p style="color:#5A7A8A;margin-top:20px">Dashboard file loading... API is running.</p>
+    </body></html>"""
 
 # ============================================================================
 # MAIN API STATUS - Used by dashboard
@@ -60,11 +86,14 @@ def api_status():
     return jsonify({
         "status": "live",
         "metrics": system_data["metrics"],
-        "open_trades": system_data["open_trades"],
-        "signals": system_data["signals"][-20:],
-        "agents": system_data["agents"],
-        "news": system_data["news"][-10:],
-        "last_update": system_data["last_update"],
+        "open_trades": system_data.get("open_trades", []),
+        "closed_trades": system_data.get("closed_trades", [])[-20:],
+        "signals": system_data.get("signals", [])[-20:],
+        "agents": system_data.get("agents", []),
+        "news": system_data.get("news", [])[-10:],
+        "alt_data": system_data.get("alt_data", {}),
+        "pair_signals": system_data.get("pair_signals", {}),
+        "last_update": system_data.get("last_update"),
         "timestamp": datetime.now().isoformat()
     })
 
@@ -93,12 +122,15 @@ def update_data():
         m["pairs_scanned"]  = data.get("pairs_scanned", 12)
         m["last_updated"]   = data.get("last_updated", "")
         m["regime"]         = data.get("regime", "UNKNOWN")
-        m["cycle_time_sec"] = data.get("cycle_time_sec", 0)
-        # Store alt data signals
+        # Store alt data and pair signals
         if "alt_data" in data:
             system_data["alt_data"] = data["alt_data"]
         if "pair_signals" in data:
             system_data["pair_signals"] = data["pair_signals"]
+        # Store closed trades
+        if "closed_trades" in data:
+            system_data["closed_trades"] = data["closed_trades"][-100:]
+        system_data["last_update"] = datetime.now().isoformat()
 
         # Update open trades if provided
         if "trades" in data:
