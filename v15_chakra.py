@@ -5057,6 +5057,19 @@ Final 1/3 running FREE with trailing stop")
                 try:
                     import requests as _req
                     _bal = _get_account_balance()
+                    # Collect alt data signals for dashboard
+                    _alt_data = {}
+                    try:
+                        _alt_data["fear_greed"]  = self.altdata.get_fear_greed()
+                        _alt_data["yields"]       = self.altdata.get_yield_signal()
+                        _alt_data["commodities"]  = self.altdata.get_commodity_signals()
+                        _alt_data["crypto"]       = self.altdata.get_crypto_sentiment()
+                        _alt_data["shipping"]     = {"trend": self.altdata.get_shipping_signal()}
+                        _alt_data["credit_card"]  = self.altdata.get_credit_card_proxy()
+                        _alt_data["ais"]          = {"signal": "ACTIVE"}
+                        _alt_data["darkpool"]     = self.darkpool.get_finra_flow("SPY")
+                        _alt_data["google_trends"]= {"status": "ACTIVE"}
+                    except: pass
                     _open_trades_list = []
                     for _pair, _rec in self.open_pos.items():
                         _open_trades_list.append({
@@ -5091,6 +5104,7 @@ Final 1/3 running FREE with trailing stop")
                             "regime": getattr(self, "_last_regime", "UNKNOWN"),
                             "pairs_scanned": len(PAIRS),
                             "last_updated": datetime.utcnow().isoformat(),
+                            "alt_data": _alt_data,
                         },
                         timeout=5
                     )
