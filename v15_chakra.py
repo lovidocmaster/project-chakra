@@ -1966,25 +1966,33 @@ Respond in JSON only:
                 "https://api.anthropic.com/v1/messages",
                 headers={"Content-Type": "application/json",
                          "x-api-key": self.api_key,
-                         "anthropic-version": "2023-06-01"},
+                         "anthropic-version": "2023-06-01",
+                         "anthropic-beta": "prompt-caching-2024-07-31"},
                 json={"model": "claude-haiku-4-5-20251001",
                       "max_tokens": 200,
+                      "system": [{"type": "text", "text": "You are an expert forex risk manager. Respond in JSON only. Never include markdown or explanation outside JSON.", "cache_control": {"type": "ephemeral"}}],
                       "messages": [{"role": "user", "content": prompt}]},
                 timeout=8
             )
             
             if response.status_code == 200:
-                text = response.json()["content"][0]["text"]
                 import json as _json
-                # Extract JSON
-                import re as _re
-                json_match = _re.search(r'\{.*\}', text, _re.DOTALL)
-                if json_match:
-                    result = _json.loads(json_match.group())
+                resp_data = response.json()
+                text = resp_data["content"][0]["text"].strip()
+                # Structured output parsing — handles both clean JSON and wrapped JSON
+                try:
+                    # Try direct parse first (structured output)
+                    result = _json.loads(text)
+                except Exception:
+                    # Fallback: extract JSON from text
+                    import re as _re
+                    json_match = _re.search(r'\{.*\}', text, _re.DOTALL)
+                    result = _json.loads(json_match.group()) if json_match else {}
+                if result:
                     return {
                         "approved": result.get("approve", True),
                         "risk": result.get("risk", "MEDIUM"),
-                        "boost": result.get("confidence_adjustment", 0),
+                        "boost": float(result.get("confidence_adjustment", 0)),
                         "insight": result.get("reason", "")
                     }
         except Exception as e:
@@ -2132,11 +2140,13 @@ CRITICAL CONSTRAINTS:
                 "https://api.anthropic.com/v1/messages",
                 headers={"Content-Type": "application/json",
                          "x-api-key": self.api_key,
-                         "anthropic-version": "2023-06-01"},
-                json={"model": "claude-haiku-4-5-20251001",
-                      "max_tokens": 500,
+                         "anthropic-version": "2023-06-01",
+                         "anthropic-beta": "prompt-caching-2024-07-31"},
+                json={"model": "claude-sonnet-4-20250514",
+                      "max_tokens": 1000,
+                      "system": [{"type": "text", "text": "You are an expert quantitative trading strategist specializing in forex markets. Optimize trading prompts based on performance data. Return only the new prompt text, no explanations.", "cache_control": {"type": "ephemeral"}}],
                       "messages": [{"role": "user", "content": optimization_prompt}]},
-                timeout=15
+                timeout=20
             )
             
             if response.status_code == 200:
