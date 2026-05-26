@@ -260,10 +260,10 @@ def multi_tf_vote(all_signals, regime, h4_dir, d1_dir):
 def fetch(pair, gran, years=24):
     if not OANDA_OK or not OANDA_TOKEN: return []
     all_c=[]; end=datetime.utcnow()
-    # M15 only 5 years (too much data otherwise)
-    actual_years = min(years, 5) if gran=="M15" else years
+    # M15 full 20 years — same as all other timeframes for solid base
+    actual_years = years  # All timeframes get same 20-year window
     start=end-timedelta(days=actual_years*365)
-    chunk=timedelta(days=60 if gran=="M15" else 180)
+    chunk=timedelta(days=90 if gran=="M15" else 180)  # 90-day chunks for M15 (balance speed vs memory)
     cur=start
     while cur<end:
         nxt=min(cur+chunk,end)
@@ -571,7 +571,7 @@ footer{{text-align:center;padding:40px;color:var(--muted);font-family:'Space Mon
   <div style="font-size:1rem;font-weight:700;color:var(--gold);margin-bottom:16px">🔀 HOW MULTI-TIMEFRAME WORKS IN THIS BACKTEST</div>
   <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:16px;">
     <div class="tf-box"><div style="color:var(--green);font-weight:700;margin-bottom:6px">M15 — Entry</div>
-      <div style="color:var(--muted);font-size:.82rem">Precise entry timing. BOS, CHOCH, OrderFlow on 15-min candles. Last 5 years only.</div></div>
+      <div style="color:var(--muted);font-size:.82rem">Precise entry timing. BOS, CHOCH, OrderFlow on 15-min candles. Full 20 years — solid base.</div></div>
     <div class="tf-box"><div style="color:var(--gold);font-weight:700;margin-bottom:6px">H1 — Signal</div>
       <div style="color:var(--muted);font-size:.82rem">Main signal generation. All 10 agents. Same as live system. 24 years data.</div></div>
     <div class="tf-box"><div style="color:var(--blue);font-weight:700;margin-bottom:6px">H4 — Trend</div>
@@ -674,8 +674,8 @@ def main():
             print(f"  Fetching H1 (24yr)...", end=" ", flush=True)
             h1=fetch(pair,"H1",24); print(f"{len(h1):,} candles")
 
-            print(f"  Fetching M15 (5yr)...", end=" ", flush=True)
-            m15=fetch(pair,"M15",5); print(f"{len(m15):,} candles")
+            print(f"  Fetching M15 (20yr)...", end=" ", flush=True)
+            m15=fetch(pair,"M15",20); print(f"{len(m15):,} candles")
 
             if len(h1)<500:
                 print(f"  ❌ Insufficient H1 data"); results[pair]=None; continue
