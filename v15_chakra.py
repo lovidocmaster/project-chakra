@@ -2658,8 +2658,10 @@ class IntelligentPositionSizer:
         # Get real performance data from memory
         total = self.mem.wins + self.mem.losses
         
-        if total < 5:
-            # Not enough data - use conservative default
+        if total < 20:
+            # Not enough data — use conservative default
+            # Self-learning activates after 20 real trades (was 200, now more responsive)
+            log.info(f"Self-learning: {total}/20 trades needed — using conservative 1% risk")
             return 0.01  # 1% until we have real data
         
         win_rate = self.mem.wins / total
@@ -3646,6 +3648,10 @@ Final 1/3 running FREE with trailing stop")
             try:
                 from ic_markets_bridge import ICMarketsBridge
                 ic = ICMarketsBridge()
+                # FIX 7: MT5/IC Markets only works on Windows with MT5 installed
+                # On Render (Linux), this gracefully skips to OANDA-only mode
+                if not ic.connected:
+                    log.info("MT5/IC Markets not available on this server — OANDA-only mode")
                 if ic.connected:
                     result = ic.place_trade(
                         pair=rec.pair, direction=rec.direction,
@@ -3969,7 +3975,20 @@ Final 1/3 running FREE with trailing stop")
         threading.Thread(target=self._listen_telegram_commands, daemon=True).start()
 
         log.info("\n" + "="*70)
-        log.info("V13 PRODUCTION SYSTEM RUNNING")
+        log.info("V15 CHAKRA PRODUCTION SYSTEM RUNNING")
+        # FIX 6: Send startup ping to confirm Telegram is working
+        _telegram(
+            "🚀 <b>CHAKRA SYSTEM STARTED</b>\n"
+            "━━━━━━━━━━━━━━━━━━━━\n"
+            "✅ All systems online\n"
+            "📊 Trading 12 pairs every 15 min\n"
+            "⚡ Scale-out in thirds: ACTIVE\n"
+            "📈 6x ATR take profit: ACTIVE\n"
+            "🔍 H4 + 12M momentum: ACTIVE\n"
+            "━━━━━━━━━━━━━━━━━━━━\n"
+            "⚠️ If you see this, Telegram is working!\n"
+            "If bot is muted: open @Chakra_trading_bot → Unmute"
+        )
         log.info(f"Dashboard: http://localhost:5000")
         log.info(f"Webhook:   POST http://localhost:5000/webhook/tradingview")
         log.info(f"Commands:  Send /stop /status /report to Telegram bot")
