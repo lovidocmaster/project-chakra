@@ -1,10 +1,13 @@
 """
-PROJECT CHAKRA - Complete Flask Backend
-Railway Production - All endpoints working
+PROJECT CHAKRA — Railway Dashboard Backend
+Minimal bulletproof version — no complex imports at startup
 """
 
 import os
+import json
 import logging
+import threading
+import time
 from datetime import datetime
 from flask import Flask, request, jsonify
 from flask_cors import CORS
@@ -20,7 +23,7 @@ CORS(app, resources={r"/*": {"origins": "*"}})
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Live data store - updated by v15_chakra.py every cycle
+# ── LIVE DATA STORE ──────────────────────────────────────────────────────────
 system_data = {
     "metrics": {
         "win_rate":      0.0,
@@ -28,399 +31,240 @@ system_data = {
         "wins":          0,
         "losses":        0,
         "cycle":         0,
-        "balance":       100000,
-        "nav":           100000,
+        "balance":       100000.0,
+        "nav":           100000.0,
         "pnl":           0.0,
         "open_trades":   0,
         "regime":        "UNKNOWN",
         "last_updated":  "",
         "pairs_scanned": 12,
     },
-    "open_trades":  [],
+    "open_trades":   [],
     "closed_trades": [],
     "signals":       [],
-    "agents":        [],
-    "news":          [],
     "alt_data":      {},
     "pair_signals":  {},
-    "last_update":   None
+    "last_update":   None,
 }
 
-# ============================================================================
-# DASHBOARD
-# ============================================================================
+# ── BACKTEST STATE ───────────────────────────────────────────────────────────
+bt_running  = False
+bt_progress = "Not started"
+bt_started  = None
+bt_results  = {}
 
-@app.route('/')
+# ── ROUTES ───────────────────────────────────────────────────────────────────
+
+@app.route("/")
 def dashboard():
-    # Try multiple paths — Railway deploys from repo root
-    for path in ['chakra_dashboard.html', 'chakra/chakra_dashboard.html',
-                 'dashboard_live.html', 'index.html']:
+    """Serve the dashboard HTML"""
+    for path in ["chakra_dashboard.html", "index.html"]:
         try:
-            with open(path, 'r', encoding='utf-8') as f:
-                return f.read()
+            with open(path, "r", encoding="utf-8") as f:
+                return f.read(), 200, {"Content-Type": "text/html"}
         except:
             continue
-    # Fallback — serve live data as HTML if no file found
+    # Inline fallback dashboard
     m = system_data["metrics"]
-    return f"""<!DOCTYPE html><html><head>
-    <title>Project Chakra</title>
-    <meta http-equiv="refresh" content="30">
-    <style>body{{background:#050A0F;color:#E8F4F8;font-family:monospace;padding:40px}}
-    .g{{color:#06D6A0}}.r{{color:#EF476F}}.gold{{color:#F0A500}}
-    h1{{color:#06D6A0;margin-bottom:20px}}</style></head><body>
-    <h1>⚡ PROJECT CHAKRA — LIVE</h1>
-    <p>Balance: <span class="g">${m.get('balance',100000):,.0f}</span></p>
-    <p>Win Rate: <span class="g">{m.get('win_rate',0)*100:.1f}%</span></p>
-    <p>Trades: <span class="gold">{m.get('total_trades',0)}</span></p>
-    <p>Cycle: #{m.get('cycle',0)}</p>
-    <p>Regime: <span class="gold">{m.get('regime','UNKNOWN')}</span></p>
-    <p style="color:#5A7A8A;margin-top:20px">Dashboard file loading... API is running.</p>
-    </body></html>"""
-
-# ============================================================================
-# MAIN API STATUS - Used by dashboard
-# ============================================================================
-
-@app.route('/api/status')
-def api_status():
-    return jsonify({
-        "status": "live",
-        "metrics": system_data["metrics"],
-        "open_trades": system_data.get("open_trades", []),
-        "closed_trades": system_data.get("closed_trades", [])[-20:],
-        "signals": system_data.get("signals", [])[-20:],
-        "agents": system_data.get("agents", []),
-        "news": system_data.get("news", [])[-10:],
-        "alt_data": system_data.get("alt_data", {}),
-        "pair_signals": system_data.get("pair_signals", {}),
-        "last_update": system_data.get("last_update"),
-        "timestamp": datetime.now().isoformat()
-    })
-
-# ============================================================================
-# UPDATE ENDPOINT - Called by v15_chakra.py every cycle
-# ============================================================================
-
-@app.route('/api/update', methods=['POST'])
-def update_data():
-    try:
-        data = request.get_json()
-        if not data:
-            return jsonify({"success": False, "error": "No data"}), 400
-
-        # Update metrics
-        m = system_data["metrics"]
-        m["win_rate"]       = data.get("win_rate", data.get("confidence", 0))
-        m["total_trades"]   = data.get("total_trades", 0)
-        m["wins"]         = data.get("wins", 0)
-        m["losses"]       = data.get("losses", 0)
-        m["cycle"]        = data.get("cycle", 0)
-        m["balance"]        = data.get("balance", 100000)
-        m["nav"]            = data.get("nav", data.get("balance", 100000))
-        m["pnl"]            = data.get("pnl", 0)
-        m["open_trades"]    = data.get("open_trades", 0)
-        m["pairs_scanned"]  = data.get("pairs_scanned", 12)
-        m["last_updated"]   = data.get("last_updated", "")
-        m["regime"]         = data.get("regime", "UNKNOWN")
-        # Store alt data and pair signals
-        if "alt_data" in data:
-            system_data["alt_data"] = data["alt_data"]
-        if "pair_signals" in data:
-            system_data["pair_signals"] = data["pair_signals"]
-        # Store closed trades
-        if "closed_trades" in data:
-            system_data["closed_trades"] = data["closed_trades"][-100:]
-        system_data["last_update"] = datetime.now().isoformat()
-
-        # Update open trades if provided
-        if "trades" in data:
-            system_data["open_trades"] = data["trades"]
-
-        # Update signals if provided
-        if "signal" in data:
-            sig = data["signal"]
-            sig["time"] = datetime.now().strftime("%H:%M:%S")
-            system_data["signals"].append(sig)
-            if len(system_data["signals"]) > 100:
-                system_data["signals"] = system_data["signals"][-100:]
-
-        # Update agents if provided
-        if "agents" in data:
-            system_data["agents"] = data["agents"]
-
-        system_data["last_update"] = datetime.now().isoformat()
-        logger.info(f"Updated: cycle={m['cycle']}, trades={m['total_trades']}, wr={m['win_rate']:.1%}")
-        return jsonify({"success": True}), 200
-    except Exception as e:
-        logger.error(f"Update error: {e}")
-        return jsonify({"success": False, "error": str(e)}), 400
-
-# ============================================================================
-# TRADE ENDPOINTS
-# ============================================================================
-
-@app.route('/api/trades/create', methods=['POST'])
-def create_trade():
-    try:
-        data = request.get_json()
-        trade = {
-            "id": f"T{len(system_data['open_trades']) + 1}",
-            "pair": data.get("pair"),
-            "direction": data.get("direction"),
-            "entry_price": data.get("entry_price"),
-            "stop_loss": data.get("stop_loss"),
-            "take_profit": data.get("take_profit"),
-            "size": data.get("size"),
-            "strategy": data.get("strategy", "AUTO"),
-            "confidence": data.get("confidence", 0),
-            "opened_at": datetime.now().isoformat()
-        }
-        system_data["open_trades"].append(trade)
-        system_data["metrics"]["total_trades"] += 1
-        return jsonify({"success": True, "trade": trade}), 201
-    except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 400
-
-@app.route('/api/trades/close/<trade_id>', methods=['POST'])
-def close_trade(trade_id):
-    try:
-        data = request.get_json() or {}
-        for i, trade in enumerate(system_data["open_trades"]):
-            if trade["id"] == trade_id:
-                closed = system_data["open_trades"].pop(i)
-                closed["closed_at"] = datetime.now().isoformat()
-                closed["exit_price"] = data.get("exit_price")
-                closed["pnl"] = data.get("pnl", 0)
-                closed["outcome"] = "WIN" if closed["pnl"] > 0 else "LOSS"
-                system_data["closed_trades"].append(closed)
-                if closed["pnl"] > 0:
-                    system_data["metrics"]["wins"] += 1
-                else:
-                    system_data["metrics"]["losses"] += 1
-                total = system_data["metrics"]["wins"] + system_data["metrics"]["losses"]
-                if total > 0:
-                    system_data["metrics"]["win_rate"] = system_data["metrics"]["wins"] / total
-                return jsonify({"success": True}), 200
-        return jsonify({"success": False, "error": "Not found"}), 404
-    except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 400
-
-@app.route('/api/trades/open', methods=['GET'])
-def get_open_trades():
-    return jsonify(system_data["open_trades"])
-
-@app.route('/api/trades/closed', methods=['GET'])
-def get_closed_trades():
-    return jsonify(system_data["closed_trades"][-50:])
-
-# ============================================================================
-# SIGNAL ENDPOINT
-# ============================================================================
-
-@app.route('/api/signal/add', methods=['POST'])
-def add_signal():
-    try:
-        data = request.get_json()
-        signal = {
-            "pair": data.get("pair"),
-            "direction": data.get("direction"),
-            "confidence": data.get("confidence", 0),
-            "strategy": data.get("strategy", "AUTO"),
-            "regime": data.get("regime", "UNKNOWN"),
-            "time": datetime.now().strftime("%H:%M:%S")
-        }
-        system_data["signals"].append(signal)
-        if len(system_data["signals"]) > 100:
-            system_data["signals"] = system_data["signals"][-100:]
-        return jsonify({"success": True}), 200
-    except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 400
-
-# ============================================================================
-# AI CHAT ENDPOINT
-# ============================================================================
-
-@app.route('/api/chat', methods=['POST'])
-def ai_chat():
-    try:
-        import anthropic
-        data = request.get_json()
-        m = system_data["metrics"]
-        client = anthropic.Anthropic(api_key=os.environ.get('ANTHROPIC_API_KEY', ''))
-        message = client.messages.create(
-            model="claude-sonnet-4-20250514",
-            max_tokens=1000,
-            system=f"""You are the AI assistant for Project Chakra, a 36-agent AI forex trading system built by Lovinder.
-
-LIVE SYSTEM DATA:
-- Win Rate: {m['win_rate']*100:.1f}%
-- Total Trades: {m['total_trades']}
-- Wins: {m['wins']} | Losses: {m['losses']}
-- Cycle: #{m['cycle']}
-- Open Trades: {m['open_trades']}
-- Balance: ${m['balance']:,.0f}
-- Last Update: {system_data['last_update']}
-
-SYSTEM INFO:
-- 36 AI agents voting on every trade
-- Confidence threshold: 70%
-- Strategies: Mean Reversion (RANGING) + Trend Following (TRENDING) + Survival (VOLATILE)
-- Pairs: EUR/USD, GBP/USD, USD/JPY, AUD/USD, USD/CAD, XAU/USD, GBP/JPY
-- HiveMind recalibrates every 3 days
-- Daily evolution runs every 24 hours
-
-Be concise, specific, and professional. Answer questions about trading system, signals, performance, risk.""",
-            messages=data.get('messages', [])
-        )
-        return jsonify({"reply": message.content[0].text}), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-# ============================================================================
-# SYSTEM ENDPOINTS
-# ============================================================================
-
-@app.route('/api/system/status')
-def system_status():
-    return jsonify({"status": "operational", "timestamp": datetime.now().isoformat()}), 200
-
-@app.route('/health')
-def health():
-    return jsonify({"status": "ok"}), 200
-
-# ============================================================================
-# ERROR HANDLERS
-# ============================================================================
-
-@app.errorhandler(404)
-def not_found(e):
-    return jsonify({"error": "Endpoint not found"}), 404
-
-@app.errorhandler(500)
-def internal_error(e):
-    return jsonify({"error": "Internal server error"}), 500
+    bal   = m.get("balance", 100000)
+    pnl   = m.get("pnl", 0)
+    wr    = m.get("win_rate", 0) * 100
+    trade = m.get("total_trades", 0)
+    reg   = m.get("regime", "UNKNOWN")
+    upd   = m.get("last_updated", "Never")[:16]
+    html  = f"""<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><meta http-equiv="refresh" content="15">
+<title>Project Chakra</title>
+<style>
+  body{{background:#050A0F;color:#E8F4F8;font-family:monospace;padding:40px;margin:0}}
+  h1{{color:#06D6A0;font-size:2rem;margin-bottom:8px}}
+  .sub{{color:#5A7A8A;font-size:.8rem;margin-bottom:32px}}
+  .grid{{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:32px}}
+  .card{{background:#0D1821;border:1px solid #1E3448;border-radius:12px;padding:20px}}
+  .lbl{{color:#5A7A8A;font-size:.65rem;text-transform:uppercase;letter-spacing:.1em}}
+  .val{{font-size:1.8rem;font-weight:700;margin-top:6px}}
+  .green{{color:#06D6A0}}.red{{color:#EF476F}}.gold{{color:#F0A500}}.blue{{color:#118AB2}}
+  .status{{background:#0D1821;border:1px solid #1E3448;border-radius:12px;padding:20px}}
+  .row{{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #1E3448}}
+</style></head><body>
+<h1>⚡ PROJECT CHAKRA</h1>
+<div class="sub">AUTONOMOUS FOREX TRADING SYSTEM V15 — Live Dashboard</div>
+<div class="grid">
+  <div class="card"><div class="lbl">Balance</div>
+    <div class="val green">${bal:,.0f}</div></div>
+  <div class="card"><div class="lbl">P&L</div>
+    <div class="val {'green' if pnl>=0 else 'red'}">{'+' if pnl>=0 else ''}${pnl:,.0f}</div></div>
+  <div class="card"><div class="lbl">Win Rate</div>
+    <div class="val {'green' if wr>=45 else 'gold'}">{wr:.1f}%</div></div>
+  <div class="card"><div class="lbl">Total Trades</div>
+    <div class="val gold">{trade}</div></div>
+</div>
+<div class="status">
+  <div class="row"><span class="lbl">Regime</span><span class="gold">{reg}</span></div>
+  <div class="row"><span class="lbl">Wins</span><span class="green">{m.get('wins',0)}</span></div>
+  <div class="row"><span class="lbl">Losses</span><span class="red">{m.get('losses',0)}</span></div>
+  <div class="row"><span class="lbl">Open Trades</span><span class="blue">{m.get('open_trades',0)}</span></div>
+  <div class="row"><span class="lbl">Last Update</span><span>{upd} UTC</span></div>
+  <div class="row"><span class="lbl">System</span><span class="green">● LIVE</span></div>
+</div>
+<div style="color:#5A7A8A;font-size:.7rem;margin-top:20px">
+  Auto-refresh every 15s &nbsp;|&nbsp; Full dashboard loading...
+</div>
+</body></html>"""
+    return html, 200, {"Content-Type": "text/html"}
 
 
-# ============================================================================
-# BACKTEST RUNNER — Run backtests on server, results saved here
-# ============================================================================
-
-backtest_results = {}
-backtest_status = {"running": False, "progress": "", "started_at": None}
-
-@app.route('/api/backtest/status')
-def backtest_status_endpoint():
-    return jsonify({
-        "running": _backtest_running,
-        "progress": _backtest_progress,
-        "started_at": _backtest_started,
-        "results_available": len(_backtest_results) > 0
-    })
-
-@app.route('/api/backtest/results')
-def backtest_results_endpoint():
-    return jsonify(_backtest_results)
-
-@app.route('/api/backtest/run', methods=['POST'])
-def run_backtest():
-    """Trigger backtest from dashboard — runs in background thread"""
-    import threading
-    global _backtest_running, _backtest_progress, _backtest_results, _backtest_started
-    if _backtest_running:
-        return jsonify({"error": "Backtest already running"}), 400
-    def _run():
-        global _backtest_running, _backtest_progress, _backtest_results, _backtest_started
-        import subprocess, sys, json as _j
-        _backtest_running  = True
-        _backtest_started  = datetime.now().isoformat()
-        _backtest_progress = "Starting deep backtest..."
-        try:
-            subprocess.run([sys.executable, "deep_backtest.py"],
-                          capture_output=True, text=True, timeout=3600)
-            _backtest_progress = "Complete"
-            try:
-                with open("deep_backtest_results.json") as f:
-                    _backtest_results = _j.load(f)
-            except: pass
-        except Exception as e:
-            _backtest_progress = f"Error: {e}"
-        finally:
-            _backtest_running = False
-    threading.Thread(target=_run, daemon=True).start()
-    return jsonify({"started": True, "message": "Backtest running in background"})
-
-# ============================================================================
-# HEALTH CHECK
-# ============================================================================
-
-@app.route('/health')
+@app.route("/health")
 def health():
     return jsonify({
         "status": "ok",
         "service": "Project Chakra Dashboard",
-        "timestamp": datetime.now().isoformat(),
-        "metrics": system_data["metrics"],
-        "uptime": "running"
+        "timestamp": datetime.utcnow().isoformat(),
+        "balance": system_data["metrics"].get("balance", 100000),
+        "trades": system_data["metrics"].get("total_trades", 0),
     })
 
-# ============================================================================
-# AUTO SCHEDULER — Runs deep backtest every Sunday 2am UTC automatically
-# ============================================================================
 
-import threading
-import time as _time
-import subprocess
-import sys
-import json as _json_module
+@app.route("/api/status")
+def api_status():
+    return jsonify({
+        "status": "live",
+        "metrics":      system_data["metrics"],
+        "open_trades":  system_data["open_trades"],
+        "closed_trades": system_data["closed_trades"][-20:],
+        "alt_data":     system_data["alt_data"],
+        "pair_signals": system_data["pair_signals"],
+        "last_update":  system_data["last_update"],
+        "timestamp":    datetime.utcnow().isoformat(),
+    })
 
-# Module-level state — must be here so scheduler can access them
-_backtest_running   = False
-_backtest_progress  = "Not started"
-_backtest_results   = {}
-_backtest_started   = None
 
-def _auto_backtest_scheduler():
-    """Run deep backtest automatically every Sunday 2am UTC"""
-    global _backtest_running, _backtest_progress, _backtest_results, _backtest_started
+@app.route("/api/update", methods=["POST"])
+def api_update():
+    """Receive live data from v15_chakra.py every 5 minutes"""
+    try:
+        data = request.get_json(force=True, silent=True) or {}
+        m    = system_data["metrics"]
+
+        # Update all fields
+        m["win_rate"]      = float(data.get("win_rate", data.get("confidence", 0)))
+        m["total_trades"]  = int(data.get("total_trades", m["total_trades"]))
+        m["wins"]          = int(data.get("wins", m["wins"]))
+        m["losses"]        = int(data.get("losses", m["losses"]))
+        m["cycle"]         = int(data.get("cycle", m["cycle"]))
+        m["balance"]       = float(data.get("balance", m["balance"]))
+        m["nav"]           = float(data.get("nav", m["balance"]))
+        m["pnl"]           = float(data.get("pnl", m["balance"] - 100000))
+        m["open_trades"]   = int(data.get("open_trades", 0))
+        m["regime"]        = str(data.get("regime", m["regime"]))
+        m["last_updated"]  = str(data.get("last_updated", datetime.utcnow().isoformat()))
+        m["pairs_scanned"] = int(data.get("pairs_scanned", 12))
+
+        # Update collections
+        if "trades" in data:
+            system_data["open_trades"] = data["trades"]
+        if "closed_trades" in data:
+            system_data["closed_trades"] = data["closed_trades"][-100:]
+        if "alt_data" in data:
+            system_data["alt_data"] = data["alt_data"]
+        if "pair_signals" in data:
+            system_data["pair_signals"] = data["pair_signals"]
+
+        system_data["last_update"] = datetime.utcnow().isoformat()
+        logger.info(f"Updated: bal=${m['balance']:,.0f} wr={m['win_rate']:.1%} "
+                   f"trades={m['total_trades']} regime={m['regime']}")
+        return jsonify({"status": "ok", "cycle": m["cycle"]})
+    except Exception as e:
+        logger.error(f"Update error: {e}")
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+@app.route("/api/backtest/status")
+def backtest_status():
+    return jsonify({
+        "running": bt_running,
+        "progress": bt_progress,
+        "started_at": bt_started,
+        "results_available": len(bt_results) > 0,
+    })
+
+
+@app.route("/api/backtest/results")
+def backtest_results_ep():
+    return jsonify(bt_results)
+
+
+@app.route("/api/backtest/run", methods=["POST"])
+def run_backtest():
+    global bt_running, bt_progress, bt_started, bt_results
+    if bt_running:
+        return jsonify({"error": "Already running"}), 400
+
+    def _run():
+        global bt_running, bt_progress, bt_started, bt_results
+        import subprocess, sys
+        bt_running  = True
+        bt_started  = datetime.utcnow().isoformat()
+        bt_progress = "Running..."
+        try:
+            subprocess.run([sys.executable, "deep_backtest.py"],
+                          capture_output=True, text=True, timeout=3600)
+            bt_progress = "Complete"
+            try:
+                with open("deep_backtest_results.json") as f:
+                    bt_results = json.load(f)
+            except:
+                pass
+        except Exception as e:
+            bt_progress = f"Error: {e}"
+        finally:
+            bt_running = False
+
+    threading.Thread(target=_run, daemon=True).start()
+    return jsonify({"started": True})
+
+
+# ── AUTO SCHEDULER ───────────────────────────────────────────────────────────
+
+def _scheduler():
+    """Run deep backtest every Sunday 2am UTC"""
+    global bt_running, bt_progress, bt_started, bt_results
     while True:
         try:
             now = datetime.utcnow()
-            if now.weekday() == 6 and now.hour == 2 and now.minute < 5:
-                if not _backtest_running:
-                    logger.info("AUTO SCHEDULER: Starting weekly deep backtest...")
-                    _backtest_running  = True
-                    _backtest_started  = now.isoformat()
-                    _backtest_progress = "Running weekly backtest..."
+            if now.weekday() == 6 and now.hour == 2 and now.minute < 5 and not bt_running:
+                bt_running  = True
+                bt_started  = now.isoformat()
+                bt_progress = "Auto weekly backtest..."
+                try:
+                    import subprocess, sys
+                    subprocess.run([sys.executable, "deep_backtest.py"],
+                                  capture_output=True, text=True, timeout=7200)
+                    bt_progress = "Complete"
                     try:
-                        result = subprocess.run(
-                            [sys.executable, "deep_backtest.py"],
-                            capture_output=True, text=True, timeout=7200
-                        )
-                        _backtest_progress = "Complete"
-                        try:
-                            with open("deep_backtest_results.json") as f:
-                                _backtest_results = _json_module.load(f)
-                            logger.info("AUTO SCHEDULER: Backtest results saved")
-                        except Exception as e:
-                            logger.warning(f"Results read: {e}")
-                    except Exception as e:
-                        _backtest_progress = f"Error: {e}"
-                        logger.error(f"Scheduler error: {e}")
-                    finally:
-                        _backtest_running = False
-            _time.sleep(60)
+                        with open("deep_backtest_results.json") as f:
+                            bt_results = json.load(f)
+                    except:
+                        pass
+                except Exception as e:
+                    bt_progress = f"Error: {e}"
+                finally:
+                    bt_running = False
+            time.sleep(60)
         except Exception as e:
-            logger.error(f"Scheduler loop error: {e}")
-            _time.sleep(300)
+            logger.error(f"Scheduler: {e}")
+            time.sleep(300)
 
-# Start scheduler thread
+# Start scheduler safely
 try:
-    _scheduler_thread = threading.Thread(target=_auto_backtest_scheduler, daemon=True)
-    _scheduler_thread.start()
-    logger.info("Auto backtest scheduler started")
+    _t = threading.Thread(target=_scheduler, daemon=True)
+    _t.start()
+    logger.info("Scheduler started")
 except Exception as e:
-    logger.warning(f"Scheduler start failed: {e}")
+    logger.warning(f"Scheduler failed to start: {e}")
 
-if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port)
+# ── ENTRY POINT ──────────────────────────────────────────────────────────────
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=False)
