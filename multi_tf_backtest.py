@@ -258,26 +258,36 @@ def multi_tf_vote(all_signals, regime, h4_dir, d1_dir):
 # ─── DATA FETCHING ─────────────────────────────────────────────────────────────
 
 def fetch(pair, gran, years=24):
+    """
+    Fetch candles using DATE-BASED chunks (not count-based).
+    OANDA limits: M15=500/req, H1=5000/req, H4=5000/req, D=5000/req
+    Using from/to dates bypasses the count limit entirely.
+    M15: 90-day chunks = ~8640 candles per chunk (well within limits)
+    """
     if not OANDA_OK or not OANDA_TOKEN: return []
     all_c=[]; end=datetime.utcnow()
-    # M15 full 20 years — same as all other timeframes for solid base
-    actual_years = years  # All timeframes get same 20-year window
-    start=end-timedelta(days=actual_years*365)
-    chunk=timedelta(days=90 if gran=="M15" else 180)  # 90-day chunks for M15 (balance speed vs memory)
+    start=end-timedelta(days=years*365)
+    # Date-based chunk sizes — chosen to stay under OANDA limits
+    chunk_days = {"M15": 5, "H1": 180, "H4": 365, "D": 1825}.get(gran, 180)
+    chunk=timedelta(days=chunk_days)
     cur=start
     while cur<end:
         nxt=min(cur+chunk,end)
         try:
             client=oandapyV20.API(access_token=OANDA_TOKEN,environment=OANDA_ENV)
-            params={"granularity":gran,
-                    "from":cur.strftime("%Y-%m-%dT%H:%M:%SZ"),
-                    "to":nxt.strftime("%Y-%m-%dT%H:%M:%SZ")}
+            # Use from/to (date-based) NOT count — avoids "Maximum value exceeded"
+            params={
+                "granularity": gran,
+                "from": cur.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                "to":   nxt.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            }
             r=instruments.InstrumentsCandles(pair,params=params)
             client.request(r)
-            all_c.extend([c for c in r.response.get("candles",[]) if c.get("complete")])
+            chunk_data=[c for c in r.response.get("candles",[]) if c.get("complete")]
+            all_c.extend(chunk_data)
         except Exception as e:
             log.warning(f"  {gran} chunk failed: {e}")
-        cur=nxt; time.sleep(0.2)
+        cur=nxt; time.sleep(0.15)
     seen=set(); unique=[]
     for c in all_c:
         t=c.get("time","")
