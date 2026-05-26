@@ -257,6 +257,69 @@ def not_found(e):
 def internal_error(e):
     return jsonify({"error": "Internal server error"}), 500
 
+
+# ============================================================================
+# BACKTEST RUNNER — Run backtests on server, results saved here
+# ============================================================================
+
+backtest_results = {}
+backtest_status = {"running": False, "progress": "", "started_at": None}
+
+@app.route('/api/backtest/status')
+def backtest_status_endpoint():
+    return jsonify({
+        "running": backtest_status["running"],
+        "progress": backtest_status["progress"],
+        "started_at": backtest_status["started_at"],
+        "results_available": len(backtest_results) > 0
+    })
+
+@app.route('/api/backtest/results')
+def backtest_results_endpoint():
+    return jsonify(backtest_results)
+
+@app.route('/api/backtest/run', methods=['POST'])
+def run_backtest():
+    """Trigger backtest from dashboard — runs in background thread"""
+    import threading
+    if backtest_status["running"]:
+        return jsonify({"error": "Backtest already running"}), 400
+    def _run():
+        backtest_status["running"] = True
+        backtest_status["started_at"] = datetime.now().isoformat()
+        try:
+            import subprocess, sys
+            backtest_status["progress"] = "Starting deep backtest..."
+            result = subprocess.run(
+                [sys.executable, "deep_backtest.py"],
+                capture_output=True, text=True, timeout=3600
+            )
+            backtest_status["progress"] = "Complete"
+            try:
+                with open("deep_backtest_results.json") as f:
+                    backtest_results.update(json.load(f))
+            except: pass
+        except Exception as e:
+            backtest_status["progress"] = f"Error: {e}"
+        finally:
+            backtest_status["running"] = False
+    threading.Thread(target=_run, daemon=True).start()
+    return jsonify({"started": True, "message": "Backtest running in background"})
+
+# ============================================================================
+# HEALTH CHECK
+# ============================================================================
+
+@app.route('/health')
+def health():
+    return jsonify({
+        "status": "ok",
+        "service": "Project Chakra Dashboard",
+        "timestamp": datetime.now().isoformat(),
+        "metrics": system_data["metrics"],
+        "uptime": "running"
+    })
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
