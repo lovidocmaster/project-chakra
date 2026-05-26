@@ -4402,7 +4402,7 @@ Final 1/3 running FREE with trailing stop")
                 if now.hour == 22 and _last_report_day != today_str:
                     self._send_daily_report()
                     _last_report_day = today_str
-                time.sleep(900)  # 15 min
+                time.sleep(300)  # 5 min — 3x faster, catches more setups
             except KeyboardInterrupt:
                 log.info("System stopped")
                 self.mem.save(); self.rl.save(); self.weights.save()
