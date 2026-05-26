@@ -81,13 +81,24 @@ def update_data():
 
         # Update metrics
         m = system_data["metrics"]
-        m["win_rate"]     = data.get("confidence", data.get("win_rate", 0))
-        m["total_trades"] = data.get("total_trades", 0)
+        m["win_rate"]       = data.get("win_rate", data.get("confidence", 0))
+        m["total_trades"]   = data.get("total_trades", 0)
         m["wins"]         = data.get("wins", 0)
         m["losses"]       = data.get("losses", 0)
         m["cycle"]        = data.get("cycle", 0)
-        m["balance"]      = data.get("balance", 100000)
-        m["open_trades"]  = data.get("open_trades", 0)
+        m["balance"]        = data.get("balance", 100000)
+        m["nav"]            = data.get("nav", data.get("balance", 100000))
+        m["pnl"]            = data.get("pnl", 0)
+        m["open_trades"]    = data.get("open_trades", 0)
+        m["pairs_scanned"]  = data.get("pairs_scanned", 12)
+        m["last_updated"]   = data.get("last_updated", "")
+        m["regime"]         = data.get("regime", "UNKNOWN")
+        m["cycle_time_sec"] = data.get("cycle_time_sec", 0)
+        # Store alt data signals
+        if "alt_data" in data:
+            system_data["alt_data"] = data["alt_data"]
+        if "pair_signals" in data:
+            system_data["pair_signals"] = data["pair_signals"]
 
         # Update open trades if provided
         if "trades" in data:
