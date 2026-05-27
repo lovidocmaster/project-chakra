@@ -2,12 +2,13 @@
   "$schema": "https://railway.app/railway.schema.json",
   "build": {
     "builder": "NIXPACKS",
-    "buildCommand": "pip install flask flask-cors gunicorn python-dotenv requests yfinance"
+    "buildCommand": "pip install flask flask-cors gunicorn python-dotenv requests"
   },
   "deploy": {
-    "startCommand": "gunicorn app:app --bind 0.0.0.0:$PORT --workers 1 --timeout 120",
+    "startCommand": "gunicorn chakra.app:app --bind 0.0.0.0:$PORT --workers 1 --timeout 120",
     "healthcheckPath": "/health",
+    "healthcheckTimeout": 30,
     "restartPolicyType": "ON_FAILURE",
-    "restartPolicyMaxRetries": 3
+    "restartPolicyMaxRetries": 5
   }
 }
