@@ -1,1 +1,1 @@
-# Project Chakra dashboard package
+# Project Chakra Module Package
