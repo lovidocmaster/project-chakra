@@ -1137,6 +1137,29 @@ class RLAgent:
         self._load()
 
     def _load(self):
+        """Load from Supabase first, fallback to local file"""
+        try:
+            SUPA_URL = os.getenv("SUPABASE_URL","")
+            SUPA_KEY = os.getenv("SUPABASE_KEY", os.getenv("SUPABASE_ANON_KEY",""))
+            if SUPA_URL and SUPA_KEY:
+                import requests as _r
+                resp = _r.get(f"{SUPA_URL}/rest/v1/system_state?key=eq.rl_agent&select=value",
+                             headers={"apikey": SUPA_KEY,
+                                     "Authorization": f"Bearer {SUPA_KEY}"},
+                             timeout=5)
+                if resp.status_code == 200:
+                    rows = resp.json()
+                    if rows:
+                        d = json.loads(rows[0]["value"])
+                        self.q = d.get("q", {})
+                        self.eps = d.get("eps", 0.3)
+                        self.episodes = d.get("episodes", 0)
+                        self.reward_total = d.get("reward_total", 0.0)
+                        log.info(f"RL loaded from Supabase: {self.episodes} episodes")
+                        return
+        except Exception as _se:
+            log.debug(f"Supabase RL load: {_se}")
+        # Fallback to local
         try:
             if os.path.exists(RL_FILE):
                 with open(RL_FILE) as f:
@@ -1144,17 +1167,37 @@ class RLAgent:
                 self.q = d.get("q", {})
                 self.eps = d.get("eps", 0.3)
                 self.episodes = d.get("episodes", 0)
-                log.info(f"RL Agent: {self.episodes} episodes, eps={self.eps:.3f}")
+                log.info(f"RL loaded from file: {self.episodes} episodes")
         except Exception:
             pass
 
     def save(self):
+        """Save to Supabase — survives Render restarts"""
+        data = {"q": self.q, "eps": self.eps,
+                "episodes": self.episodes, "reward_total": self.reward_total}
+        # Try Supabase first (persistent across restarts)
+        try:
+            SUPA_URL = os.getenv("SUPABASE_URL","")
+            SUPA_KEY = os.getenv("SUPABASE_KEY", os.getenv("SUPABASE_ANON_KEY",""))
+            if SUPA_URL and SUPA_KEY:
+                import requests as _r
+                _r.post(f"{SUPA_URL}/rest/v1/system_state",
+                       json={"key": "rl_agent", "value": json.dumps(data),
+                             "updated_at": datetime.utcnow().isoformat()},
+                       headers={"apikey": SUPA_KEY, "Authorization": f"Bearer {SUPA_KEY}",
+                               "Content-Type": "application/json",
+                               "Prefer": "resolution=merge-duplicates"},
+                       timeout=5)
+                log.info(f"RL saved to Supabase: {self.episodes} episodes")
+                return
+        except Exception as _se:
+            log.debug(f"Supabase RL save: {_se}")
+        # Fallback to local file
         try:
             with open(RL_FILE,"w") as f:
-                json.dump({"q":self.q,"eps":self.eps,"episodes":self.episodes,
-                           "reward_total":self.reward_total}, f, indent=2)
+                json.dump(data, f, indent=2)
         except Exception as e:
-            log.error(f"RL save: {e}")
+            log.error(f"RL local save: {e}")
 
     def _state(self, pair, regime, conf, wr, news, cot, tv_conf, hour) -> str:
         c = "HI" if conf>0.7 else ("MD" if conf>0.5 else "LO")
