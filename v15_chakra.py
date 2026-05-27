@@ -5991,6 +5991,12 @@ Final 1/3 running FREE with trailing stop")
                 p, err = fut.result()
                 if err:
                     log.error(f"Pair {p}: {err}")
+        # Update embedded dashboard every cycle
+        try:
+            _update_dashboard_data(self)
+        except Exception as _de:
+            pass
+
         # Diagnostic: log and alert why no signals if all pairs skipped
         if not _cycle_signals:
             hour = datetime.utcnow().hour
@@ -7226,7 +7232,153 @@ def main():
 
     orch.run()
 
+# ══════════════════════════════════════════════════════════════════════════════
+# EMBEDDED DASHBOARD SERVER
+# Runs ON the same Render instance as the trading bot
+# No Railway dependency — guaranteed to work
+# Access at: https://your-render-app.onrender.com/dashboard
+# ══════════════════════════════════════════════════════════════════════════════
+
+_dashboard_data = {
+    "metrics": {"balance":100000,"pnl":0,"win_rate":0,"total_trades":0,
+                "wins":0,"losses":0,"cycle":0,"regime":"UNKNOWN","open_trades":0},
+    "open_trades": [], "closed_trades": [], "alt_data": {}, "last_update": None
+}
+
+def _start_dashboard_server():
+    """Start embedded Flask dashboard on port 8080"""
+    try:
+        from flask import Flask as _Flask, jsonify as _jsonify, Response as _Response
+        from flask_cors import CORS as _CORS
+        import threading as _threading
+
+        _app = _Flask("chakra_dashboard")
+        _CORS(_app)
+
+        @_app.route("/")
+        @_app.route("/dashboard")
+        def _serve_dashboard():
+            m = _dashboard_data["metrics"]
+            bal = m.get("balance",100000)
+            pnl = m.get("pnl",0)
+            wr  = m.get("win_rate",0)*100 if m.get("win_rate",0) < 2 else m.get("win_rate",0)
+            trades = m.get("total_trades",0)
+            reg = m.get("regime","UNKNOWN")
+            upd = str(m.get("last_updated","Never"))[:16]
+            open_t = _dashboard_data.get("open_trades",[])
+            alt = _dashboard_data.get("alt_data",{})
+            fg = alt.get("fear_greed",{}).get("score",50)
+            yld = alt.get("yields",{}).get("trend","--")
+            oil = alt.get("commodities",{}).get("OIL",{}).get("change",0)
+            btc = alt.get("crypto",{}).get("sentiment","--")
+
+            html = f"""<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><meta http-equiv="refresh" content="15">
+<title>Chakra Live</title>
+<style>
+*{{margin:0;padding:0;box-sizing:border-box}}
+body{{background:#050A0F;color:#E8F4F8;font-family:monospace;padding:0}}
+.hdr{{background:#0D1821;border-bottom:3px solid #06D6A0;padding:16px 24px;display:flex;justify-content:space-between;align-items:center}}
+.logo{{color:#06D6A0;font-size:1.4rem;font-weight:700}}
+.live{{color:#06D6A0;font-size:.75rem;animation:pulse 2s infinite}}
+@keyframes pulse{{0%,100%{{opacity:1}}50%{{opacity:.4}}}}
+.grid{{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:20px}}
+.card{{background:#0D1821;border:1px solid #1E3448;border-radius:10px;padding:16px}}
+.lbl{{color:#5A7A8A;font-size:.65rem;text-transform:uppercase;letter-spacing:.08em}}
+.val{{font-size:1.6rem;font-weight:700;margin-top:6px}}
+.g{{color:#06D6A0}}.r{{color:#EF476F}}.gold{{color:#F0A500}}.b{{color:#118AB2}}
+.section{{background:#0D1821;border:1px solid #1E3448;border-radius:10px;margin:0 20px 16px;padding:16px}}
+.sec-title{{color:#F0A500;font-size:.8rem;font-weight:700;text-transform:uppercase;margin-bottom:12px;letter-spacing:.06em}}
+.trade-row{{display:flex;justify-content:space-between;padding:8px 12px;background:#162030;border-radius:6px;margin-bottom:6px;font-size:.78rem}}
+.alt-grid{{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:8px}}
+.alt-card{{background:#162030;border-radius:6px;padding:10px;text-align:center}}
+.alt-lbl{{color:#5A7A8A;font-size:.6rem;text-transform:uppercase}}
+.alt-val{{font-size:.9rem;font-weight:700;margin-top:4px}}
+.footer{{text-align:center;padding:16px;color:#5A7A8A;font-size:.65rem;border-top:1px solid #1E3448}}
+</style></head><body>
+<div class="hdr"><div class="logo">⚡ PROJECT CHAKRA</div>
+<div><span class="live">● LIVE</span> &nbsp; {upd} UTC &nbsp; Cycle #{m.get('cycle',0)}</div></div>
+<div class="grid">
+<div class="card"><div class="lbl">Balance</div><div class="val g">${bal:,.0f}</div></div>
+<div class="card"><div class="lbl">P&L</div><div class="val {'g' if pnl>=0 else 'r'}">{'+' if pnl>=0 else ''}${pnl:,.0f}</div></div>
+<div class="card"><div class="lbl">Win Rate</div><div class="val {'g' if wr>=45 else 'gold'}">{wr:.1f}%</div></div>
+<div class="card"><div class="lbl">Trades</div><div class="val gold">{trades}</div></div>
+<div class="card"><div class="lbl">Wins</div><div class="val g">{m.get('wins',0)}</div></div>
+<div class="card"><div class="lbl">Losses</div><div class="val r">{m.get('losses',0)}</div></div>
+<div class="card"><div class="lbl">Open</div><div class="val b">{m.get('open_trades',0)}</div></div>
+<div class="card"><div class="lbl">Regime</div><div class="val gold" style="font-size:1rem">{reg}</div></div>
+</div>
+<div class="section"><div class="sec-title">📊 Open Positions</div>
+{''.join([f'<div class="trade-row"><span style="color:#FFD166">{t.get("pair","--").replace("_","/")}</span><span class="{"g" if t.get("direction")=="BUY" else "r"}">{t.get("direction","--")}</span><span style="color:#5A7A8A">{t.get("confidence",0)*100:.0f}%</span><span>{t.get("strategy","--")}</span></div>' for t in open_t]) if open_t else '<div style="color:#5A7A8A;text-align:center;padding:12px">No open positions</div>'}
+</div>
+<div class="section"><div class="sec-title">🌍 Alternative Data</div>
+<div class="alt-grid">
+<div class="alt-card"><div class="alt-lbl">Fear&Greed</div><div class="alt-val {'g' if fg>55 else 'r' if fg<30 else 'gold'}">{fg:.0f}</div></div>
+<div class="alt-card"><div class="alt-lbl">Yields</div><div class="alt-val {'r' if yld=='UP' else 'g' if yld=='DOWN' else 'gold'}">{yld}</div></div>
+<div class="alt-card"><div class="alt-lbl">Oil</div><div class="alt-val {'g' if oil>0 else 'r'}">{oil:+.1f}%</div></div>
+<div class="alt-card"><div class="alt-lbl">BTC</div><div class="alt-val {'g' if btc=='RISK_ON' else 'r' if btc=='RISK_OFF' else 'gold'}">{btc}</div></div>
+</div></div>
+<div class="footer">PROJECT CHAKRA V15 | {trades} trades | Auto-refresh 15s | NOT FINANCIAL ADVICE</div>
+</body></html>"""
+            return _Response(html, mimetype="text/html")
+
+        @_app.route("/api/status")
+        def _api_status():
+            return _jsonify({
+                "status": "live",
+                "metrics": _dashboard_data["metrics"],
+                "open_trades": _dashboard_data["open_trades"],
+                "closed_trades": _dashboard_data["closed_trades"][-20:],
+                "alt_data": _dashboard_data["alt_data"],
+                "timestamp": datetime.utcnow().isoformat(),
+            })
+
+        @_app.route("/health")
+        def _health():
+            return _jsonify({"status":"ok","service":"chakra-embedded-dashboard"})
+
+        port = int(os.getenv("DASHBOARD_PORT", "8080"))
+        _t = _threading.Thread(
+            target=lambda: _app.run(host="0.0.0.0", port=port, debug=False, use_reloader=False),
+            daemon=True
+        )
+        _t.start()
+        log.info(f"✅ Dashboard server started on port {port}")
+        log.info(f"   View at: https://your-render-service.onrender.com/dashboard")
+
+    except ImportError:
+        log.warning("Flask not installed — dashboard not available")
+    except Exception as e:
+        log.warning(f"Dashboard server failed: {e}")
+
+
+def _update_dashboard_data(orch):
+    """Update dashboard data from orchestrator state — called every cycle"""
+    try:
+        m = _dashboard_data["metrics"]
+        total = orch.mem.wins + orch.mem.losses
+        m["balance"]      = _get_account_balance()
+        m["pnl"]          = m["balance"] - 100000.0
+        m["win_rate"]     = round(orch.mem.wins / total, 3) if total > 0 else 0.0
+        m["total_trades"] = total
+        m["wins"]         = orch.mem.wins
+        m["losses"]       = orch.mem.losses
+        m["cycle"]        = orch.stats.get("cycles", 0)
+        m["open_trades"]  = len(orch.open_pos)
+        m["regime"]       = getattr(orch, "_last_regime", "UNKNOWN")
+        m["last_updated"] = datetime.utcnow().isoformat()
+
+        _dashboard_data["open_trades"] = [
+            {"pair": p, "direction": r.direction,
+             "confidence": r.confidence, "strategy": r.regime}
+            for p, r in orch.open_pos.items()
+        ]
+    except Exception as e:
+        log.debug(f"Dashboard update: {e}")
+
+
 if __name__ == "__main__":
+    _start_dashboard_server()
     main()
 
 
