@@ -2,4 +2,4 @@
 cmds = ["pip install flask flask-cors gunicorn python-dotenv requests"]
 
 [start]
-cmd = "gunicorn app:app --bind 0.0.0.0:$PORT --workers 1 --timeout 120 --chdir chakra"
+cmd = "gunicorn app:app --bind 0.0.0.0:$PORT --workers 1 --timeout 120"
