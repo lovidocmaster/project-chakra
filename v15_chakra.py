@@ -990,6 +990,30 @@ class FinMem:
                 }, f, indent=2)
         except Exception as e:
             log.error(f"FinMem save: {e}")
+        # Also save to Supabase — survives Render restarts
+        try:
+            SUPA_URL = os.getenv("SUPABASE_URL","")
+            SUPA_KEY = os.getenv("SUPABASE_KEY", os.getenv("SUPABASE_ANON_KEY",""))
+            if SUPA_URL and SUPA_KEY:
+                import requests as _sr
+                _sr.post(f"{SUPA_URL}/rest/v1/system_state",
+                        json={"key": "finmem",
+                              "value": json.dumps({
+                                  "total": self.total, "wins": self.wins,
+                                  "losses": self.losses, "pair_perf": self.pair_perf,
+                                  "regime_perf": self.regime_perf,
+                                  "session_perf": self.session_perf,
+                                  "tv_confirmed_wr": self.tv_confirmed_wr,
+                                  "trades": self.trades[-200:]
+                              }),
+                              "updated_at": datetime.utcnow().isoformat()},
+                        headers={"apikey": SUPA_KEY,
+                                "Authorization": f"Bearer {SUPA_KEY}",
+                                "Content-Type": "application/json",
+                                "Prefer": "resolution=merge-duplicates"},
+                        timeout=5)
+        except Exception as _sfe:
+            log.debug(f"FinMem Supabase save: {_sfe}")
 
     def record(self, rec: TradeRecord):
         self.total += 1
@@ -1090,12 +1114,32 @@ class AgentWeights:
             pass
 
     def save(self):
+        data = {"weights": self.w, "perf": self.perf,
+                "updated": datetime.utcnow().isoformat()}
+        # Save to file
         try:
             with open(WTS_FILE,"w") as f:
-                json.dump({"weights":self.w,"perf":self.perf,
-                           "updated":datetime.now().isoformat()}, f, indent=2)
+                json.dump(data, f, indent=2)
         except Exception as e:
             log.error(f"Weights save: {e}")
+        # Save to Supabase — survives Render restarts
+        try:
+            SUPA_URL = os.getenv("SUPABASE_URL","")
+            SUPA_KEY = os.getenv("SUPABASE_KEY", os.getenv("SUPABASE_ANON_KEY",""))
+            if SUPA_URL and SUPA_KEY:
+                import requests as _wr
+                _wr.post(f"{SUPA_URL}/rest/v1/system_state",
+                        json={"key": "agent_weights",
+                              "value": json.dumps(data),
+                              "updated_at": datetime.utcnow().isoformat()},
+                        headers={"apikey": SUPA_KEY,
+                                "Authorization": f"Bearer {SUPA_KEY}",
+                                "Content-Type": "application/json",
+                                "Prefer": "resolution=merge-duplicates"},
+                        timeout=5)
+                log.info(f"Agent weights saved to Supabase ({len(self.w)} agents)")
+        except Exception as _swe:
+            log.debug(f"AgentWeights Supabase save: {_swe}")
 
     def update(self, agreed: List[str], disagreed: List[str], outcome: str):
         win = outcome == "WIN"
