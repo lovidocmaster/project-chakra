@@ -4635,6 +4635,14 @@ class V13Orchestrator:
         self.altdata   = AlternativeDataEngine()    # 8 free alternative data sources
         self.aistrack  = AISShipTracker()           # Free ship tracking (satellite alternative)
         self.darkpool  = DarkPoolFlow()             # Free FINRA dark pool + options flow
+        # NEW INTELLIGENCE MODULES
+        self.cb_agent  = CentralBankTranscriptAgent() # Fed/ECB/BOE transcript analysis
+        self.debate    = AgentDebate()                # Structured bull/bear debate
+        self.retrainer = LiveResultRetrainer()        # Auto-recalibrate on live results
+        self.onchain   = OnChainAnalytics()           # BTC whale flow signal
+        self.eia       = EIAEnergyAgent()             # Oil inventory → CAD signal
+        self.rl_memory = RLMemory()                   # RL-style contextual memory
+        self.micro     = MarketMicrostructureAgent()  # Stop hunts, FVG, order blocks
         self.evolver = DailyEvolution(self.mem, self.weights)
 
         # Risk & logging
@@ -4984,7 +4992,6 @@ class V13Orchestrator:
             pass
 
         # AIS SHIP TRACKING — free satellite alternative
-        # Tanker positions at Hormuz → oil → CAD; Shanghai traffic → AUD
         try:
             ais_adj, ais_reason = self.aistrack.get_forex_signal(pair)
             if abs(ais_adj) > 0.01:
@@ -4993,14 +5000,87 @@ class V13Orchestrator:
         except Exception as _aie:
             pass
 
-        # DARK POOL FLOW — free FINRA data + options put/call ratio
-        # Institutional equity positioning as forex risk sentiment proxy
+        # DARK POOL FLOW
         try:
             dp_adj, dp_reason = self.darkpool.get_forex_signal(pair)
             if abs(dp_adj) > 0.01:
                 adj_conf = max(0.0, min(1.0, adj_conf + dp_adj))
                 log.info(f"{pair}: DarkPool {dp_adj:+.0%} — {dp_reason}")
         except Exception as _dpe:
+            pass
+
+        # CENTRAL BANK TRANSCRIPT ANALYSIS
+        try:
+            cb_adj, cb_reason = self.cb_agent.get_signal(pair)
+            if abs(cb_adj) > 0.01:
+                adj_conf = max(0.0, min(1.0, adj_conf + cb_adj))
+                log.info(f"{pair}: CB Transcript {cb_adj:+.0%} — {cb_reason}")
+        except Exception as _cbe:
+            pass
+
+        # EIA OIL INVENTORY → CAD SIGNAL
+        try:
+            eia_adj, eia_reason = self.eia.get_signal(pair)
+            if abs(eia_adj) > 0.01:
+                adj_conf = max(0.0, min(1.0, adj_conf + eia_adj))
+                log.info(f"{pair}: EIA {eia_adj:+.0%} — {eia_reason}")
+        except Exception as _eiae:
+            pass
+
+        # ON-CHAIN ANALYTICS → RISK SENTIMENT
+        try:
+            oc_adj, oc_reason = self.onchain.get_signal(pair)
+            if abs(oc_adj) > 0.01:
+                adj_conf = max(0.0, min(1.0, adj_conf + oc_adj))
+                log.info(f"{pair}: OnChain {oc_adj:+.0%} — {oc_reason}")
+        except Exception as _oce:
+            pass
+
+        # RL MEMORY — contextual win rate boost/penalty
+        try:
+            hour = datetime.utcnow().hour
+            rl_adj, rl_reason = self.rl_memory.get_context_boost(
+                pair, direction, curr_regime, session if 'session' in dir() else "UNKNOWN")
+            if abs(rl_adj) > 0.01:
+                adj_conf = max(0.0, min(1.0, adj_conf + rl_adj))
+                log.info(f"{pair}: RL Memory {rl_adj:+.0%} — {rl_reason}")
+        except Exception as _rle:
+            pass
+
+        # MARKET MICROSTRUCTURE — stop hunts, FVG, order blocks
+        try:
+            ms_dir, ms_conf, ms_reason = self.micro.analyze(bars, pair)
+            if ms_dir == direction and ms_conf > 0.7:
+                adj_conf = min(1.0, adj_conf * 1.08)
+                log.info(f"{pair}: Microstructure confirms — {ms_reason}")
+            elif ms_dir != "HOLD" and ms_dir != direction and ms_conf > 0.75:
+                adj_conf *= 0.88  # Microstructure contradicts — reduce confidence
+                log.info(f"{pair}: Microstructure contradicts — {ms_reason}")
+        except Exception as _mse:
+            pass
+
+        # STRUCTURED DEBATE — on ambiguous signals (55-68% confidence)
+        try:
+            if self.debate.should_debate(adj_conf):
+                bull_sigs = [s.__dict__ if hasattr(s,'__dict__') else {"name":str(s)} 
+                            for s in signals if getattr(s,'signal','HOLD')=="BUY"]
+                bear_sigs = [s.__dict__ if hasattr(s,'__dict__') else {"name":str(s)}
+                            for s in signals if getattr(s,'signal','HOLD')=="SELL"]
+                debate_dir, debate_conf, debate_reason = self.debate.run_debate(
+                    pair, direction, adj_conf, bull_sigs, bear_sigs, curr_regime)
+                if debate_dir != direction or abs(debate_conf - adj_conf) > 0.05:
+                    direction = debate_dir
+                    adj_conf  = debate_conf
+                    log.info(f"{pair}: Debate result: {direction} {adj_conf:.0%} — {debate_reason}")
+        except Exception as _de:
+            pass
+
+        # LIVE RETRAINER — recalibrate thresholds every 100 trades
+        try:
+            if hasattr(self,'closed_trades') and self.retrainer.should_retrain(len(self.closed_trades)):
+                self.regime_params = self.retrainer.retrain(self.closed_trades, self.regime_params)
+                log.info("Live retrainer: thresholds recalibrated")
+        except Exception as _rte:
             pass
 
         # FINRS Multi-timescale momentum alignment boost/penalty
