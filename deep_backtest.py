@@ -398,10 +398,11 @@ def run_backtest(candles, pair):
             if hit:
                 ex_price = pos["sl"] if hit == "SL" else pos["tp2"]
                 remain_units = pos["units"] - (pos["units"]//3)*(2 if pos.get("scaled2") else 1 if pos.get("scaled1") else 0)
+                spread_cost = SPREADS.get(pair, 0.00025) * remain_units * _pip_val(pair) * 10000
                 if pos["dir"] == "BUY":
-                    final_pnl = (ex_price - pos["entry"]) * remain_units * _pip_val(pair)
+                    final_pnl = (ex_price - pos["entry"]) * remain_units * _pip_val(pair) - spread_cost
                 else:
-                    final_pnl = (pos["entry"] - ex_price) * remain_units * _pip_val(pair)
+                    final_pnl = (pos["entry"] - ex_price) * remain_units * _pip_val(pair) - spread_cost
                 total_pnl = final_pnl + pos.get("partial_pnl",0)
                 bal += final_pnl
                 peak = max(peak, bal)
@@ -470,6 +471,17 @@ def run_backtest(candles, pair):
             direction, conf = optimized_vote(signals, regime)
 
             if direction not in ("BUY","SELL"): continue
+
+            # REALISTIC SPREAD MODEL (Critic Fix 2 — backtest was ignoring costs)
+            # These are actual average OANDA practice spreads
+            SPREADS = {
+                "EUR_USD":0.00015,"GBP_USD":0.00018,"USD_JPY":0.015,
+                "AUD_USD":0.00018,"USD_CAD":0.00020,"GBP_JPY":0.035,
+                "EUR_JPY":0.025,"NZD_USD":0.00020,"USD_CHF":0.00020,
+                "EUR_GBP":0.00020,"AUD_JPY":0.030,"USD_SGD":0.00050
+            }
+            spread = SPREADS.get(pair, 0.00025)
+            slippage = spread * 0.5  # Conservative slippage estimate
 
             # FINRS multi-timescale momentum
             if len(window) >= 30:
