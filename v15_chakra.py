@@ -1213,10 +1213,10 @@ class RegimeDetector:
 
     def params(self, regime: str) -> Dict:
         return {
-            "TRENDING": {"min_conf":0.55,"risk_mult":1.2,
+            "TRENDING": {"min_conf":0.52,"risk_mult":1.2,
                          "desc":"Trend following. Larger positions.",
                          "agents":["EMA","MACD","BOS","CHOCH"]},
-            "RANGING":  {"min_conf":0.58,"risk_mult":0.8,
+            "RANGING":  {"min_conf":0.54,"risk_mult":0.8,
                          "desc":"Reversal at boundaries. Smaller positions.",
                          "agents":["RSI","OrderBlock","FVG","OTE"]},
             "VOLATILE": {"min_conf":0.65,"risk_mult":0.5,
@@ -5861,10 +5861,17 @@ Final 1/3 running FREE with trailing stop")
                 p, err = fut.result()
                 if err:
                     log.error(f"Pair {p}: {err}")
-        # Diagnostic: log why no signals if all pairs skipped
+        # Diagnostic: log and alert why no signals if all pairs skipped
         if not _cycle_signals:
             hour = datetime.utcnow().hour
-            log.info(f"Cycle {self.stats['cycles']}: No signals. Hour={hour} UTC. All pairs filtered.")
+            msg = f"Cycle {self.stats['cycles']}: No signals generated. Hour={hour} UTC. All {len(PAIRS)} pairs filtered."
+            log.info(msg)
+            # Send Telegram diagnostic every 12 cycles (1 hour) if still no trades
+            if self.stats['cycles'] % 12 == 0:
+                _send_telegram(f"⚠️ System Update\nCycle #{self.stats['cycles']} complete\n"
+                              f"No trades yet — filters active\n"
+                              f"Hour: {hour} UTC | Session: {'ACTIVE' if 6 < hour < 21 else 'CLOSED'}\n"
+                              f"Bot is running ✅")
 
     def run(self):
         self.running = True
