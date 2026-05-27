@@ -2220,7 +2220,25 @@ class AlternativeDataEngine:
     def __init__(self):
         self.cache = {}
         self.cache_ts = {}
-        self.TTL = 3600  # 1 hour cache for alt data
+        self.TTL = 3600  # 1 hour cache
+        self.source_status = {}  # Track which sources are working
+        self.source_failures = {}  # Count consecutive failures
+
+    def _record_success(self, source: str):
+        self.source_status[source] = "OK"
+        self.source_failures[source] = 0
+
+    def _record_failure(self, source: str):
+        self.source_failures[source] = self.source_failures.get(source, 0) + 1
+        fails = self.source_failures[source]
+        if fails >= 3:
+            self.source_status[source] = "BLOCKED"
+        else:
+            self.source_status[source] = "UNRELIABLE"
+
+    def get_working_sources(self) -> list:
+        """Returns list of sources currently returning data"""
+        return [s for s, status in self.source_status.items() if status == "OK"]
 
     def _cached(self, key, fetch_fn):
         import time as _t
@@ -5419,9 +5437,21 @@ class V13Orchestrator:
             size_mult = route.get("size_multiplier", 1.0)
             risk["units"] = max(1000, min(int(risk.get("units", 1000) * size_mult), 15000))
         log.info(f"{pair}: Strategy={route['strategy']} Reason={route.get('reason','')}")
+        # SIGNAL ATTRIBUTION — tracks which layers contributed to this decision
+        # When trade closes, this allows diagnosis of which layers were correct
+        signal_attribution = {
+            "agents_agreed":    agreed[:5] if agreed else [],
+            "regime":           curr_regime,
+            "h4_direction":     h4_dir if 'h4_dir' in dir() else "UNKNOWN",
+            "news_sentiment":   news_sent if 'news_sent' in dir() else "NEUTRAL",
+            "cot_bias":         cot_bias if 'cot_bias' in dir() else "NEUTRAL",
+            "tv_confirmed":     tv_confirmed if 'tv_confirmed' in dir() else False,
+            "final_confidence": round(final_conf, 3),
+        }
         log.info(f"SIGNAL: {pair} {direction} {final_conf:.1%} | "
                  f"Regime:{curr_regime} | News:{news_sent} | COT:{cot_bias} | "
                  f"TV:{tv_confirmed} | Agents:{len(agreed)}{h4_boost}")
+        log.info(f"ATTRIBUTION: {signal_attribution}")
 
         # ── Execute trade ─────────────────────────────────────────────────────
         # CVaR Risk Check (FinRS)
@@ -5437,6 +5467,19 @@ class V13Orchestrator:
         self.hmem.add_signal(pair, direction, final_conf, curr_regime, 
                              self.momentum.get_momentum_score(pair))
         if AUTO_EXECUTE and OANDA_OK and OANDA_TOKEN:
+            # Apply simulated slippage to paper trades for realistic testing
+            # This closes the paper vs live gap before real money trading
+            SLIPPAGE_PIPS = {
+                "EUR_USD":1.2,"GBP_USD":1.5,"USD_JPY":1.2,"AUD_USD":1.5,
+                "USD_CAD":1.8,"GBP_JPY":3.0,"EUR_JPY":2.2,"NZD_USD":1.8,
+                "USD_CHF":1.8,"EUR_GBP":1.8,"AUD_JPY":2.5,"USD_SGD":4.0
+            }
+            pip_size = 0.0001 if "JPY" not in rec.pair else 0.01
+            slip = SLIPPAGE_PIPS.get(rec.pair, 2.0) * pip_size
+            if rec.direction == "BUY":
+                rec.where_entry = round(float(rec.where_entry) + slip, 5)
+            else:
+                rec.where_entry = round(float(rec.where_entry) - slip, 5)
             self._execute_trade(rec, risk)
         # Send Telegram alert for executed trade
         _telegram(
