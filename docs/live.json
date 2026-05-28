@@ -1,0 +1,16 @@
+{
+  "status": "live",
+  "balance": 100000,
+  "pnl": 0,
+  "win_rate": 0,
+  "total_trades": 0,
+  "wins": 0,
+  "losses": 0,
+  "cycle": 0,
+  "regime": "STARTING",
+  "open_trades": 0,
+  "last_updated": "System starting...",
+  "pairs_scanned": 12,
+  "open_positions": [],
+  "alt_data": {}
+}
