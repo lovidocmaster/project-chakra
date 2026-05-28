@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="refresh" content="15">
+<title>⚡ Project Chakra — Live Trading Dashboard</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@700;800&display=swap');
+:root{--bg:#050A0F;--s1:#0D1821;--s2:#162030;--bd:#1E3448;
+  --g:#06D6A0;--r:#EF476F;--gold:#F0A500;--blue:#118AB2;
+  --text:#E8F4F8;--muted:#5A7A8A;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Space Mono',monospace;min-height:100vh;}
+.hdr{background:#0D1821;border-bottom:3px solid var(--g);
+  padding:14px 28px;display:flex;justify-content:space-between;align-items:center;}
+.logo{font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;
+  background:linear-gradient(90deg,var(--g),#00E5FF,var(--gold));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.badge{padding:4px 12px;border-radius:4px;font-size:.7rem;font-weight:700;}
+.live{background:rgba(6,214,160,.15);color:var(--g);border:1px solid rgba(6,214,160,.3);
+  animation:pulse 2s infinite;}
+.info{background:rgba(17,138,178,.1);color:var(--blue);border:1px solid rgba(17,138,178,.3);}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.wrap{max-width:1400px;margin:0 auto;padding:20px 28px;}
+.kpi-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:10px;margin-bottom:20px;}
+.kpi{background:var(--s1);border:1px solid var(--bd);border-radius:10px;
+  padding:14px 12px;position:relative;overflow:hidden;}
+.kpi::after{content:'';position:absolute;bottom:0;left:0;height:2px;width:100%;background:var(--g);}
+.kpi.r::after{background:var(--r);}.kpi.gold::after{background:var(--gold);}
+.kpi.blue::after{background:var(--blue);}
+.kpi-lbl{font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;}
+.kpi-val{font-size:1.4rem;font-weight:700;margin-top:6px;color:var(--g);}
+.kpi-val.r{color:var(--r);}.kpi-val.gold{color:var(--gold);}.kpi-val.b{color:var(--blue);}
+.kpi-val.w{color:var(--text);}
+.grid2{display:grid;grid-template-columns:1.5fr 1fr;gap:16px;margin-bottom:16px;}
+.panel{background:var(--s1);border:1px solid var(--bd);border-radius:12px;padding:20px;}
+.pt{font-size:.8rem;font-weight:700;color:var(--gold);text-transform:uppercase;
+  letter-spacing:.06em;margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+.pt::after{content:'';flex:1;height:1px;background:var(--bd);}
+.alt-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+.alt-card{background:var(--s2);border-radius:8px;padding:12px;text-align:center;
+  border:1px solid var(--bd);}
+.al{font-size:.58rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px;}
+.av{font-size:.95rem;font-weight:700;}
+.trade-row{display:flex;align-items:center;justify-content:space-between;
+  padding:10px 12px;background:var(--s2);border-radius:8px;margin-bottom:6px;
+  border:1px solid var(--bd);font-size:.78rem;}
+.buy{color:var(--g);font-weight:700;}.sell{color:var(--r);font-weight:700;}
+.no-trades{color:var(--muted);text-align:center;padding:20px;font-size:.8rem;}
+.status-row{display:flex;justify-content:space-between;padding:8px 0;
+  border-bottom:1px solid rgba(30,52,72,.4);font-size:.75rem;}
+.status-row:last-child{border-bottom:none;}
+.dot-g{color:var(--g);font-weight:700;}.dot-r{color:var(--r);font-weight:700;}
+.dot-a{color:var(--gold);font-weight:700;}
+.footer{text-align:center;padding:20px;color:var(--muted);font-size:.65rem;
+  border-top:1px solid var(--bd);margin-top:16px;}
+.offline{background:rgba(239,71,111,.1);border:1px solid rgba(239,71,111,.3);
+  border-radius:8px;padding:12px;text-align:center;margin-bottom:12px;
+  color:var(--r);font-size:.8rem;display:none;}
+</style>
+</head>
+<body>
+<div class="hdr">
+  <div>
+    <div class="logo">⚡ PROJECT CHAKRA</div>
+    <div style="color:var(--muted);font-size:.6rem;margin-top:2px">AUTONOMOUS FOREX TRADING SYSTEM V15</div>
+  </div>
+  <div style="display:flex;gap:10px;align-items:center;">
+    <span class="badge live" id="live-badge">● LIVE</span>
+    <span class="badge info" id="regime-badge">REGIME: --</span>
+    <span class="badge info" id="cycle-badge">CYCLE #--</span>
+    <span style="color:#00E5FF;font-size:.8rem" id="clock">--:--:-- UTC</span>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="offline" id="offline-msg">
+    ⚠️ Data not yet updated — trading bot posts every 5 minutes. Refresh in a moment.
+  </div>
+
+  <div class="kpi-grid">
+    <div class="kpi"><div class="kpi-lbl">Balance</div><div class="kpi-val" id="k-bal">$--</div></div>
+    <div class="kpi"><div class="kpi-lbl">P&L</div><div class="kpi-val" id="k-pnl">$--</div></div>
+    <div class="kpi"><div class="kpi-lbl">Win Rate</div><div class="kpi-val" id="k-wr">--%</div></div>
+    <div class="kpi gold"><div class="kpi-lbl">Total Trades</div><div class="kpi-val gold" id="k-tr">--</div></div>
+    <div class="kpi"><div class="kpi-lbl">Wins</div><div class="kpi-val" id="k-wi">--</div></div>
+    <div class="kpi r"><div class="kpi-lbl">Losses</div><div class="kpi-val r" id="k-lo">--</div></div>
+    <div class="kpi blue"><div class="kpi-lbl">Open</div><div class="kpi-val b" id="k-op">--</div></div>
+    <div class="kpi"><div class="kpi-lbl">Updated</div><div class="kpi-val w" style="font-size:.7rem" id="k-upd">--</div></div>
+  </div>
+
+  <div class="grid2">
+    <div class="panel">
+      <div class="pt">🌍 Alternative Data Intelligence</div>
+      <div class="alt-grid" id="alt-grid">
+        <!-- populated by JS -->
+      </div>
+    </div>
+    <div class="panel">
+      <div class="pt">📋 Open Positions</div>
+      <div id="positions">
+        <div class="no-trades">No open positions</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="panel">
+      <div class="pt">📊 System Status</div>
+      <div>
+        <div class="status-row"><span style="color:var(--muted)">Trading Bot</span><span class="dot-g" id="st-bot">● LIVE</span></div>
+        <div class="status-row"><span style="color:var(--muted)">OANDA Practice</span><span class="dot-g">● CONNECTED</span></div>
+        <div class="status-row"><span style="color:var(--muted)">Self-Learning</span><span class="dot-a" id="st-learn">⏳ WARMING</span></div>
+        <div class="status-row"><span style="color:var(--muted)">Supabase Memory</span><span class="dot-g">● ACTIVE</span></div>
+        <div class="status-row"><span style="color:var(--muted)">Alt Data Engine</span><span class="dot-g">● ACTIVE</span></div>
+        <div class="status-row"><span style="color:var(--muted)">Agent Debate</span><span class="dot-g">● ACTIVE</span></div>
+        <div class="status-row"><span style="color:var(--muted)">CB Transcripts</span><span class="dot-g">● ACTIVE</span></div>
+        <div class="status-row"><span style="color:var(--muted)">Cycle Speed</span><span style="color:#00E5FF">5 MINUTES</span></div>
+        <div class="status-row"><span style="color:var(--muted)">Parallel Threads</span><span style="color:#00E5FF">6 THREADS</span></div>
+        <div class="status-row"><span style="color:var(--muted)">Agents</span><span style="color:var(--gold)">17 ACTIVE</span></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="pt">⚡ Market Regime</div>
+      <div style="text-align:center;padding:20px;">
+        <div style="font-size:.7rem;color:var(--muted);margin-bottom:8px">CURRENT REGIME</div>
+        <div id="regime-val" style="font-size:2rem;font-weight:800;font-family:'Syne',sans-serif;color:var(--gold)">--</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px">
+        <div style="text-align:center;padding:10px;background:rgba(240,165,0,.08);border-radius:8px;border:1px solid rgba(240,165,0,.2)">
+          <div style="color:var(--gold);font-size:.58rem">TRENDING</div>
+          <div style="color:var(--gold);font-size:.85rem;font-weight:700;margin-top:4px">BOS+CHOCH</div>
+        </div>
+        <div style="text-align:center;padding:10px;background:rgba(17,138,178,.08);border-radius:8px;border:1px solid rgba(17,138,178,.2)">
+          <div style="color:var(--blue);font-size:.58rem">RANGING</div>
+          <div style="color:var(--blue);font-size:.85rem;font-weight:700;margin-top:4px">RSI+BB</div>
+        </div>
+        <div style="text-align:center;padding:10px;background:rgba(239,71,111,.08);border-radius:8px;border:1px solid rgba(239,71,111,.2)">
+          <div style="color:var(--r);font-size:.58rem">VOLATILE</div>
+          <div style="color:var(--r);font-size:.85rem;font-weight:700;margin-top:4px">SMC ONLY</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  PROJECT CHAKRA V15 &nbsp;|&nbsp; 17 AGENTS &nbsp;|&nbsp; 14 INTELLIGENCE LAYERS &nbsp;|&nbsp;
+  12 PAIRS &nbsp;|&nbsp; BY LOVINDER &nbsp;|&nbsp;
+  Auto-refresh 15s &nbsp;|&nbsp; NOT FINANCIAL ADVICE
+</div>
+
+<script>
+// Fetch from GitHub repo docs/live.json
+// Updated by trading bot every cycle via GitHub API
+const DATA_URL = 'https://raw.githubusercontent.com/lovidocmaster/project-chakra/main/docs/live.json';
+const CACHE_BUST = () => DATA_URL + '?t=' + Date.now();
+
+// Clock
+setInterval(() => {
+  const n = new Date();
+  const pad = x => String(x).padStart(2,'0');
+  document.getElementById('clock').textContent =
+    `${pad(n.getUTCHours())}:${pad(n.getUTCMinutes())}:${pad(n.getUTCSeconds())} UTC`;
+}, 1000);
+
+// Alt data config
+const ALT_SOURCES = [
+  {id:'fg',   label:'Fear & Greed', key:'fear_greed',   val: d => d?.score?.toFixed(0)||'--'},
+  {id:'yld',  label:'Yields',       key:'yields',        val: d => d?.trend||'--'},
+  {id:'oil',  label:'Oil',          key:'commodities',   val: d => {
+    const c = d?.OIL?.change||0; return (c>=0?'+':'')+c.toFixed(1)+'%';}},
+  {id:'gold', label:'Gold',         key:'commodities',   val: d => {
+    const c = d?.GOLD?.change||0; return (c>=0?'+':'')+c.toFixed(1)+'%';}},
+  {id:'btc',  label:'BTC',          key:'crypto',        val: d => d?.sentiment||'--'},
+  {id:'ship', label:'Shipping',     key:'shipping',      val: d => d?.trend||'FLAT'},
+  {id:'dp',   label:'Dark Pool',    key:'darkpool',      val: d => d?.trend||'--'},
+  {id:'ob',   label:'Order Book',   key:'orderbook',     val: () => 'ACTIVE'},
+];
+
+function colorVal(val) {
+  const v = String(val).toUpperCase();
+  if(['UP','BULLISH','RISK_ON','ACTIVE','GREED'].some(x=>v.includes(x))) return 'var(--g)';
+  if(['DOWN','BEARISH','RISK_OFF','FEAR','DROP'].some(x=>v.includes(x))) return 'var(--r)';
+  if(['+'].some(x=>v.includes(x)) && !v.includes('-')) return 'var(--g)';
+  if(v.startsWith('-')) return 'var(--r)';
+  return 'var(--gold)';
+}
+
+function renderAltData(alt) {
+  const grid = document.getElementById('alt-grid');
+  grid.innerHTML = ALT_SOURCES.map(src => {
+    const data = alt[src.key];
+    const val = src.val(data);
+    return `<div class="alt-card">
+      <div class="al">${src.label}</div>
+      <div class="av" style="color:${colorVal(val)}">${val}</div>
+    </div>`;
+  }).join('');
+}
+
+async function fetchData() {
+  try {
+    const res = await fetch(CACHE_BUST());
+    if (!res.ok) throw new Error(res.status);
+    const d = await res.json();
+
+    // Hide offline msg
+    document.getElementById('offline-msg').style.display = 'none';
+    document.getElementById('live-badge').textContent = '● LIVE';
+    document.getElementById('live-badge').style.color = '';
+
+    // KPIs
+    const bal = d.balance || 100000;
+    const pnl = d.pnl || (bal - 100000);
+    document.getElementById('k-bal').textContent = '$' + bal.toLocaleString('en',{maximumFractionDigits:0});
+
+    const pnlEl = document.getElementById('k-pnl');
+    pnlEl.textContent = (pnl>=0?'+$':'-$') + Math.abs(pnl).toLocaleString('en',{maximumFractionDigits:0});
+    pnlEl.className = 'kpi-val ' + (pnl>=0?'':'r');
+
+    const wr = d.win_rate || 0;
+    const wrPct = wr < 2 ? wr * 100 : wr;
+    const wrEl = document.getElementById('k-wr');
+    wrEl.textContent = wrPct.toFixed(1) + '%';
+    wrEl.className = 'kpi-val ' + (wrPct>=45?'':(wrPct>=35?'gold':'r'));
+
+    document.getElementById('k-tr').textContent = d.total_trades || 0;
+    document.getElementById('k-wi').textContent = d.wins || 0;
+    document.getElementById('k-lo').textContent = d.losses || 0;
+    document.getElementById('k-op').textContent = d.open_trades || 0;
+
+    const upd = d.last_updated ? String(d.last_updated).slice(11,16) + ' UTC' : '--';
+    document.getElementById('k-upd').textContent = upd;
+
+    // Regime
+    const reg = d.regime || '--';
+    const regEl = document.getElementById('regime-val');
+    regEl.textContent = reg;
+    const rColors = {TRENDING:'var(--gold)',RANGING:'var(--blue)',VOLATILE:'var(--r)'};
+    regEl.style.color = rColors[reg] || 'var(--text)';
+    document.getElementById('regime-badge').textContent = 'REGIME: ' + reg;
+    document.getElementById('cycle-badge').textContent = 'CYCLE #' + (d.cycle || '--');
+
+    // Self-learning status
+    const learnEl = document.getElementById('st-learn');
+    if ((d.total_trades||0) >= 20) {
+      learnEl.textContent = '● ACTIVE'; learnEl.className = 'dot-g';
+    } else {
+      learnEl.textContent = `⏳ ${d.total_trades||0}/20`; learnEl.className = 'dot-a';
+    }
+
+    // Open positions
+    const pos = d.open_positions || [];
+    const posEl = document.getElementById('positions');
+    if (pos.length === 0) {
+      posEl.innerHTML = '<div class="no-trades">No open positions</div>';
+    } else {
+      posEl.innerHTML = pos.map(p => `
+        <div class="trade-row">
+          <span style="color:var(--gold);font-weight:700">${(p.pair||'--').replace('_','/')}</span>
+          <span class="${(p.direction||'buy').toLowerCase()}">${p.direction||'--'}</span>
+          <span style="color:var(--muted)">${Math.round((p.confidence||0)*100)}%</span>
+          <span style="color:var(--muted);font-size:.7rem">${p.regime||'--'}</span>
+        </div>`).join('');
+    }
+
+    // Alt data
+    renderAltData(d.alt_data || {});
+
+  } catch(e) {
+    document.getElementById('offline-msg').style.display = 'block';
+    document.getElementById('live-badge').textContent = '● UPDATING';
+    document.getElementById('live-badge').style.color = 'var(--gold)';
+    renderAltData({});
+  }
+}
+
+fetchData();
+setInterval(fetchData, 15000);
+</script>
+</body>
+</html>
