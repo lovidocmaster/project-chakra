@@ -8,6 +8,8 @@ import json
 import logging
 import threading
 import time
+import subprocess
+import sys
 from datetime import datetime
 from flask import Flask, request, jsonify
 from flask_cors import CORS
@@ -22,6 +24,42 @@ app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# ── SPAWN v15_chakra.py AS BACKGROUND TRADING BOT ─────────────────────────────
+def _spawn_v15_chakra():
+    """Launch v15_chakra.py in a child process so the trading bot runs
+    alongside this Flask web server on Render."""
+    try:
+        env = os.environ.copy()
+        env["PYTHONUNBUFFERED"] = "1"
+        # avoid v15's internal dashboard port colliding with gunicorn's $PORT
+        env["DASHBOARD_PORT"] = "8081"
+        proc = subprocess.Popen(
+            [sys.executable, "v15_chakra.py"],
+            env=env,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            bufsize=1,
+            universal_newlines=True,
+        )
+        logger.info(f"[BOOT] v15_chakra.py spawned with PID {proc.pid}")
+
+        def _pipe_logs():
+            try:
+                for line in proc.stdout:
+                    logger.info(f"[v15] {line.rstrip()}")
+            except Exception as e:
+                logger.warning(f"[v15] log pipe ended: {e}")
+            logger.warning(f"[v15] process exited (code={proc.returncode})")
+
+        threading.Thread(target=_pipe_logs, daemon=True).start()
+    except Exception as e:
+        logger.error(f"[BOOT] Could not spawn v15_chakra.py: {e}")
+
+# Guard so gunicorn worker forks don't spawn duplicate bots
+if os.environ.get("CHAKRA_V15_SPAWNED") != "1":
+    os.environ["CHAKRA_V15_SPAWNED"] = "1"
+    _spawn_v15_chakra()
 
 # ── LIVE DATA STORE ──────────────────────────────────────────────────────────
 system_data = {
