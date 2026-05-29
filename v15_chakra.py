@@ -457,7 +457,7 @@ class ForexFactoryCalendar:
         self.total_fetched = 0
         self.high_impact_today = []
 
-        def fetch(self) -> List[Dict]:
+    def fetch(self) -> List[Dict]:
         """Fetch economic calendar from multiple sources for maximum accuracy"""
         events = []
         
@@ -2747,16 +2747,14 @@ class AgentDebate:
             import requests as _r
 
             # Build bull case
-            bull_case = "
-".join([
+            bull_case = "\n".join([
                 f"  • {s.get('name','?')}: {s.get('reason', s.get('signal','?'))} "
                 f"(conf={s.get('confidence',0):.0%})"
                 for s in bull_signals[:5]
             ]) or "  • No strong bull signals"
 
             # Build bear case
-            bear_case = "
-".join([
+            bear_case = "\n".join([
                 f"  • {s.get('name','?')}: {s.get('reason', s.get('signal','?'))} "
                 f"(conf={s.get('confidence',0):.0%})"
                 for s in bear_signals[:5]
@@ -2768,8 +2766,7 @@ class AgentDebate:
                 fg = alt_data.get("fear_greed",{}).get("score",50)
                 yld = alt_data.get("yields",{}).get("trend","FLAT")
                 btc = alt_data.get("crypto",{}).get("sentiment","NEUTRAL")
-                alt_ctx = f"
-Alt data: Fear&Greed={fg}/100, Yields={yld}, BTC={btc}"
+                alt_ctx = f"\nAlt data: Fear&Greed={fg}/100, Yields={yld}, BTC={btc}"
 
             prompt = f"""You are a senior forex portfolio manager adjudicating a trading debate.
 
@@ -5563,10 +5560,10 @@ class V13Orchestrator:
                             api.request(cr)
                             rec.scale_out_done = 1
                             log.info(f"SCALE-OUT 1/3: {pair} closed {close_units} units at +{unrealized_pl:.2f} (1x ATR={atr:.5f})")
-                            _telegram(f"📊 <b>SCALE-OUT 1/3</b>
+                            _telegram(f"""📊 <b>SCALE-OUT 1/3</b>
 {pair} | Closed {close_units} units
 Profit locked: ${unrealized_pl/3:.2f}
-Remaining: 2/3 position — SL moved to breakeven")
+Remaining: 2/3 position — SL moved to breakeven""")
                             # Move SL to breakeven
                             try:
                                 be_price = rec.where_entry if hasattr(rec, 'where_entry') else open_price
@@ -5591,10 +5588,10 @@ Remaining: 2/3 position — SL moved to breakeven")
                             api.request(cr)
                             rec.scale_out_done = 2
                             log.info(f"SCALE-OUT 2/3: {pair} closed {close_units} units at +{unrealized_pl:.2f} (3x ATR)")
-                            _telegram(f"📊 <b>SCALE-OUT 2/3</b>
+                            _telegram(f"""📊 <b>SCALE-OUT 2/3</b>
 {pair} | Closed {close_units} units
 Profit locked: ${unrealized_pl/2:.2f}
-Final 1/3 running FREE with trailing stop")
+Final 1/3 running FREE with trailing stop""")
                         except Exception as e:
                             log.warning(f"Scale-out 2/3 failed {pair}: {e}")
 
