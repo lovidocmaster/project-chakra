@@ -3,6 +3,7 @@ services:
     name: chakra-live-trader
     runtime: python
     plan: starter
-    buildCommand: pip install -r requirements.txt
+    pythonVersion: "3.11.9"
+    buildCommand: "echo no build needed - live trader uses only Python stdlib"
     startCommand: python live_paper_trader.py
     autoDeploy: true
