@@ -262,10 +262,32 @@ print("  "+datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"))
 print("="*64)
 if not OANDA_TOKEN: print("No OANDA token in .env"); raise SystemExit(1)
 tg("🚀 <b>Chakra Live Paper Trader started</b>\nTrend + Carry + 0.5% risk\nLogging every decision honestly.")
+import traceback
 n=0
 while True:
     n+=1
-    try: cycle(n)
-    except Exception as e: log(f"cycle error: {e}")
-    log(f"sleeping {CYCLE_SEC//60} min...")
-    time.sleep(CYCLE_SEC)
+    try:
+        cycle(n)
+    except Exception as e:
+        log(f"cycle error (continuing): {e}")
+        log(traceback.format_exc())
+        # write an error heartbeat so we can SEE it is alive even when a cycle fails
+        try:
+            sb_patch("system_state","id=eq.1",
+                {"status":"LIVE-ERR","updated_at":datetime.now(timezone.utc).isoformat()})
+            sb_insert("live_decisions",{"decision":"SKIP","reason":"cycle_exception",
+                "details":{"error":str(e)[:300]}})
+        except Exception:
+            pass
+    # sleep in small chunks so a killed sleep doesn't strand the worker,
+    # and write a heartbeat every chunk so stalls are visible fast
+    slept=0
+    while slept < CYCLE_SEC:
+        time.sleep(60)
+        slept+=60
+        try:
+            sb_patch("system_state","id=eq.1",
+                {"updated_at":datetime.now(timezone.utc).isoformat()})
+        except Exception:
+            pass
+    log(f"woke after {CYCLE_SEC//60} min")
