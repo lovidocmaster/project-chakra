@@ -154,6 +154,46 @@ def place_trade(pair, side, bars, balance):
     return None
 
 # ---------------- main loop ----------------
+# ---------------- economic-calendar guard ----------------
+_EVENT_CACHE = {"events": [], "fetched": None}
+
+def fetch_high_impact_events():
+    """Fetch this week's HIGH-impact economic events (free ForexFactory JSON feed).
+    Cached for 6 hours. Returns list of {currency, time(datetime utc)}."""
+    now = datetime.now(timezone.utc)
+    if _EVENT_CACHE["fetched"] and (now - _EVENT_CACHE["fetched"]).total_seconds() < 6*3600:
+        return _EVENT_CACHE["events"]
+    url = "https://nfs.faireconomy.media/ff_calendar_thisweek.json"
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+        data = json.loads(urllib.request.urlopen(req, timeout=20).read().decode())
+        events = []
+        for e in data:
+            if str(e.get("impact", "")).lower() == "high":
+                try:
+                    dt = datetime.fromisoformat(e["date"].replace("Z", "+00:00"))
+                    events.append({"currency": e.get("country", ""), "time": dt})
+                except Exception:
+                    pass
+        _EVENT_CACHE["events"] = events
+        _EVENT_CACHE["fetched"] = now
+        log(f"economic calendar: {len(events)} high-impact events loaded")
+        return events
+    except Exception as ex:
+        log(f"calendar fetch failed (will allow trading): {ex}")
+        return _EVENT_CACHE["events"]  # fail-open to last good cache (may be empty)
+
+def near_high_impact_event(pair, events, window_min=60):
+    """True if either currency in the pair has a HIGH-impact event within +/- window."""
+    now = datetime.now(timezone.utc)
+    base, quote = pair.split("_")
+    for ev in events:
+        if ev["currency"] in (base, quote):
+            delta = abs((ev["time"] - now).total_seconds()) / 60.0
+            if delta <= window_min:
+                return True, ev["currency"]
+    return False, None
+
 def cycle(n):
     log(f"--- cycle #{n} ---")
     try: acct=account()
@@ -174,10 +214,19 @@ def cycle(n):
                   "details":{"weekday":wd,"hour":now.hour}})
         return
 
+    events = fetch_high_impact_events()
+
     open_pairs={t['instrument'] for t in opens}
     room = MAX_OPEN - len(opens)
     for pair in PAIRS:
         if pair in open_pairs: continue
+        # NEWS GUARD: do not open trades within 60 min of a high-impact event
+        near, cur = near_high_impact_event(pair, events, window_min=60)
+        if near:
+            log(f"{pair}: SKIP - high-impact {cur} event within 60min")
+            sb_insert("live_decisions",{"pair":pair,"decision":"SKIP",
+                      "reason":"high_impact_news_window","details":{"currency":cur}})
+            continue
         try: bars=candles(pair)
         except Exception as e: log(f"{pair} candles err: {e}"); continue
         sig=signal(pair,bars)
